@@ -54,6 +54,20 @@ public class EngineSettings {
         put("provider." + provider, up ? "up" : "down");
     }
 
+    public int number(String key, int fallback) {
+        String value = raw().get(key);
+        if (value == null || value.isBlank()) return fallback;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    public String text(String key) {
+        return raw().get(key);
+    }
+
     public void reset() {
         jdbc.update("delete from engine_setting");
     }

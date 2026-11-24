@@ -19,8 +19,13 @@ public class OrganizationService {
     }
 
     public long idOf(CurrentUser user) {
-        Long id = jdbc.query("select organization_id from app_user where email = ?",
-                rs -> rs.next() ? (Long) rs.getObject(1) : null, user.email());
+        return idOfEmail(user.email());
+    }
+
+    public long idOfEmail(String email) {
+        if (email == null || email.isBlank()) return 1L;
+        Long id = jdbc.query("select organization_id from app_user where lower(email) = lower(?)",
+                rs -> rs.next() ? (Long) rs.getObject(1) : null, email);
         return id == null ? 1L : id;
     }
 

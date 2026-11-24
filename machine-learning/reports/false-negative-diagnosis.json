@@ -1,0 +1,194 @@
+{
+  "executedAt" : "2026-11-24T07:51:09.589050600Z",
+  "modelsReplaced" : false,
+  "thresholdAdopted" : false,
+  "reservedUsedForTuning" : false,
+  "publishedModel" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\logistic-context.ser",
+  "publishedEvaluation" : {
+    "name" : "reservado-9901",
+    "examples" : 400,
+    "frauds" : 158,
+    "denials" : 51,
+    "habitualLegit" : 51,
+    "denialsWithSameDeclaredAnswers" : 51,
+    "denialsWithSameContextFeatures" : 51,
+    "denialsWithSameOperationBits" : 51,
+    "denialsInsideHabitualContinuousRange" : 50,
+    "medianDistanceDenialToHabitual" : 0.0166,
+    "medianDistanceAmongHabitual" : 0.018,
+    "separableWithoutFalsePositives" : false,
+    "absentOnEveryDenial" : [ "script de orientação observado", "incidente de destino", "incidente de vendedor", "dispositivo novo", "destino de terceiro", "resposta que admite ajuda" ],
+    "presentOnEveryDenial" : [ "origem declarada própria", "respostas: própria, sem contato, endereço meu, sem orientação", "compra habitual", "horário diurno" ],
+    "publishedModel" : {
+      "falseNegatives" : 51,
+      "falseNegativeStories" : {
+        "fraude-que-nega" : 51
+      },
+      "denialProbability" : {
+        "min" : 0.3281,
+        "median" : 0.3688,
+        "max" : 0.4078
+      },
+      "habitualProbability" : {
+        "min" : 0.3265,
+        "median" : 0.3597,
+        "max" : 0.405
+      },
+      "thresholdSweep" : [ {
+        "cutoff" : 0.5,
+        "denialsCaught" : 0,
+        "habitualPurchasesFlagged" : 0
+      }, {
+        "cutoff" : 0.45,
+        "denialsCaught" : 0,
+        "habitualPurchasesFlagged" : 0
+      }, {
+        "cutoff" : 0.4,
+        "denialsCaught" : 9,
+        "habitualPurchasesFlagged" : 6
+      }, {
+        "cutoff" : 0.35,
+        "denialsCaught" : 35,
+        "habitualPurchasesFlagged" : 34
+      }, {
+        "cutoff" : 0.3,
+        "denialsCaught" : 51,
+        "habitualPurchasesFlagged" : 51
+      }, {
+        "cutoff" : 0.25,
+        "denialsCaught" : 51,
+        "habitualPurchasesFlagged" : 51
+      }, {
+        "cutoff" : 0.2,
+        "denialsCaught" : 51,
+        "habitualPurchasesFlagged" : 51
+      }, {
+        "cutoff" : 0.15,
+        "denialsCaught" : 51,
+        "habitualPurchasesFlagged" : 51
+      }, {
+        "cutoff" : 0.1,
+        "denialsCaught" : 51,
+        "habitualPurchasesFlagged" : 51
+      }, {
+        "cutoff" : 0.05,
+        "denialsCaught" : 51,
+        "habitualPurchasesFlagged" : 51
+      } ],
+      "sweepNote" : "Varredura só para mostrar o custo. Nenhum corte foi adotado."
+    },
+    "engine" : {
+      "beforeAnswers" : {
+        "APPROVE" : 51
+      },
+      "scoreBeforeMin" : 6,
+      "scoreBeforeMax" : 6,
+      "afterDeclaredDenial" : {
+        "APPROVE_WITH_ALERT" : 51
+      },
+      "scoreAfterMin" : 0,
+      "scoreAfterMax" : 0,
+      "ruleAfterDenial" : {
+        "S-R8" : 51
+      },
+      "habitualAfterSameAnswers" : {
+        "APPROVE_WITH_ALERT" : 51
+      }
+    },
+    "irreducible" : "Com as respostas declaradas iguais e os sinais da operação iguais, não há função que marque a fraude e deixe a compra habitual intacta."
+  },
+  "confirmation" : {
+    "name" : "confirmacao-12011",
+    "examples" : 400,
+    "frauds" : 184,
+    "denials" : 72,
+    "habitualLegit" : 59,
+    "denialsWithSameDeclaredAnswers" : 72,
+    "denialsWithSameContextFeatures" : 72,
+    "denialsWithSameOperationBits" : 72,
+    "denialsInsideHabitualContinuousRange" : 70,
+    "medianDistanceDenialToHabitual" : 0.016,
+    "medianDistanceAmongHabitual" : 0.0182,
+    "separableWithoutFalsePositives" : false,
+    "absentOnEveryDenial" : [ "script de orientação observado", "incidente de destino", "incidente de vendedor", "dispositivo novo", "destino de terceiro", "resposta que admite ajuda" ],
+    "presentOnEveryDenial" : [ "origem declarada própria", "respostas: própria, sem contato, endereço meu, sem orientação", "compra habitual", "horário diurno" ],
+    "publishedModel" : {
+      "falseNegatives" : 72,
+      "falseNegativeStories" : {
+        "fraude-que-nega" : 72
+      },
+      "denialProbability" : {
+        "min" : 0.3262,
+        "median" : 0.361,
+        "max" : 0.4054
+      },
+      "habitualProbability" : {
+        "min" : 0.3263,
+        "median" : 0.3734,
+        "max" : 0.4067
+      },
+      "thresholdSweep" : [ {
+        "cutoff" : 0.5,
+        "denialsCaught" : 0,
+        "habitualPurchasesFlagged" : 0
+      }, {
+        "cutoff" : 0.45,
+        "denialsCaught" : 0,
+        "habitualPurchasesFlagged" : 0
+      }, {
+        "cutoff" : 0.4,
+        "denialsCaught" : 5,
+        "habitualPurchasesFlagged" : 8
+      }, {
+        "cutoff" : 0.35,
+        "denialsCaught" : 44,
+        "habitualPurchasesFlagged" : 48
+      }, {
+        "cutoff" : 0.3,
+        "denialsCaught" : 72,
+        "habitualPurchasesFlagged" : 59
+      }, {
+        "cutoff" : 0.25,
+        "denialsCaught" : 72,
+        "habitualPurchasesFlagged" : 59
+      }, {
+        "cutoff" : 0.2,
+        "denialsCaught" : 72,
+        "habitualPurchasesFlagged" : 59
+      }, {
+        "cutoff" : 0.15,
+        "denialsCaught" : 72,
+        "habitualPurchasesFlagged" : 59
+      }, {
+        "cutoff" : 0.1,
+        "denialsCaught" : 72,
+        "habitualPurchasesFlagged" : 59
+      }, {
+        "cutoff" : 0.05,
+        "denialsCaught" : 72,
+        "habitualPurchasesFlagged" : 59
+      } ],
+      "sweepNote" : "Varredura só para mostrar o custo. Nenhum corte foi adotado."
+    },
+    "engine" : {
+      "beforeAnswers" : {
+        "APPROVE" : 72
+      },
+      "scoreBeforeMin" : 6,
+      "scoreBeforeMax" : 6,
+      "afterDeclaredDenial" : {
+        "APPROVE_WITH_ALERT" : 72
+      },
+      "scoreAfterMin" : 0,
+      "scoreAfterMax" : 0,
+      "ruleAfterDenial" : {
+        "S-R8" : 72
+      },
+      "habitualAfterSameAnswers" : {
+        "APPROVE_WITH_ALERT" : 59
+      }
+    },
+    "irreducible" : "Com as respostas declaradas iguais e os sinais da operação iguais, não há função que marque a fraude e deixe a compra habitual intacta."
+  },
+  "decision" : "Nenhum modelo novo foi gravado. O corte 0,5 permanece. Fraude que nega ajuda usa as mesmas respostas e o mesmo tipo de compra habitual."
+}

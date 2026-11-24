@@ -60,7 +60,8 @@ public class Views {
 
     public record OpsTx(TxSummary summary, List<Item> items, Map<String, Object> address, Map<String, Object> device,
                         Map<String, Object> customer, String merchant, String coachScript, List<JsonNode> assessments,
-                        Map<String, String> answers, String verificationState, List<StatusChange> statusLog, List<Incident> incidents,
+                        Map<String, String> answers, String verificationState, String verificationReason,
+                        List<StatusChange> statusLog, List<Incident> incidents,
                         List<Map<String, Object>> shadow) {}
 
     private JsonNode parse(String json) {
@@ -144,6 +145,7 @@ public class Views {
         }).toList();
         Verification found = verifications.findById(t.getId()).orElse(null);
         String verificationState = found == null || found.getState() == null ? "NOT_REQUIRED" : found.getState();
+        String verificationReason = found == null ? null : found.getReason();
         Map<String, String> answers = null;
         if (found != null && found.getAnswers() != null && !found.getAnswers().isBlank()) {
             try {
@@ -175,7 +177,7 @@ public class Views {
         }).orElse(Map.of());
         String merchant = merchants.findById(t.getMerchantId()).map(Merchant::getName).orElse("");
         return new OpsTx(summary(t), items(t.getId()), address(t.getAddressId()), device, customer, merchant, t.getCoachScript(),
-                list, answers, verificationState, statusLog.findByTxIdOrderByIdAsc(t.getId()), incidents.findByTxId(t.getId()),
+                list, answers, verificationState, verificationReason, statusLog.findByTxIdOrderByIdAsc(t.getId()), incidents.findByTxId(t.getId()),
                 learning.rows(t.getId()));
     }
 

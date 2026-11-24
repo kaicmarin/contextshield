@@ -42,7 +42,7 @@ public class MetricsService {
 
     /** Histórico completo. */
     public Map<String, Object> overview() {
-        return overview(null, null);
+        return overview(null, null, 1L);
     }
 
     /**
@@ -52,13 +52,17 @@ public class MetricsService {
      * (LOW, MEDIUM, HIGH, CRITICAL). Relatos não têm banda: entram só pelo intervalo de criação.
      */
     public Map<String, Object> overview(Integer days, String band) {
+        return overview(days, band, 1L);
+    }
+
+    public Map<String, Object> overview(Integer days, String band, long organizationId) {
         LocalDateTime to = LocalDateTime.now(ZONE).withNano(0);
         LocalDateTime from = null;
         if (days != null && days > 0) from = to.toLocalDate().minusDays(days - 1L).atStartOfDay();
         String risk = band == null || band.isBlank() ? null : band;
 
         List<Object> txArgs = new ArrayList<>();
-        String txWhere = txWhere(from, risk, txArgs);
+        String txWhere = txWhere(from, risk, organizationId, txArgs);
 
         Map<String, Object> out = new LinkedHashMap<>();
         Map<String, Long> byStatus = new LinkedHashMap<>();
@@ -102,20 +106,36 @@ public class MetricsService {
         out.put("safetyAdjusted", Math.round(score[1]));
 
         List<Object> incArgs = new ArrayList<>();
-        String incWhere = from == null ? "" : " where created_at >= ? ";
-        if (from != null) incArgs.add(Timestamp.valueOf(from));
+        StringBuilder incWhere = new StringBuilder(" where coalesce(organization_id, 1) = ? ");
+        incArgs.add(organizationId);
+        if (from != null) {
+            incWhere.append(" and created_at >= ? ");
+            incArgs.add(Timestamp.valueOf(from));
+        }
         Map<String, Long> incidents = new LinkedHashMap<>();
         jdbc.query("select status, count(*) from incident " + incWhere + " group by status", incArgs.toArray(), rs -> {
             incidents.put(rs.getString(1), rs.getLong(2));
         });
         out.put("incidentsByStatus", incidents);
+        List<Object> entityArgs = new ArrayList<>();
+        StringBuilder entityWhere = new StringBuilder(" where coalesce(i.organization_id, 1) = ? ");
+        entityArgs.add(organizationId);
+        if (from != null) {
+            entityWhere.append(" and i.created_at >= ? ");
+            entityArgs.add(Timestamp.valueOf(from));
+        }
         out.put("entities", jdbc.queryForObject("""
                 select count(distinct m.entity_id) from intel_mention m
                 join incident i on i.id = m.incident_id
-                """ + (from == null ? "" : " where i.created_at >= ? "), Long.class, incArgs.toArray()));
+                """ + entityWhere, Long.class, entityArgs.toArray()));
 
         List<Object> latArgs = new ArrayList<>();
-        StringBuilder latWhere = new StringBuilder(" where 1=1 ");
+        StringBuilder latWhere = new StringBuilder("""
+                 where exists (
+                   select 1 from transactions t
+                   where t.id = assessment.tx_id and coalesce(t.organization_id, 1) = ?)
+                """);
+        latArgs.add(organizationId);
         if (from != null) {
             latWhere.append(" and created_at >= ? ");
             latArgs.add(Timestamp.valueOf(from));
@@ -171,9 +191,10 @@ public class MetricsService {
         Long previousProtected = null;
         if (from != null && days != null && days > 0) {
             List<Object> prevArgs = new ArrayList<>();
+            prevArgs.add(organizationId);
             prevArgs.add(Timestamp.valueOf(from.minusDays(days)));
             prevArgs.add(Timestamp.valueOf(from));
-            StringBuilder prev = new StringBuilder(" where t.created_at >= ? and t.created_at < ? ");
+            StringBuilder prev = new StringBuilder(" where coalesce(t.organization_id, 1) = ? and t.created_at >= ? and t.created_at < ? ");
             if (risk != null) {
                 prev.append("""
                          and exists (
@@ -197,12 +218,47 @@ public class MetricsService {
         window.put("to", to);
         window.put("zone", ZONE.getId());
         window.put("bandAppliesToIncidents", false);
+        window.put("organizationId", organizationId);
+        window.put("scope", "organization");
         out.put("window", window);
         return out;
     }
 
-    private static String txWhere(LocalDateTime from, String band, List<Object> args) {
-        StringBuilder sql = new StringBuilder(" where 1=1 ");
+    /** Verificações da organização. Expira pedidos vencidos sem aprovar a compra. */
+    public Map<String, Object> verificationSummary(long organizationId) {
+        jdbc.update("""
+                update verification set state = 'EXPIRED'
+                where state = 'REQUESTED' and expires_at is not null and expires_at < ?
+                  and exists (
+                    select 1 from transactions t
+                    where t.id = verification.tx_id and coalesce(t.organization_id, 1) = ?)
+                """, Timestamp.valueOf(LocalDateTime.now().withNano(0)), organizationId);
+        Map<String, Long> byState = new LinkedHashMap<>();
+        jdbc.query("""
+                select v.state, count(*) from verification v
+                join transactions t on t.id = v.tx_id
+                where coalesce(t.organization_id, 1) = ?
+                group by v.state
+                """, (RowCallbackHandler) rs -> byState.put(rs.getString(1), rs.getLong(2)), organizationId);
+        long total = byState.values().stream().mapToLong(Long::longValue).sum();
+        long expired = byState.getOrDefault("EXPIRED", 0L);
+        Long transactions = jdbc.queryForObject(
+                "select count(*) from transactions where coalesce(organization_id, 1) = ?", Long.class, organizationId);
+        long purchases = transactions == null ? 0 : transactions;
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("byState", byState);
+        out.put("total", total);
+        out.put("expired", expired);
+        out.put("transactions", purchases);
+        out.put("verificationRate", purchases == 0 ? null : Math.round(total * 1000.0 / purchases) / 1000.0);
+        out.put("abandonmentRate", total == 0 ? null : Math.round(expired * 1000.0 / total) / 1000.0);
+        out.put("note", "A taxa de verificação divide as verificações abertas pelas compras da organização. O abandono divide as verificações expiradas pelas verificações. Sem denominador, a taxa fica ausente. Expirar não aprova a compra.");
+        return out;
+    }
+
+    private static String txWhere(LocalDateTime from, String band, long organizationId, List<Object> args) {
+        StringBuilder sql = new StringBuilder(" where coalesce(t.organization_id, 1) = ? ");
+        args.add(organizationId);
         if (from != null) {
             sql.append(" and t.created_at >= ? ");
             args.add(Timestamp.valueOf(from));

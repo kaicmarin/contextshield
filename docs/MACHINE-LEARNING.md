@@ -252,7 +252,8 @@ Por isso:
 
 - analista cria rascunho e envia; não publica;
 - administrador aprova e publica política;
-- administrador aprova modelo, e só se a validação passou;
+- administrador aprova modelo de operação só se a validação passou;
+- administrador pode aprovar um modelo contextual com validação `RECORDED` exclusivamente para sombra; a meta de aceite não é declarada como cumprida e o modelo de operação aprovado permanece;
 - restaurar uma política antiga também é ato de administrador e gera versão nova;
 - pesos com piso de segurança (destino em incidente, verificação pedida, eco de roteiro) não podem ser zerados;
 - o limiar de bloqueio não pode passar de 80 para um número mais frouxo.
@@ -284,4 +285,18 @@ No conjunto reservado, só com a operação, a logística teve F1 0,5682 (56 fal
 
 No mesmo conjunto, a política padrão liberou as 158 fraudes, porque a compra habitual não pede verificação. Quando as respostas foram aplicadas só na comparação, 107 fraudes foram retidas e 51 continuaram liberadas. A flag que pede verificação nesse caso nasce desligada, para a política padrão não mudar.
 
-Os arquivos são `models/logistic-context.ser`, `models/random-forest-context.ser` e `reports/context-study.json`. O relatório da semente 42 não foi substituído. Os modelos contextuais entram no laboratório como treinados e registrados, sem aprovação para sombra. A decisão da compra continua no motor.
+Os arquivos são `models/logistic-context.ser`, `models/random-forest-context.ser` e `reports/context-study.json`. O relatório da semente 42 não foi substituído. Os dois arquivos contextuais foram relidos. O conjunto reservado não foi usado para escolher modelo.
+
+Um administrador pode aprovar o modelo contextual só para sombra. A validação continua `RECORDED`, `decisionAuthorized` fica falso e o modelo de operação aprovado não é substituído. Na compra `TX-2026-000205`, a sombra inicial estimou `LEGIT` enquanto o motor pedia verificação. Depois das respostas, a logística de operação continuou em `LEGIT` e a logística contextual estimou `FRAUD`. O motor decidiu `INTERVENE` pela regra R2. Nenhuma previsão alterou a compra. Os 51 falsos negativos do conjunto reservado, o roteiro `fraude-que-nega`, continuam sem métrica melhor: não houve dado novo para retreinar.
+
+## 18. Diagnóstico dos 51 falsos negativos, 24/11/2026
+
+O relatório `reports/false-negative-diagnosis.json` releu `logistic-context.ser` e o conjunto da semente 9901. Não houve treino, corte novo nem gravação de modelo. As 400 operações e as 158 fraudes batem com `context-study.json`. Os 51 erros são as 51 operações do roteiro `fraude-que-nega`.
+
+As 51 têm as mesmas quatro respostas de uma compra habitual lícita: origem própria, sem contato, endereço meu, sem orientação. Os 16 bits da operação também coincidem com alguma compra habitual do mesmo conjunto. A distância mediana até a compra habitual mais próxima é 0,0166; a distância mediana entre as próprias compras habituais é 0,0180. A probabilidade de fraude fica em 0,328–0,408 nas negações e em 0,327–0,405 nas compras habituais.
+
+Um corte de 0,40 marcaria 9 negações e 6 compras habituais. Um corte de 0,30 marcaria as 51 dos dois lados. Nenhum corte foi adotado. A semente 12011, com 400 operações e 72 negações, foi lida uma vez e não entrou em ajuste: as 72 também coincidem com compras habituais, e o corte 0,40 marcaria 5 negações e 8 compras habituais.
+
+Antes das respostas, o motor aprova as 51 com score 6. Depois da negativa, o score vai a 0 e a regra vira S-R8, alerta por fragilidade. As 51 compras habituais com as mesmas respostas também ficam em alerta. O alerta não separa as classes.
+
+Falta, em todos esses casos, um registro observado: texto da mensagem, incidente de destino ou de vendedor, aparelho novo, destino de terceiro, ou uma resposta que admita ajuda. Sem um desses registros, a negativa e a compra habitual são a mesma observação.

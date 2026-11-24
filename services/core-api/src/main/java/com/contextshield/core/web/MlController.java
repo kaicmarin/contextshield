@@ -1,6 +1,7 @@
 package com.contextshield.core.web;
 
 import com.contextshield.core.service.MlLabService;
+import com.contextshield.core.service.OrganizationService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -11,24 +12,26 @@ import java.util.Map;
 public class MlController {
 
     private final MlLabService lab;
+    private final OrganizationService organizations;
 
-    public MlController(MlLabService lab) {
+    public MlController(MlLabService lab, OrganizationService organizations) {
         this.lab = lab;
+        this.organizations = organizations;
     }
 
     @GetMapping
     public Map<String, Object> overview() {
-        return lab.overview();
+        return lab.overview(organizations.idOf(Auth.user()));
     }
 
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
-        return lab.monitor();
+        return lab.monitor(organizations.idOf(Auth.user()));
     }
 
     @GetMapping("/experiments/{id}")
     public Map<String, Object> experiment(@PathVariable long id) {
-        return lab.experiment(id);
+        return lab.experiment(id, organizations.idOf(Auth.user()));
     }
 
     public record ExperimentRequest(int examples, long seed) {}

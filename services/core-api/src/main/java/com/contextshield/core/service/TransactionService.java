@@ -171,7 +171,8 @@ public class TransactionService {
         transition(tx, to, r.getRuleText(), "Motor de risco", at);
         audit.log("risk-engine", "DECISION", tx.getId(), r.getDecision() + " · score " + r.getScore() + " · " + r.getRuleId(), at);
         intel.recordAttempt(tx);
-        learning.shadow(tx.getId(), input, r.getDecision(), stage);
+        long organizationId = tx.getOrganizationId() == null ? 1L : tx.getOrganizationId();
+        learning.shadow(tx.getId(), input, r.getDecision(), stage, organizationId);
         if ("REQUEST_CONTEXT".equals(r.getDecision())) openVerification(tx.getId(), r.getRuleText(), at);
         return tx;
     }
@@ -231,7 +232,22 @@ public class TransactionService {
         verifications.save(v);
         audit.log(user.email(), "VERIFICATION_ANSWERED", tx.getId(), (complete ? "completa" : "incompleta"), at);
         Transaction done = evaluate(tx, "recalculated", clean, at);
-        v.setState(complete ? "COMPLETED" : "INCONCLUSIVE");
+        boolean declaredDenial = complete && "self".equals(clean.get("origin")) && "no".equals(clean.get("contact"))
+                && "mine".equals(clean.get("address")) && "no".equals(clean.get("coached"));
+        boolean independent = tx.getCoachScript() != null && !tx.getCoachScript().isBlank();
+        if (!complete) {
+            v.setState("INCONCLUSIVE");
+            v.setReason("Faltam respostas. A ausência de resposta não libera a compra.");
+        } else if (declaredDenial && !independent) {
+            v.setState("INCONCLUSIVE");
+            v.setReason("A negativa foi declarada pelo cliente. Não há roteiro, relato ou outro registro independente que a confirme. A resposta não prova legitimidade.");
+        } else if (declaredDenial) {
+            v.setState("COMPLETED");
+            v.setReason("Há um texto associado à compra. A negativa foi comparada a esse texto e continua sendo uma declaração.");
+        } else {
+            v.setState("COMPLETED");
+            v.setReason("O questionário foi respondido. As respostas são declaradas e o motor reavaliou a compra.");
+        }
         verifications.save(v);
         return done;
     }

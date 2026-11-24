@@ -5,8 +5,10 @@ import com.contextshield.core.repo.*;
 import com.contextshield.core.web.ApiException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -28,11 +30,12 @@ public class EngineInputBuilder {
     private final EngineSettings settings;
     private final RiskPolicyService policies;
     private final ObjectMapper mapper;
+    private final JdbcTemplate jdbc;
 
     public EngineInputBuilder(CustomerRepository customers, DeviceRepository devices, AddressRepository addresses,
                               MerchantRepository merchants, SellerRepository sellers, TransactionItemRepository items,
                               TransactionRepository transactions, IntelligenceService intel, EngineSettings settings,
-                              RiskPolicyService policies, ObjectMapper mapper) {
+                              RiskPolicyService policies, ObjectMapper mapper, JdbcTemplate jdbc) {
         this.customers = customers;
         this.devices = devices;
         this.addresses = addresses;
@@ -44,6 +47,7 @@ public class EngineInputBuilder {
         this.settings = settings;
         this.policies = policies;
         this.mapper = mapper;
+        this.jdbc = jdbc;
     }
 
     private static Map<String, Object> address(Address a) {
@@ -97,12 +101,39 @@ public class EngineInputBuilder {
         in.put("answers", answers);
         in.put("coachScript", tx.getCoachScript());
         in.put("relations", intel.relationsFor(tx, at));
+        long organizationId = tx.getOrganizationId() == null ? 1L : tx.getOrganizationId();
         Map<String, Object> config = new LinkedHashMap<>(settings.config());
-        config.put("weights", policies.activeWeights());
+        config.put("weights", policies.activeWeights(policies.activeProfile(), organizationId));
+        String probes = settings.text("context-probes");
+        if (probes != null && !probes.isBlank()) {
+            config.put("contextProbes", Arrays.stream(probes.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
+        }
+        capContextProbe(config, tx.getCustomerId());
         in.put("config", config);
         in.put("unavailable", tx.getUnavailable() == null || tx.getUnavailable().isBlank()
                 ? List.of() : Arrays.asList(tx.getUnavailable().split(",")));
         return in;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void capContextProbe(Map<String, Object> config, String customerId) {
+        Object raw = config.get("flags");
+        if (!(raw instanceof Map<?, ?> flags) || !Boolean.TRUE.equals(flags.get("context-when-unknown"))) return;
+        int max = Math.max(0, settings.number("context-probe-max", 1));
+        int hours = Math.max(1, settings.number("context-probe-hours", 24));
+        Integer recent = jdbc.queryForObject("""
+                select count(*) from verification v
+                join transactions t on t.id = v.tx_id
+                where t.customer_id = ? and v.requested_at is not null and v.requested_at >= ?
+                """, Integer.class, customerId, Timestamp.valueOf(LocalDateTime.now().minusHours(hours)));
+        int seen = recent == null ? 0 : recent;
+        if (seen < max) return;
+        Map<String, Object> copy = new LinkedHashMap<>();
+        flags.forEach((key, value) -> copy.put(String.valueOf(key), value));
+        copy.put("context-when-unknown", false);
+        config.put("flags", copy);
+        config.put("contextProbeSuppressed", true);
+        config.put("contextProbeRecent", seen);
     }
 
     public Map<String, String> readAnswers(String json) {

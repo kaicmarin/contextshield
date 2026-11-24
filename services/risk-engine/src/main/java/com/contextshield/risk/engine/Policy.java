@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Passos 2 e 3 do motor: soma os sinais (score + confiança) e aplica as regras R1 a R11. */
+/** Passos 2 e 3 do motor: soma os sinais (score + confiança) e aplica as regras R1 a R12. R12 fica desligada por padrão. */
 public final class Policy {
     private Policy() {}
 
@@ -98,15 +98,28 @@ public final class Policy {
         if (!recalculated && config.flag("context-on-declared-guidance") && (s.has("ORIGIN_LINK") || s.has("ORIGIN_GUIDED")))
             return outcome("R6", "REQUEST_CONTEXT", "cliente declarou que a compra começou por link ou indicação");
         if ("MEDIUM".equals(s.band())) return outcome("R7", "APPROVE_WITH_ALERT", "score " + s.score());
-        if (!recalculated && config.flag("context-when-unknown") && "LOW".equals(s.band()) && contextUnknown(s))
+        if (!recalculated && config.flag("context-when-unknown") && "LOW".equals(s.band()) && contextUnknown(s) && probePresent(s, config))
             return outcome("R12", "REQUEST_CONTEXT",
-                    "a compra parece habitual, mas não há informação confirmada sobre contato de terceiro; a política pediu verificação");
+                    "há um sinal de atenção já calculado e não há confirmação sobre contato de terceiro; a verificação seletiva foi pedida");
         return outcome("R8", "APPROVE", "score " + s.score());
     }
+
+    /** Sinais que já existem. A ausência de contato, sozinha, não entra nesta lista. */
+    static final java.util.Set<String> DEFAULT_PROBES = java.util.Set.of(
+            "UNUSUAL_HOUR", "NEW_DEVICE", "AMOUNT_ABOVE_HABIT", "HISTORY_SPARSE", "ORIGIN_AD",
+            "NEW_DESTINATION_OWN", "NEW_DESTINATION_THIRD", "SESSION_ANOMALY", "PICKUP_POINT",
+            "RECENT_SELLER", "SELLER_HIGH_CLAIMS");
 
     /** Não há link, indicação nem relato. A declaração "por conta própria" não confirma a ausência de contato. */
     private static boolean contextUnknown(Scored s) {
         return !s.has("ORIGIN_LINK") && !s.has("ORIGIN_GUIDED")
                 && !s.has("DESTINATION_IN_INCIDENT") && !s.has("SELLER_IN_INCIDENT");
+    }
+
+    private static boolean probePresent(Scored s, EngineConfig config) {
+        java.util.List<String> requested = config.contextProbes();
+        java.util.Set<String> probes = requested == null || requested.isEmpty() ? DEFAULT_PROBES : new java.util.HashSet<>(requested);
+        if (probes.contains("NONE")) return false;
+        return probes.stream().anyMatch(s::has);
     }
 }

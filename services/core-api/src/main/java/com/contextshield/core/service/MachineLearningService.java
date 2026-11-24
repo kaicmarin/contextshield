@@ -34,19 +34,23 @@ public class MachineLearningService {
     }
 
     public Map<String, Object> shadow(String txId, Map<String, Object> checkout, String engineDecision) {
-        return shadow(txId, checkout, engineDecision, "initial");
+        return shadow(txId, checkout, engineDecision, "initial", 1L);
     }
 
     public Map<String, Object> shadow(String txId, Map<String, Object> checkout, String engineDecision, String stage) {
-        Map<String, Object> first = predict(txId, checkout, engineDecision, stage, "operation", false);
+        return shadow(txId, checkout, engineDecision, stage, 1L);
+    }
+
+    public Map<String, Object> shadow(String txId, Map<String, Object> checkout, String engineDecision, String stage, long organizationId) {
+        Map<String, Object> first = predict(txId, checkout, engineDecision, stage, "operation", false, organizationId);
         if ("recalculated".equals(stage) && checkout.get("answers") instanceof Map<?, ?> answers && !answers.isEmpty()) {
-            predict(txId, checkout, engineDecision, stage, "context", true);
+            predict(txId, checkout, engineDecision, stage, "context", true, organizationId);
         }
         return first;
     }
 
     private Map<String, Object> predict(String txId, Map<String, Object> checkout, String engineDecision, String stage,
-                                        String featureSet, boolean contextual) {
+                                        String featureSet, boolean contextual, long organizationId) {
         Map<String, Object> quiet = new java.util.LinkedHashMap<>();
         quiet.put("mode", "shadow");
         quiet.put("stage", stage);
@@ -55,7 +59,7 @@ public class MachineLearningService {
         quiet.put("affectsDecision", false);
         long usedId = -1;
         try {
-            SavedModel current = approved(featureSet);
+            SavedModel current = approved(featureSet, organizationId);
             if (current == null) return quiet;
             usedId = "context".equals(featureSet) ? contextModelId : modelId;
             long started = System.nanoTime();
@@ -64,10 +68,10 @@ public class MachineLearningService {
                     : Features.vector(checkout));
             double ms = (System.nanoTime() - started) / 1_000_000.0;
             jdbc.update("""
-                    insert into ml_shadow (tx_id, model_id, algorithm, prediction, probability, engine_decision, latency_ms, at, stage)
-                    values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    insert into ml_shadow (tx_id, model_id, algorithm, prediction, probability, engine_decision, latency_ms, at, stage, organization_id)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, txId, usedId, prediction.algorithm(), prediction.label(), prediction.fraudProbability(),
-                    engineDecision, ms, Timestamp.valueOf(LocalDateTime.now().withNano(0)), stage);
+                    engineDecision, ms, Timestamp.valueOf(LocalDateTime.now().withNano(0)), stage, organizationId);
             Map<String, Object> out = new java.util.LinkedHashMap<>();
             out.put("mode", "shadow");
             out.put("stage", stage);
@@ -79,13 +83,14 @@ public class MachineLearningService {
             out.put("prediction", prediction.label());
             out.put("probability", prediction.fraudProbability());
             out.put("latencyMs", Math.round(ms * 1000.0) / 1000.0);
+            out.put("explanation", explain(stage, prediction.label(), engineDecision));
             return out;
         } catch (Exception e) {
             log.warn("ML em modo sombra falhou; a decisão do motor permanece: {}", e.toString());
             try {
-                jdbc.update("insert into ml_shadow (tx_id, model_id, engine_decision, at, error, stage) values (?, ?, ?, ?, ?, ?)",
+                jdbc.update("insert into ml_shadow (tx_id, model_id, engine_decision, at, error, stage, organization_id) values (?, ?, ?, ?, ?, ?, ?)",
                         txId, usedId > 0 ? usedId : null, engineDecision, Timestamp.valueOf(LocalDateTime.now().withNano(0)),
-                        trim(e.getMessage()), stage);
+                        trim(e.getMessage()), stage, organizationId);
             } catch (Exception ignored) {
                 log.warn("Não foi possível registrar a falha do modo sombra.");
             }
@@ -96,32 +101,50 @@ public class MachineLearningService {
 
     public List<Map<String, Object>> rows(String txId) {
         return jdbc.query("""
-                select model_id, algorithm, prediction, probability, engine_decision, latency_ms, error, at, stage
-                from ml_shadow where tx_id = ? order by id
+                select s.model_id, s.algorithm, s.prediction, s.probability, s.engine_decision, s.latency_ms, s.error, s.at, s.stage,
+                       m.library_version, m.feature_set
+                from ml_shadow s
+                left join ml_model m on m.id = s.model_id
+                where s.tx_id = ? order by s.id
                 """, (rs, n) -> {
             Map<String, Object> row = new java.util.LinkedHashMap<>();
+            String stage = rs.getString("stage");
+            String prediction = rs.getString("prediction");
+            String decision = rs.getString("engine_decision");
             row.put("modelId", rs.getObject("model_id"));
-            row.put("stage", rs.getString("stage"));
+            row.put("stage", stage);
             row.put("algorithm", rs.getString("algorithm"));
-            row.put("prediction", rs.getString("prediction"));
+            row.put("featureSet", rs.getString("feature_set"));
+            row.put("libraryVersion", rs.getString("library_version"));
+            row.put("prediction", prediction);
             row.put("probability", rs.getObject("probability"));
-            row.put("engineDecision", rs.getString("engine_decision"));
+            row.put("engineDecision", decision);
             row.put("latencyMs", rs.getObject("latency_ms"));
             row.put("error", rs.getString("error"));
             row.put("affectsDecision", false);
+            row.put("explanation", rs.getString("error") == null ? explain(stage, prediction, decision) : "A falha ficou registrada. A decisão continua sendo a do motor.");
             row.put("at", rs.getTimestamp("at").toLocalDateTime());
             return row;
         }, txId);
     }
 
-    private SavedModel approved(String featureSet) throws Exception {
+    private static String explain(String stage, String prediction, String decision) {
+        String when = "recalculated".equals(stage) ? "Depois das respostas declaradas" : "No checkout, antes das respostas";
+        return when + ", o modelo estimou " + prediction + ". O motor decidiu " + decision + ". A estimativa fica ao lado dessa decisão.";
+    }
+
+    private SavedModel approved(String featureSet, long organizationId) throws Exception {
         List<String> paths = new ArrayList<>();
         List<Long> ids = new ArrayList<>();
-        jdbc.query("select id, path from ml_model where status = 'APPROVED' and coalesce(feature_set, 'operation') = ? order by id desc",
+        jdbc.query("""
+                select id, path from ml_model
+                where status = 'APPROVED' and coalesce(feature_set, 'operation') = ? and coalesce(organization_id, 1) = ?
+                order by id desc
+                """,
                 rs -> {
                     ids.add(rs.getLong("id"));
                     paths.add(rs.getString("path"));
-                }, featureSet);
+                }, featureSet, organizationId);
         if (ids.isEmpty()) return null;
         long id = ids.get(0);
         String path = paths.get(0);

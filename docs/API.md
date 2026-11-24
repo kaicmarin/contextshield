@@ -50,7 +50,9 @@ A documentação interativa (OpenAPI 3 / Swagger) é gerada a partir do código 
 | GET | `/api/ops/intelligence` · `/{id}` | Entidades de inteligência |
 | PATCH | `/api/ops/intelligence/{id}` | Revisão do analista: `{ "status", "confidence" }`. `status` é `UNVERIFIED`, `INVESTIGATING`, `CONFIRMED` ou `DISCARDED`. Auditoria `INTEL_REVIEWED` |
 | GET · PUT | `/api/ops/engine/config` | Liga e desliga comportamentos e fontes já previstos pelo motor. Os pesos ficam na política, não neste endpoint. Cada alteração válida é auditada como `ENGINE_SETTING` |
-| GET | `/api/ops/policies` · `/catalog` · `/{id}` · `/compare?left=&right=` | Políticas de risco. O catálogo traz sinal, peso efetivo, faixa e piso de segurança. A compra usa a versão `PUBLISHED` do perfil `fintech` |
+| GET | `/api/ops/engine/context-probe` | Simula a verificação seletiva nas últimas compras aprovadas da organização. Não grava decisão |
+| GET | `/api/ops/verifications` | Conta verificações por estado, taxa de verificação e abandono. Expira pedidos vencidos sem aprovar a compra |
+| GET | `/api/ops/policies` · `/catalog` · `/{id}` · `/compare?left=&right=` | Políticas da organização autenticada. Outra organização recebe 404. A compra usa a versão `PUBLISHED` do perfil configurado e da organização da transação |
 | POST · PUT | `/api/ops/policies` · `/{id}` | Cria e edita rascunho (`DRAFT` ou `REJECTED`). Peso fora da faixa é recusado |
 | POST | `/api/ops/policies/{id}/submit` | Envia o rascunho para aprovação (`PENDING`) |
 | POST | `/api/ops/policies/{id}/simulate` | Corpo `{ "txId" }`. Recalcula com os pesos da versão e não grava a compra |
@@ -72,7 +74,7 @@ A documentação interativa (OpenAPI 3 / Swagger) é gerada a partir do código 
 | GET · POST | `/api/admin/users` | Lista e cria usuários |
 | GET · PUT · DELETE | `/api/admin/users/{id}` | Lê, edita (nome, papel, ativo, senha) e exclui |
 | POST | `/api/admin/policies/{id}/approve` · `/reject` · `/publish` · `/rollback` | Aprova, rejeita, publica ou restaura política. Analista recebe 403 |
-| POST | `/api/admin/ml/models/{id}/approve` · `/reject` | Aprova só modelo com validação `PASS`. Rejeita um modelo que não esteja aprovado |
+| POST | `/api/admin/ml/models/{id}/approve` · `/reject` | Aprova modelo de operação só com validação `PASS`. Um modelo contextual com validação `RECORDED` pode ser aprovado só para sombra: `decisionAuthorized` fica falso e a meta de aceite não é marcada como cumprida. A aprovação não substitui o modelo aprovado de outro conjunto de atributos |
 | POST | `/api/admin/ml/suggestions/{id}/draft` | Copia a sugestão de pesos para um rascunho fintech. Não publica |
 | POST | `/api/admin/outcomes` | Corpo `{ "txId", "label" }`. `label` é `FRAUD`, `LEGIT` ou `INCONCLUSIVE`. Fica revisado e verificado. A decisão do motor não vira rótulo. Entra em treinos futuros, não treina na hora |
 | POST | `/api/admin/outcomes/reports` | Mesmo corpo. Fica pendente, como denúncia. Não entra no treino |

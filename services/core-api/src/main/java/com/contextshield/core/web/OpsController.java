@@ -47,12 +47,13 @@ public class OpsController {
     private final OrganizationService organizations;
 
     private final QueueService queue;
+    private final PolicySimulation simulation;
 
     public OpsController(TransactionRepository txs, TransactionService txService, IncidentRepository incidents,
                          IncidentService incidentService, IntelligenceService intel, AuditEntryRepository auditRepo,
                          AuditService audit, EngineSettings settings, MetricsService metrics, CustomerRepository customers,
                          AlertService alerts, SeedService seed, ReferenceData ref, DeviceRepository devices, Views views,
-                         OrganizationService organizations, QueueService queue) {
+                         OrganizationService organizations, QueueService queue, PolicySimulation simulation) {
         this.txs = txs;
         this.txService = txService;
         this.incidents = incidents;
@@ -70,6 +71,17 @@ public class OpsController {
         this.views = views;
         this.organizations = organizations;
         this.queue = queue;
+        this.simulation = simulation;
+    }
+
+    @GetMapping("/verifications")
+    public Map<String, Object> verifications() {
+        return metrics.verificationSummary(organizations.idOf(Auth.user()));
+    }
+
+    @GetMapping("/engine/context-probe")
+    public Map<String, Object> contextProbe() {
+        return simulation.contextProbeImpact(Auth.user());
     }
 
     @GetMapping("/overview")
@@ -79,7 +91,7 @@ public class OpsController {
             throw ApiException.badRequest("O período precisa estar entre 0 e " + MetricsService.MAX_DAYS + " dias");
         if (band != null && !band.isBlank() && !Set.of("LOW", "MEDIUM", "HIGH", "CRITICAL").contains(band))
             throw ApiException.badRequest("Nível de risco desconhecido");
-        Map<String, Object> m = new LinkedHashMap<>(metrics.overview(days, band));
+        Map<String, Object> m = new LinkedHashMap<>(metrics.overview(days, band, organizations.idOf(Auth.user())));
         m.put("seed", seed.state());
         return m;
     }
@@ -250,13 +262,14 @@ public class OpsController {
                                      @RequestParam(defaultValue = "50") int size,
                                      @RequestParam(required = false) String action,
                                      @RequestParam(required = false) String q) {
-        var result = auditRepo.search(blankToNull(action), like(q), auditPage(page, size));
+        long organizationId = organizations.idOf(Auth.user());
+        var result = auditRepo.search(organizationId, blankToNull(action), like(q), auditPage(page, size));
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("page", result.getNumber());
         out.put("size", result.getSize());
         out.put("total", result.getTotalElements());
         out.put("pages", result.getTotalPages());
-        out.put("actions", auditRepo.actions());
+        out.put("actions", auditRepo.actions(organizationId));
         out.put("items", result.getContent());
         return out;
     }
@@ -265,7 +278,7 @@ public class OpsController {
     @GetMapping(value = "/audit/export", produces = "text/csv")
     public ResponseEntity<String> exportAudit(@RequestParam(required = false) String action,
                                               @RequestParam(required = false) String q) {
-        var page = auditRepo.search(blankToNull(action), like(q), auditPage(0, 5000, 5000));
+        var page = auditRepo.search(organizations.idOf(Auth.user()), blankToNull(action), like(q), auditPage(0, 5000, 5000));
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("quando;quem;acao;alvo;detalhe\n");
         for (AuditEntry entry : page.getContent()) {

@@ -16,14 +16,16 @@ public interface AuditEntryRepository extends JpaRepository<AuditEntry, Long> {
 
     @Query("""
             select a from AuditEntry a
-            where (:action is null or a.action = :action)
+            where coalesce(a.organizationId, 1) = :organizationId
+              and (:action is null or a.action = :action)
               and (:q is null or lower(coalesce(a.actor, '')) like :q
                    or lower(coalesce(a.action, '')) like :q
                    or lower(coalesce(a.target, '')) like :q
                    or lower(coalesce(a.detail, '')) like :q)
             """)
-    Page<AuditEntry> search(@Param("action") String action, @Param("q") String q, Pageable pageable);
+    Page<AuditEntry> search(@Param("organizationId") long organizationId, @Param("action") String action,
+                            @Param("q") String q, Pageable pageable);
 
-    @Query("select distinct a.action from AuditEntry a order by a.action")
-    List<String> actions();
+    @Query("select distinct a.action from AuditEntry a where coalesce(a.organizationId, 1) = :organizationId order by a.action")
+    List<String> actions(@Param("organizationId") long organizationId);
 }
