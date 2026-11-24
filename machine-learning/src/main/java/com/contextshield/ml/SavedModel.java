@@ -71,7 +71,9 @@ public final class SavedModel implements Serializable {
         try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(path))) {
             Object value = in.readObject();
             if (!(value instanceof SavedModel model)) throw new IOException("Arquivo não é um modelo do ContextShield.");
-            if (!Arrays.equals(model.featureNames, Features.NAMES)) throw new IOException("Catálogo de características incompatível.");
+            boolean known = Arrays.equals(model.featureNames, Features.NAMES)
+                    || Arrays.equals(model.featureNames, ContextFeatures.NAMES);
+            if (!known) throw new IOException("Catálogo de características incompatível.");
             return model;
         }
     }

@@ -55,3 +55,7 @@ contextshield:
     anchor-today: ${SEED_ANCHOR_TODAY:true}
   check:
     per-minute: ${CHECK_PER_MINUTE:40}
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %5p [%X{requestId:-}] %logger{36} : %msg%n"

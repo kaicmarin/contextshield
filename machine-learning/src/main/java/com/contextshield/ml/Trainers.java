@@ -25,17 +25,25 @@ public final class Trainers {
     private Trainers() {}
 
     public static SavedModel logistic(double[][] x, int[] y) {
+        return logistic(x, y, Features.NAMES, "logistic-regression");
+    }
+
+    public static SavedModel logistic(double[][] x, int[] y, String[] names, String algorithm) {
         LogisticRegression model = LogisticRegression.fit(x, y, LOGISTIC_LAMBDA, LOGISTIC_TOLERANCE, LOGISTIC_ITERATIONS);
-        return new SavedModel("logistic-regression", LIBRARY_VERSION, Features.NAMES, model, null, null);
+        return new SavedModel(algorithm, LIBRARY_VERSION, names, model, null, null);
     }
 
     public static SavedModel forest(double[][] x, int[] y) {
-        DataFrame frame = DataFrame.of(x, Features.NAMES).merge(IntVector.of("fraud", y));
+        return forest(x, y, Features.NAMES, "random-forest");
+    }
+
+    public static SavedModel forest(double[][] x, int[] y, String[] names, String algorithm) {
+        DataFrame frame = DataFrame.of(x, names).merge(IntVector.of("fraud", y));
         int mtry = Math.max(1, (int) Math.sqrt(x[0].length));
         RandomForest model = RandomForest.fit(Formula.lhs("fraud"), frame, FOREST_TREES, mtry, SplitRule.GINI,
                 FOREST_DEPTH, 256, FOREST_NODE, 1.0, classWeight(y));
-        StructType schema = DataFrame.of(x, Features.NAMES).schema();
-        return new SavedModel("random-forest", LIBRARY_VERSION, Features.NAMES, null, model, schema);
+        StructType schema = DataFrame.of(x, names).schema();
+        return new SavedModel(algorithm, LIBRARY_VERSION, names, null, model, schema);
     }
 
     static Tuple tuple(StructType schema, double[] features) {

@@ -1,0 +1,390 @@
+{
+  "executedAt" : "2026-11-24T06:56:30.446651900Z",
+  "library" : "smile-core 3.1.1",
+  "java" : "21.0.13.0.2+1-LTS",
+  "origin" : "sintético",
+  "promoted" : false,
+  "developmentSeed" : 8801,
+  "reservedSeed" : 9901,
+  "reservedUsedForSelection" : false,
+  "developmentExamples" : 800,
+  "train" : 480,
+  "validation" : {
+    "examples" : 160,
+    "operationLogistic" : {
+      "examples" : 160,
+      "frauds" : 69,
+      "legits" : 91,
+      "precision" : 0.5316,
+      "recall" : 0.6087,
+      "f1" : 0.5676,
+      "accuracy" : 0.6,
+      "falsePositives" : 37,
+      "falseNegatives" : 27,
+      "truePositives" : 42,
+      "trueNegatives" : 54,
+      "confusion" : {
+        "fraudFraud" : 42,
+        "legitLegit" : 54,
+        "fraudLegit" : 27,
+        "legitFraud" : 37
+      },
+      "prAuc" : 0.5252,
+      "calibrationError" : 0.0055,
+      "meanInferenceMs" : 0.0162
+    },
+    "operationForest" : {
+      "examples" : 160,
+      "frauds" : 69,
+      "legits" : 91,
+      "precision" : 0.4643,
+      "recall" : 0.1884,
+      "f1" : 0.268,
+      "accuracy" : 0.5563,
+      "falsePositives" : 15,
+      "falseNegatives" : 56,
+      "truePositives" : 13,
+      "trueNegatives" : 76,
+      "confusion" : {
+        "fraudFraud" : 13,
+        "legitLegit" : 76,
+        "fraudLegit" : 56,
+        "legitFraud" : 15
+      },
+      "prAuc" : 0.4832,
+      "calibrationError" : 0.0642,
+      "meanInferenceMs" : 0.0904
+    },
+    "contextLogistic" : {
+      "examples" : 160,
+      "frauds" : 69,
+      "legits" : 91,
+      "precision" : 1.0,
+      "recall" : 0.6957,
+      "f1" : 0.8205,
+      "accuracy" : 0.8688,
+      "falsePositives" : 0,
+      "falseNegatives" : 21,
+      "truePositives" : 48,
+      "trueNegatives" : 91,
+      "confusion" : {
+        "fraudFraud" : 48,
+        "legitLegit" : 91,
+        "fraudLegit" : 21,
+        "legitFraud" : 0
+      },
+      "prAuc" : 0.9413,
+      "calibrationError" : 0.02,
+      "meanInferenceMs" : 0.0159
+    },
+    "contextForest" : {
+      "examples" : 160,
+      "frauds" : 69,
+      "legits" : 91,
+      "precision" : 1.0,
+      "recall" : 0.6957,
+      "f1" : 0.8205,
+      "accuracy" : 0.8688,
+      "falsePositives" : 0,
+      "falseNegatives" : 21,
+      "truePositives" : 48,
+      "trueNegatives" : 91,
+      "confusion" : {
+        "fraudFraud" : 48,
+        "legitLegit" : 91,
+        "fraudLegit" : 21,
+        "legitFraud" : 0
+      },
+      "prAuc" : 0.9289,
+      "calibrationError" : 0.1192,
+      "meanInferenceMs" : 0.0736
+    }
+  },
+  "developmentTest" : 160,
+  "reservedExamples" : 400,
+  "operationFeatures" : [ "amountRatio", "purchases90d", "tenureYears", "unusualHour", "newDevice", "locationMatch", "habitualDest", "newOwnDest", "thirdDest", "pickup", "sellerRecent", "sellerClaims", "sellerEstablished", "originSelf", "originAd", "originLink", "originGuided", "destIncident", "sellerIncident" ],
+  "contextFeatures" : [ {
+    "meaning" : "O cliente disse que alguém pediu a operação. Não é confirmação.",
+    "provenance" : "DECLARADA",
+    "name" : "declaredAsked"
+  }, {
+    "meaning" : "O cliente disse que houve telefone ou mensagem. O sistema não viu a ligação.",
+    "provenance" : "DECLARADA",
+    "name" : "declaredContact"
+  }, {
+    "meaning" : "O cliente disse que o endereço foi passado por outra pessoa.",
+    "provenance" : "DECLARADA",
+    "name" : "declaredAddressGiven"
+  }, {
+    "meaning" : "O cliente disse que alguém orientou as respostas.",
+    "provenance" : "DECLARADA",
+    "name" : "declaredCoached"
+  }, {
+    "meaning" : "Faltou ao menos uma resposta. Os zeros ao lado não significam negação.",
+    "provenance" : "DESCONHECIDA",
+    "name" : "unknownAnswers"
+  }, {
+    "meaning" : "A compra foi declarada como própria, mas a resposta diz que alguém pediu.",
+    "provenance" : "DECLARADA",
+    "name" : "declaredContradiction"
+  } ],
+  "diagnosis" : {
+    "pairs" : 40,
+    "identicalOperationVectors" : 40,
+    "leakage" : "As respostas não entram nos 19 atributos da primeira avaliação.",
+    "finding" : "Os 19 atributos da fraude discreta são iguais aos da compra habitual gerada com a mesma semente. Nenhum algoritmo distingue esses pares sem contexto novo."
+  },
+  "separationOnTrain" : {
+    "largestDifferences" : [ {
+      "feature" : "declaredCoached",
+      "fraudMean" : 0.7404,
+      "legitMean" : 0.0,
+      "difference" : 0.7404
+    }, {
+      "feature" : "declaredAsked",
+      "fraudMean" : 0.3798,
+      "legitMean" : 0.0,
+      "difference" : 0.3798
+    }, {
+      "feature" : "declaredContradiction",
+      "fraudMean" : 0.3798,
+      "legitMean" : 0.0,
+      "difference" : 0.3798
+    }, {
+      "feature" : "unusualHour",
+      "fraudMean" : 0.0,
+      "legitMean" : 0.2647,
+      "difference" : -0.2647
+    }, {
+      "feature" : "newDevice",
+      "fraudMean" : 0.0,
+      "legitMean" : 0.2647,
+      "difference" : -0.2647
+    }, {
+      "feature" : "locationMatch",
+      "fraudMean" : 1.0,
+      "legitMean" : 0.7353,
+      "difference" : 0.2647
+    }, {
+      "feature" : "habitualDest",
+      "fraudMean" : 1.0,
+      "legitMean" : 0.7353,
+      "difference" : 0.2647
+    }, {
+      "feature" : "thirdDest",
+      "fraudMean" : 0.0,
+      "legitMean" : 0.2647,
+      "difference" : -0.2647
+    } ],
+    "trainLegits" : 272,
+    "trainFrauds" : 208
+  },
+  "developmentTestMetrics" : {
+    "examples" : 160,
+    "operationLogistic" : {
+      "examples" : 160,
+      "frauds" : 59,
+      "legits" : 101,
+      "precision" : 0.4337,
+      "recall" : 0.6102,
+      "f1" : 0.507,
+      "accuracy" : 0.5625,
+      "falsePositives" : 47,
+      "falseNegatives" : 23,
+      "truePositives" : 36,
+      "trueNegatives" : 54,
+      "confusion" : {
+        "fraudFraud" : 36,
+        "legitLegit" : 54,
+        "fraudLegit" : 23,
+        "legitFraud" : 47
+      },
+      "prAuc" : 0.4337,
+      "calibrationError" : 0.0817,
+      "meanInferenceMs" : 0.009
+    },
+    "operationForest" : {
+      "examples" : 160,
+      "frauds" : 59,
+      "legits" : 101,
+      "precision" : 0.3846,
+      "recall" : 0.2542,
+      "f1" : 0.3061,
+      "accuracy" : 0.575,
+      "falsePositives" : 24,
+      "falseNegatives" : 44,
+      "truePositives" : 15,
+      "trueNegatives" : 77,
+      "confusion" : {
+        "fraudFraud" : 15,
+        "legitLegit" : 77,
+        "fraudLegit" : 44,
+        "legitFraud" : 24
+      },
+      "prAuc" : 0.3813,
+      "calibrationError" : 0.077,
+      "meanInferenceMs" : 0.0249
+    },
+    "contextLogistic" : {
+      "examples" : 160,
+      "frauds" : 59,
+      "legits" : 101,
+      "precision" : 1.0,
+      "recall" : 0.6949,
+      "f1" : 0.82,
+      "accuracy" : 0.8875,
+      "falsePositives" : 0,
+      "falseNegatives" : 18,
+      "truePositives" : 41,
+      "trueNegatives" : 101,
+      "confusion" : {
+        "fraudFraud" : 41,
+        "legitLegit" : 101,
+        "fraudLegit" : 18,
+        "legitFraud" : 0
+      },
+      "prAuc" : 0.9097,
+      "calibrationError" : 0.03,
+      "meanInferenceMs" : 0.0119
+    },
+    "contextForest" : {
+      "examples" : 160,
+      "frauds" : 59,
+      "legits" : 101,
+      "precision" : 1.0,
+      "recall" : 0.6949,
+      "f1" : 0.82,
+      "accuracy" : 0.8875,
+      "falsePositives" : 0,
+      "falseNegatives" : 18,
+      "truePositives" : 41,
+      "trueNegatives" : 101,
+      "confusion" : {
+        "fraudFraud" : 41,
+        "legitLegit" : 101,
+        "fraudLegit" : 18,
+        "legitFraud" : 0
+      },
+      "prAuc" : 0.9185,
+      "calibrationError" : 0.1579,
+      "meanInferenceMs" : 0.0276
+    }
+  },
+  "reservedEvaluation" : {
+    "examples" : 400,
+    "operationLogistic" : {
+      "examples" : 400,
+      "frauds" : 158,
+      "legits" : 242,
+      "precision" : 0.5075,
+      "recall" : 0.6456,
+      "f1" : 0.5682,
+      "accuracy" : 0.6125,
+      "falsePositives" : 99,
+      "falseNegatives" : 56,
+      "truePositives" : 102,
+      "trueNegatives" : 143,
+      "confusion" : {
+        "fraudFraud" : 102,
+        "legitLegit" : 143,
+        "fraudLegit" : 56,
+        "legitFraud" : 99
+      },
+      "prAuc" : 0.5148,
+      "calibrationError" : 0.037,
+      "meanInferenceMs" : 0.0089
+    },
+    "operationForest" : {
+      "examples" : 400,
+      "frauds" : 158,
+      "legits" : 242,
+      "precision" : 0.5814,
+      "recall" : 0.3165,
+      "f1" : 0.4098,
+      "accuracy" : 0.64,
+      "falsePositives" : 36,
+      "falseNegatives" : 108,
+      "truePositives" : 50,
+      "trueNegatives" : 206,
+      "confusion" : {
+        "fraudFraud" : 50,
+        "legitLegit" : 206,
+        "fraudLegit" : 108,
+        "legitFraud" : 36
+      },
+      "prAuc" : 0.5235,
+      "calibrationError" : 0.0359,
+      "meanInferenceMs" : 0.0149
+    },
+    "contextLogistic" : {
+      "examples" : 400,
+      "frauds" : 158,
+      "legits" : 242,
+      "precision" : 1.0,
+      "recall" : 0.6772,
+      "f1" : 0.8075,
+      "accuracy" : 0.8725,
+      "falsePositives" : 0,
+      "falseNegatives" : 51,
+      "truePositives" : 107,
+      "trueNegatives" : 242,
+      "confusion" : {
+        "fraudFraud" : 107,
+        "legitLegit" : 242,
+        "fraudLegit" : 51,
+        "legitFraud" : 0
+      },
+      "prAuc" : 0.9567,
+      "calibrationError" : 0.0408,
+      "meanInferenceMs" : 0.0153
+    },
+    "contextForest" : {
+      "examples" : 400,
+      "frauds" : 158,
+      "legits" : 242,
+      "precision" : 1.0,
+      "recall" : 0.6772,
+      "f1" : 0.8075,
+      "accuracy" : 0.8725,
+      "falsePositives" : 0,
+      "falseNegatives" : 51,
+      "truePositives" : 107,
+      "trueNegatives" : 242,
+      "confusion" : {
+        "fraudFraud" : 107,
+        "legitLegit" : 242,
+        "fraudLegit" : 51,
+        "legitFraud" : 0
+      },
+      "prAuc" : 0.9159,
+      "calibrationError" : 0.1224,
+      "meanInferenceMs" : 0.0316
+    }
+  },
+  "orderedByValidationF1" : "empate prático na validação; nenhum dos dois é promovido",
+  "selectionNote" : "A ordem usa só o F1 da validação do desenvolvimento. O conjunto reservado não altera modelo, corte nem hiperparâmetro.",
+  "engineOnReserved" : {
+    "fraudReleased" : 158,
+    "fraudHeld" : 0,
+    "legitReleased" : 177,
+    "legitHeld" : 65,
+    "fraudReleasedWhenAnswersAreApplied" : 51,
+    "fraudHeldWhenAnswersAreApplied" : 107,
+    "note" : "A política padrão não pede verificação numa compra habitual. As respostas só entram se a verificação acontecer. A segunda contagem aplica as respostas só nesta comparação."
+  },
+  "falseNegativesOnReserved" : {
+    "contextLogistic" : {
+      "fraude-que-nega" : 51
+    },
+    "reading" : "Fraude que nega ajuda não tem atributo diferente da compra lícita. Orientação declarada é outra história.",
+    "contextForest" : {
+      "fraude-que-nega" : 51
+    }
+  },
+  "reloadMatched" : true,
+  "paths" : {
+    "logistic" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\logistic-context.ser",
+    "forest" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\random-forest-context.ser"
+  },
+  "limitation" : "As respostas são sintéticas. Fraude que nega ajuda continua com o mesmo vetor de uma compra lícita. Isso não é evidência bancária."
+}

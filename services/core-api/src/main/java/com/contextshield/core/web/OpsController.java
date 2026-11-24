@@ -106,9 +106,12 @@ public class OpsController {
                 && !Set.of("RECEIVED", "ANALYZING", "APPROVED", "APPROVED_WITH_ALERT", "CONTEXT_REQUIRED",
                 "INTERVENTION", "BLOCKED", "CANCELLED", "INCIDENT_RECORDED").contains(status))
             throw ApiException.badRequest("Status desconhecido: " + status);
-        Map<String, Object> result = queue.page(status, q, days, band, page, size, sort, dir);
+        long organizationId = organizations.idOf(Auth.user());
+        Map<String, Object> result = queue.page(status, q, days, band, page, size, sort, dir, organizationId);
         if (sqlMissesRows(result, q, days, band)) {
-            var loaded = txs.findTop300ByOrderByCreatedAtDesc().stream().map(views::summary).toList();
+            var loaded = txs.findTop300ByOrderByCreatedAtDesc().stream()
+                    .filter(t -> organizationId == (t.getOrganizationId() == null ? 1L : t.getOrganizationId()))
+                    .map(views::summary).toList();
             if (!loaded.isEmpty()) fillFromEntities(result, loaded, status, page, size);
         }
         return result;
@@ -165,19 +168,26 @@ public class OpsController {
 
     @GetMapping("/incidents")
     public List<Incident> incidents(@RequestParam(required = false) String status) {
-        var all = incidents.findAllByOrderByCreatedAtDesc();
+        long organizationId = organizations.idOf(Auth.user());
+        var all = incidents.findAllByOrderByCreatedAtDesc().stream()
+                .filter(i -> organizationId == (i.getOrganizationId() == null ? 1L : i.getOrganizationId()))
+                .toList();
         return status == null || status.isBlank() ? all : all.stream().filter(i -> i.getStatus().equals(status)).toList();
     }
 
     @GetMapping("/incidents/{id}")
     public Map<String, Object> incident(@PathVariable String id) {
-        return incidentView(incidents.findById(id).orElseThrow(() -> ApiException.notFound("Relato")));
+        Incident incident = incidents.findById(id).orElseThrow(() -> ApiException.notFound("Relato"));
+        organizations.requireSame(Auth.user(), incident.getOrganizationId(), "Relato");
+        return incidentView(incident);
     }
 
     public record ReplyRequest(@NotBlank @Size(max = 2000) String body) {}
 
     @PostMapping("/incidents/{id}/replies")
     public Map<String, Object> reply(@PathVariable String id, @Valid @RequestBody ReplyRequest req) {
+        Incident current = incidents.findById(id).orElseThrow(() -> ApiException.notFound("Relato"));
+        organizations.requireSame(Auth.user(), current.getOrganizationId(), "Relato");
         Incident updated = incidentService.reply(id, req.body(), Auth.user());
         return incidentView(updated);
     }
@@ -196,6 +206,8 @@ public class OpsController {
 
     @PostMapping("/incidents/{id}/assign")
     public Incident assign(@PathVariable String id) {
+        Incident current = incidents.findById(id).orElseThrow(() -> ApiException.notFound("Relato"));
+        organizations.requireSame(Auth.user(), current.getOrganizationId(), "Relato");
         return incidentService.assign(id, Auth.user());
     }
 
@@ -203,6 +215,8 @@ public class OpsController {
 
     @PostMapping("/incidents/{id}/close")
     public Incident close(@PathVariable String id, @Valid @RequestBody CloseRequest req) {
+        Incident current = incidents.findById(id).orElseThrow(() -> ApiException.notFound("Relato"));
+        organizations.requireSame(Auth.user(), current.getOrganizationId(), "Relato");
         return incidentService.close(id, req.as(), req.note(), Auth.user());
     }
 
@@ -210,12 +224,12 @@ public class OpsController {
 
     @GetMapping("/intelligence")
     public List<IntelligenceService.EntityView> intelligence() {
-        return intel.list();
+        return intel.listFor(organizations.idOf(Auth.user()));
     }
 
     @GetMapping("/intelligence/{id}")
     public IntelligenceService.EntityView entity(@PathVariable String id) {
-        return intel.find(id).orElseThrow(() -> ApiException.notFound("Entidade"));
+        return intel.findFor(id, organizations.idOf(Auth.user())).orElseThrow(() -> ApiException.notFound("Entidade"));
     }
 
     public record IntelReviewRequest(
@@ -224,7 +238,7 @@ public class OpsController {
 
     @PatchMapping("/intelligence/{id}")
     public IntelligenceService.EntityView reviewEntity(@PathVariable String id, @Valid @RequestBody IntelReviewRequest req) {
-        var before = intel.find(id).orElseThrow(() -> ApiException.notFound("Entidade"));
+        var before = intel.findFor(id, organizations.idOf(Auth.user())).orElseThrow(() -> ApiException.notFound("Entidade"));
         var after = intel.review(id, req.status(), req.confidence(), Auth.user().email())
                 .orElseThrow(() -> ApiException.notFound("Entidade"));
         audit.log(Auth.user().email(), "INTEL_REVIEWED", id, before.status() + " -> " + req.status());

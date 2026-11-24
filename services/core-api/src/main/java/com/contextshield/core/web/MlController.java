@@ -21,6 +21,11 @@ public class MlController {
         return lab.overview();
     }
 
+    @GetMapping("/monitor")
+    public Map<String, Object> monitor() {
+        return lab.monitor();
+    }
+
     @GetMapping("/experiments/{id}")
     public Map<String, Object> experiment(@PathVariable long id) {
         return lab.experiment(id);

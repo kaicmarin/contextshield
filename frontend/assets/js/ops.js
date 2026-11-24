@@ -20,7 +20,7 @@ const NEXT = {
   APPROVED_WITH_ALERT: ["INCIDENT_RECORDED"],
 };
 const GO = { v: "/ops", t: "/ops/transacoes", r: "/ops/relatos", i: "/ops/inteligencia", m: "/ops/motor", a: "/ops/auditoria", d: "/ops/demo" };
-const SECTIONS = { "": "Visão geral", transacoes: "Transações", relatos: "Relatos", inteligencia: "Inteligência", motor: "Motor de risco", politicas: "Políticas de risco", laboratorio: "Laboratório", auditoria: "Auditoria", usuarios: "Usuários", demo: "Demonstração" };
+const SECTIONS = { "": "Visão geral", transacoes: "Transações", relatos: "Relatos", inteligencia: "Inteligência", motor: "Motor de risco", politicas: "Políticas de risco", laboratorio: "Laboratório", modelos: "Modelos", auditoria: "Auditoria", usuarios: "Usuários", demo: "Demonstração" };
 const CERT = { ROBUST: ["Robusta", "ok"], FRAGILE: ["Frágil", "risk"], INCONCLUSIVE: ["Inconclusiva", "warn"], DEGRADED: ["Degradada", "warn"] };
 const DECISION_TONE = { APPROVE: "ok", APPROVE_WITH_ALERT: "warn", REQUEST_CONTEXT: "info", INTERVENE: "risk", BLOCK: "stop" };
 const DECISION_ICON = { APPROVE: "check", APPROVE_WITH_ALERT: "alert", REQUEST_CONTEXT: "question", INTERVENE: "pause", BLOCK: "stop" };
@@ -180,6 +180,7 @@ function opsShell(loc) {
         nav("/ops/motor", "gauge", "Motor de risco", { mark: degraded ? " is-warn" : "" }),
         nav("/ops/politicas", "list", "Políticas de risco"),
         nav("/ops/laboratorio", "play", "Laboratório"),
+        nav("/ops/modelos", "gauge", "Modelos"),
         nav("/ops/auditoria", "history", "Auditoria"),
         nav("/ops/usuarios", "users", "Usuários", { admin: true, key: "usuarios" }),
         nav("/ops/demo", "play", "Demonstração"),
@@ -2199,12 +2200,31 @@ async function render(loc) {
   else if (loc.name === "engine") node = engine(loc.search);
   else if (loc.name === "policies") node = policiesPage(session().user.role === "ADMIN");
   else if (loc.name === "lab") node = labPage(session().user.role === "ADMIN");
+  else if (loc.name === "models") node = modelMonitor();
   else if (loc.name === "audit") node = audit();
   else if (loc.name === "users") node = users(loc.search);
   else if (loc.name === "demo") node = demo(loc.search);
   else node = empty("Página não encontrada", { iconName: "search", action: el("a", { href: "/ops" }, "Voltar para a visão geral") });
   page.replaceChildren(el("div", { class: "o-route" }, node));
   if (!shell.parentElement) document.body.append(shell);
+}
+
+function modelMonitor() {
+  const box = el("section", { class: "stack" });
+  box.append(head("Monitoramento dos modelos", { sub: "Contagens da sombra. Precisão e recall ficam de fora enquanto não houver rótulos revisados nos mesmos casos." }));
+  api("/api/ops/ml/monitor", { area: "ops" })
+    .then((data) => {
+      const rows = (data.byPrediction || []).map((row) => `${row.stage} · ${row.prediction}: ${row.total}`).join(" · ") || "Nenhuma previsão ainda.";
+      box.append(
+        el("p", {}, `Previsões sem erro: ${data.predictions}. Falhas: ${data.failures}. Divergências com o motor: ${data.disagreementsWithEngine}.`),
+        el("p", {}, data.meanLatencyMs == null ? "Ainda não há tempo de inferência." : `Latência média: ${data.meanLatencyMs} ms.`),
+        el("p", {}, rows),
+        el("p", {}, data.qualityNote),
+        el("p", { class: "muted" }, data.drift),
+      );
+    })
+    .catch((error) => box.append(el("p", {}, error?.message || "Não foi possível carregar o monitoramento.")));
+  return box;
 }
 
 function mount() {
@@ -2220,6 +2240,7 @@ function mount() {
       { name: "engine", pattern: /^motor$/ },
       { name: "policies", pattern: /^politicas$/ },
       { name: "lab", pattern: /^laboratorio$/ },
+      { name: "models", pattern: /^modelos$/ },
       { name: "audit", pattern: /^auditoria$/ },
       { name: "users", pattern: /^usuarios$/ },
       { name: "demo", pattern: /^demo$/ },

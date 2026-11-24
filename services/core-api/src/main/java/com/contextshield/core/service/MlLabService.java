@@ -63,6 +63,7 @@ public class MlLabService implements ApplicationRunner {
         jdbc.update("update ml_experiment set status = 'FAILED', error = 'A aplicação encerrou durante o experimento.', finished_at = ? where status in ('QUEUED', 'RUNNING')",
                 Timestamp.valueOf(LocalDateTime.now().withNano(0)));
         importReportIfEmpty();
+        importContextIfMissing();
     }
 
     public Map<String, Object> overview() {
@@ -142,10 +143,61 @@ public class MlLabService implements ApplicationRunner {
             throw ApiException.badRequest("O resultado confirmado é FRAUD, LEGIT ou INCONCLUSIVE.");
         var tx = transactions.findById(txId).orElseThrow(() -> ApiException.notFound("Transação"));
         double[] features = Features.vector(inputs.build(tx, "initial", tx.getCreatedAt(), null));
-        jdbc.update("insert into known_outcome (tx_id, label, source, features_json, created_by, created_at) values (?, ?, 'ANALYST', ?, ?, ?)",
-                txId, label, write(features), actor, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+        jdbc.update("""
+                insert into known_outcome (tx_id, label, source, features_json, created_by, created_at, review_state, origin_kind)
+                values (?, ?, 'ANALYST', ?, ?, ?, 'REVIEWED', 'VERIFIED')
+                """, txId, label, write(features), actor, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
         audit.log(actor, "OUTCOME_RECORDED", txId, label);
-        return Map.of("txId", txId, "label", label, "source", "ANALYST");
+        return Map.of("txId", txId, "label", label, "source", "ANALYST", "reviewState", "REVIEWED", "originKind", "VERIFIED",
+                "usedAsTrainingLabel", true);
+    }
+
+    /** Denúncia ainda não revista. Não entra no treino. A decisão do motor também não vira rótulo. */
+    public Map<String, Object> recordReport(String txId, String label, String actor) {
+        if (!List.of("FRAUD", "LEGIT", "INCONCLUSIVE").contains(label))
+            throw ApiException.badRequest("O relato é FRAUD, LEGIT ou INCONCLUSIVE.");
+        if (!transactions.existsById(txId)) throw ApiException.notFound("Transação");
+        jdbc.update("""
+                insert into known_outcome (tx_id, label, source, features_json, created_by, created_at, review_state, origin_kind)
+                values (?, ?, 'REPORT', '[]', ?, ?, 'PENDING', 'REPORT')
+                """, txId, label, actor, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+        audit.log(actor, "OUTCOME_REPORTED", txId, label + " pendente; não treina");
+        return Map.of("txId", txId, "label", label, "reviewState", "PENDING", "originKind", "REPORT", "usedAsTrainingLabel", false);
+    }
+
+    public Map<String, Object> monitor() {
+        Integer predictions = jdbc.queryForObject("select count(*) from ml_shadow where error is null", Integer.class);
+        Integer failures = jdbc.queryForObject("select count(*) from ml_shadow where error is not null", Integer.class);
+        Double latency = jdbc.queryForObject("select avg(latency_ms) from ml_shadow where error is null", Double.class);
+        Integer reviewed = jdbc.queryForObject("""
+                select count(*) from known_outcome
+                where review_state = 'REVIEWED' and origin_kind in ('VERIFIED', 'ANALYST') and label in ('FRAUD', 'LEGIT')
+                """, Integer.class);
+        List<Map<String, Object>> byPrediction = jdbc.query("""
+                select coalesce(stage, 'initial') stage, prediction, count(*) total
+                from ml_shadow where error is null group by coalesce(stage, 'initial'), prediction order by 1, 2
+                """, (rs, n) -> Map.of("stage", rs.getString(1), "prediction", rs.getString(2), "total", rs.getInt(3)));
+        Integer disagreements = jdbc.queryForObject("""
+                select count(*) from ml_shadow where error is null and (
+                    (prediction = 'FRAUD' and engine_decision in ('APPROVE', 'APPROVE_WITH_ALERT'))
+                    or (prediction = 'LEGIT' and engine_decision in ('BLOCK', 'INTERVENE'))
+                )
+                """, Integer.class);
+        int labels = reviewed == null ? 0 : reviewed;
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("predictions", predictions == null ? 0 : predictions);
+        out.put("failures", failures == null ? 0 : failures);
+        out.put("meanLatencyMs", latency == null ? null : Math.round(latency * 1000.0) / 1000.0);
+        out.put("byPrediction", byPrediction);
+        out.put("disagreementsWithEngine", disagreements == null ? 0 : disagreements);
+        out.put("reviewedLabels", labels);
+        out.put("qualityAvailable", false);
+        out.put("qualityNote", labels < 30
+                ? "Não há rótulos revisados suficientes para precisão ou recall. As contagens acima são operacionais."
+                : "Há rótulos revisados, mas a precisão só entra quando cada previsão tiver o mesmo caso confirmado. Isso ainda não foi calculado.");
+        out.put("drift", "não calculada: não há baseline de produção");
+        out.put("automaticRetrain", false);
+        return out;
     }
 
     public Map<String, Object> draftFromSuggestion(long id, String actor) {
@@ -189,11 +241,12 @@ public class MlLabService implements ApplicationRunner {
         Map<String, Object> metrics = (Map<String, Object>) model.get("metrics");
         jdbc.update("""
                 insert into ml_model (experiment_id, algorithm, status, path, metrics_json, data_origin, example_count,
-                    fraud_count, legit_count, library, library_version, validation, created_at)
-                values (?, ?, 'TRAINED', ?, ?, 'sintetico', ?, ?, ?, 'smile-core', ?, ?, ?)
+                    fraud_count, legit_count, library, library_version, validation, created_at, feature_set)
+                values (?, ?, 'TRAINED', ?, ?, 'sintetico', ?, ?, ?, 'smile-core', ?, ?, ?, ?)
                 """, experimentId, model.get("algorithm"), model.get("path"), write(metrics),
                 metrics.get("examples"), metrics.get("frauds"), metrics.get("legits"), report.get("libraryVersion"),
-                model.get("validation"), Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+                model.get("validation"), Timestamp.valueOf(LocalDateTime.now().withNano(0)),
+                model.get("featureSet") == null ? "operation" : model.get("featureSet"));
     }
 
     @SuppressWarnings("unchecked")
@@ -223,6 +276,40 @@ public class MlLabService implements ApplicationRunner {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private void importContextIfMissing() {
+        Integer existing = jdbc.queryForObject("select count(*) from ml_model where feature_set = 'context'", Integer.class);
+        if (existing != null && existing > 0) return;
+        Path report = directory().resolve("reports").resolve("context-study.json");
+        if (!Files.isRegularFile(report)) return;
+        try {
+            Map<String, Object> body = mapper.readValue(report.toFile(), new TypeReference<>() {});
+            Map<String, Object> paths = (Map<String, Object>) body.get("paths");
+            Map<String, Object> reserved = (Map<String, Object>) body.get("reservedEvaluation");
+            if (paths == null || reserved == null) return;
+            long id = insertExperiment(((Number) body.get("developmentExamples")).intValue(),
+                    ((Number) body.get("developmentSeed")).longValue(), "sistema");
+            jdbc.update("update ml_experiment set status = 'DONE', finished_at = ?, report_json = ? where id = ?",
+                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), mapper.writeValueAsString(body), id);
+            storeContext(id, "logistic-regression-context", paths.get("logistic"), (Map<String, Object>) reserved.get("contextLogistic"), body);
+            storeContext(id, "random-forest-context", paths.get("forest"), (Map<String, Object>) reserved.get("contextForest"), body);
+            log.info("Estudo contextual importado de {}", report.toAbsolutePath());
+        } catch (Exception e) {
+            log.warn("Não importei o estudo contextual: {}", e.toString());
+        }
+    }
+
+    private void storeContext(long experimentId, String algorithm, Object path, Map<String, Object> metrics, Map<String, Object> report) {
+        jdbc.update("""
+                insert into ml_model (experiment_id, algorithm, status, path, metrics_json, data_origin, example_count,
+                    fraud_count, legit_count, library, library_version, validation, created_at, feature_set)
+                values (?, ?, 'TRAINED', ?, ?, 'sintetico', ?, ?, ?, 'smile-core', ?, 'RECORDED', ?, 'context')
+                """, experimentId, algorithm, path, write(metrics),
+                metrics.get("examples"), metrics.get("frauds"), metrics.get("legits"),
+                String.valueOf(report.get("library")).replace("smile-core ", ""),
+                Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+    }
+
     private long insertExperiment(int count, long seed, String actor) {
         GeneratedKeyHolder keys = new GeneratedKeyHolder();
         jdbc.update(con -> {
@@ -241,7 +328,7 @@ public class MlLabService implements ApplicationRunner {
     private List<Map<String, Object>> models() {
         return jdbc.query("""
                 select id, algorithm, status, path, metrics_json, data_origin, example_count, fraud_count, legit_count,
-                       library, library_version, validation, created_at, approved_by, decision_authorized
+                       library, library_version, validation, created_at, approved_by, decision_authorized, feature_set
                 from ml_model order by id desc
                 """, (rs, n) -> {
             Map<String, Object> row = new LinkedHashMap<>();
@@ -259,6 +346,7 @@ public class MlLabService implements ApplicationRunner {
             row.put("createdAt", rs.getTimestamp("created_at").toLocalDateTime());
             row.put("approvedBy", rs.getString("approved_by"));
             row.put("decisionAuthorized", rs.getBoolean("decision_authorized"));
+            row.put("featureSet", rs.getString("feature_set"));
             row.put("usage", "APPROVED".equals(rs.getString("status")) ? "shadow" : "stored");
             return row;
         });
@@ -313,7 +401,12 @@ public class MlLabService implements ApplicationRunner {
     private Confirmed confirmed() {
         List<double[]> rows = new ArrayList<>();
         List<Integer> labels = new ArrayList<>();
-        jdbc.query("select label, features_json from known_outcome where label in ('FRAUD', 'LEGIT') and source = 'ANALYST' order by id", rs -> {
+        jdbc.query("""
+                select label, features_json from known_outcome
+                where label in ('FRAUD', 'LEGIT') and source = 'ANALYST'
+                  and review_state = 'REVIEWED' and origin_kind in ('VERIFIED', 'ANALYST')
+                order by id
+                """, rs -> {
             Object parsed = read(rs.getString(2));
             if (!(parsed instanceof List<?> list) || list.size() != Features.NAMES.length) return;
             double[] row = new double[list.size()];

@@ -33,6 +33,30 @@ class WeightPolicyTest {
     }
 
     @Test
+    void unknownContextAsksForVerificationOnlyWhenThePolicyIsOn() {
+        var flags = new java.util.LinkedHashMap<>(AssessmentInput.EngineConfig.defaults().flags());
+        flags.put("context-when-unknown", true);
+        var purchase = new AssessmentInput("initial", java.time.LocalDateTime.of(2026, 6, 15, 15, 0), 120,
+                new AssessmentInput.Customer("C1", "Ana", "Campinas", java.time.LocalDate.of(2021, 1, 1), 200, 12),
+                new AssessmentInput.Device("D1", "Conhecido", "browser", "Campinas, SP", java.time.LocalDateTime.of(2024, 1, 1, 10, 0), true),
+                new AssessmentInput.Address("A1", "Casa", "Rua das Flores, 10", null, "Centro", "Campinas", "home", java.util.List.of("C1")),
+                null, true,
+                new AssessmentInput.Merchant("M1", "NEXA", true, true, java.time.LocalDate.of(2018, 1, 1)),
+                java.util.List.of(new AssessmentInput.Seller("S1", "Loja", java.time.LocalDate.of(2019, 1, 1), 0.4, 4.8, "ouro", 100)),
+                "self", null, null, java.util.List.of(),
+                new AssessmentInput.EngineConfig(AssessmentInput.EngineConfig.defaults().flags(), AssessmentInput.EngineConfig.defaults().providers(), Map.of()),
+                java.util.List.of());
+        var off = new RiskAssessor().assess(purchase);
+        var on = new RiskAssessor().assess(purchase.withConfig(new AssessmentInput.EngineConfig(
+                flags, AssessmentInput.EngineConfig.defaults().providers(), Map.of())));
+        assertEquals("R8", off.ruleId());
+        assertEquals(off.score(), on.score());
+        assertEquals("R12", on.ruleId());
+        assertEquals("REQUEST_CONTEXT", on.decision());
+        assertTrue(on.verification().questions().stream().anyMatch(q -> q.prompt().contains("Alguém pediu")));
+    }
+
+    @Test
     void blockThresholdCannotBeWeakenedPast80() {
         assertEquals(80, Weights.value(Map.of("THRESHOLD_BLOCK", 95), "THRESHOLD_BLOCK"));
         assertEquals(20, Weights.value(Map.of("DESTINATION_IN_INCIDENT", 4), "DESTINATION_IN_INCIDENT"));

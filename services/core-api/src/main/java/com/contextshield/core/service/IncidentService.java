@@ -104,6 +104,7 @@ public class IncidentService {
         i.setOccurredAt(d.occurredAt() != null ? d.occurredAt() : at);
         i.setStatus("OPEN");
         i.setCreatedAt(at);
+        i.setOrganizationId(tx != null && tx.getOrganizationId() != null ? tx.getOrganizationId() : 1L);
         repo.save(i);
 
         if (tx != null && tx.getStatus().canGoTo(TransactionStatus.INCIDENT_RECORDED))

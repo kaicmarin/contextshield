@@ -89,6 +89,27 @@ public final class QuestionPlanner {
                             c.in().device().location() != null ? "A localização aproximada desta sessão é " + c.in().device().location() + "." : "",
                             null, false,
                             opts("mine", "Sim, este aparelho é meu", "other", "Não, tem outra pessoa comigo aqui", "unsure", "Não tenho certeza"))),
+            new TriggerSpec("unknown-asked", "Pedido de terceiro desconhecido", "Já há link, indicação ou roteiro que explica o pedido.",
+                    QuestionPlanner::unknownContext,
+                    c -> "Não há registro de ligação ou mensagem. A declaração de compra própria não confirma isso.",
+                    c -> q("origin", "unknown-asked", "Não há registro de contato de terceiro.",
+                            "Alguém pediu que você realizasse esta operação?",
+                            "A resposta é sua declaração. Ela não prova fraude nem legitimidade.", null, false,
+                            opts("asked", "Sim, alguém pediu", "self", "Não, a decisão foi minha"))),
+            new TriggerSpec("unknown-contact", "Contato não registrado", "Já há link, indicação ou roteiro que explica o contato.",
+                    QuestionPlanner::unknownContext,
+                    c -> "O sistema não viu uma ligação. Só o cliente pode dizer se ela aconteceu.",
+                    c -> q("contact", "unknown-contact", "Não há evidência de ligação ou mensagem nesta operação.",
+                            "Você recebeu uma ligação ou mensagem dizendo que sua conta ou entrega estava em risco?",
+                            "Se ninguém entrou em contato, responda não. A ausência desta resposta não libera a compra.", null, false,
+                            opts("no", "Não", "phone", "Sim, por telefone", "message", "Sim, por mensagem"))),
+            new TriggerSpec("unknown-coached", "Orientação para ignorar alerta", "Já há uma mensagem vista que antecipa a resposta.",
+                    QuestionPlanner::unknownContext,
+                    c -> "Não há mensagem arquivada. A pergunta existe porque o contexto está desconhecido.",
+                    c -> q("coached", "unknown-coached", "Não há mensagem arquivada dizendo o que responder.",
+                            "Alguém orientou você a ignorar um alerta ou a responder de um jeito combinado?",
+                            "Admitir a orientação não encerra a análise sozinha.", null, false,
+                            opts("no", "Não", "yes", "Sim, alguém me orientou"))),
             new TriggerSpec("amount-habit", "Valor acima do hábito", "O valor cabe no gasto habitual da conta.",
                     c -> c.ids().contains("AMOUNT_ABOVE_HABIT"),
                     c -> "O valor está acima do gasto habitual de " + c.in().customer().firstName() + ".",
@@ -131,8 +152,17 @@ public final class QuestionPlanner {
         if (ids.contains("ORIGIN_LINK")) bits.add("o pedido foi marcado como vindo de um link");
         if (ids.contains("ORIGIN_GUIDED")) bits.add("o pedido foi marcado como indicação de outra pessoa");
         if (ids.contains("DESTINATION_IN_INCIDENT")) bits.add("este destino aparece em relato de outro cliente");
+        String origin = in.declaredOrigin();
+        if ((origin == null || origin.isBlank() || "self".equals(origin)) && !ids.contains("ORIGIN_LINK") && !ids.contains("ORIGIN_GUIDED"))
+            bits.add("não há registro de ligação ou mensagem; a compra foi declarada como própria e isso ainda não foi verificado");
         if (bits.isEmpty()) return "Nada nesta compra foge do cadastro ou do gasto habitual. Nenhum gatilho de contexto disparou.";
         return "O que pode estar acontecendo, com o que já sabemos: " + String.join("; ", bits) + ".";
+    }
+
+    private static boolean unknownContext(Ctx c) {
+        if (c.link() || c.guided() || c.instruction().isPresent()) return false;
+        String origin = c.in().declaredOrigin();
+        return origin == null || origin.isBlank() || "self".equals(origin);
     }
 
     public static QuestionPlan plan(AssessmentInput in, List<Signal> signals) {

@@ -70,4 +70,9 @@ public class GovernanceController {
     public Object outcome(@Valid @RequestBody OutcomeRequest req) {
         return lab.recordOutcome(req.txId(), req.label(), Auth.user().email());
     }
+
+    @PostMapping("/outcomes/reports")
+    public Object report(@Valid @RequestBody OutcomeRequest req) {
+        return lab.recordReport(req.txId(), req.label(), Auth.user().email());
+    }
 }

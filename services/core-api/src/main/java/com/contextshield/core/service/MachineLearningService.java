@@ -26,32 +26,55 @@ public class MachineLearningService {
     private final JdbcTemplate jdbc;
     private volatile SavedModel model;
     private volatile long modelId = -1;
+    private volatile SavedModel contextModel;
+    private volatile long contextModelId = -1;
 
     public MachineLearningService(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
     public Map<String, Object> shadow(String txId, Map<String, Object> checkout, String engineDecision) {
+        return shadow(txId, checkout, engineDecision, "initial");
+    }
+
+    public Map<String, Object> shadow(String txId, Map<String, Object> checkout, String engineDecision, String stage) {
+        Map<String, Object> first = predict(txId, checkout, engineDecision, stage, "operation", false);
+        if ("recalculated".equals(stage) && checkout.get("answers") instanceof Map<?, ?> answers && !answers.isEmpty()) {
+            predict(txId, checkout, engineDecision, stage, "context", true);
+        }
+        return first;
+    }
+
+    private Map<String, Object> predict(String txId, Map<String, Object> checkout, String engineDecision, String stage,
+                                        String featureSet, boolean contextual) {
         Map<String, Object> quiet = new java.util.LinkedHashMap<>();
         quiet.put("mode", "shadow");
+        quiet.put("stage", stage);
+        quiet.put("featureSet", featureSet);
         quiet.put("active", false);
         quiet.put("affectsDecision", false);
+        long usedId = -1;
         try {
-            SavedModel current = approved();
+            SavedModel current = approved(featureSet);
             if (current == null) return quiet;
+            usedId = "context".equals(featureSet) ? contextModelId : modelId;
             long started = System.nanoTime();
-            SavedModel.Prediction prediction = current.predict(Features.vector(checkout));
+            SavedModel.Prediction prediction = current.predict(contextual
+                    ? com.contextshield.ml.ContextFeatures.vector(checkout)
+                    : Features.vector(checkout));
             double ms = (System.nanoTime() - started) / 1_000_000.0;
             jdbc.update("""
-                    insert into ml_shadow (tx_id, model_id, algorithm, prediction, probability, engine_decision, latency_ms, at)
-                    values (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, txId, modelId, prediction.algorithm(), prediction.label(), prediction.fraudProbability(),
-                    engineDecision, ms, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+                    insert into ml_shadow (tx_id, model_id, algorithm, prediction, probability, engine_decision, latency_ms, at, stage)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, txId, usedId, prediction.algorithm(), prediction.label(), prediction.fraudProbability(),
+                    engineDecision, ms, Timestamp.valueOf(LocalDateTime.now().withNano(0)), stage);
             Map<String, Object> out = new java.util.LinkedHashMap<>();
             out.put("mode", "shadow");
+            out.put("stage", stage);
+            out.put("featureSet", featureSet);
             out.put("active", true);
             out.put("affectsDecision", false);
-            out.put("modelId", modelId);
+            out.put("modelId", usedId);
             out.put("algorithm", prediction.algorithm());
             out.put("prediction", prediction.label());
             out.put("probability", prediction.fraudProbability());
@@ -60,9 +83,9 @@ public class MachineLearningService {
         } catch (Exception e) {
             log.warn("ML em modo sombra falhou; a decisão do motor permanece: {}", e.toString());
             try {
-                jdbc.update("insert into ml_shadow (tx_id, model_id, engine_decision, at, error) values (?, ?, ?, ?, ?)",
-                        txId, modelId > 0 ? modelId : null, engineDecision, Timestamp.valueOf(LocalDateTime.now().withNano(0)),
-                        trim(e.getMessage()));
+                jdbc.update("insert into ml_shadow (tx_id, model_id, engine_decision, at, error, stage) values (?, ?, ?, ?, ?, ?)",
+                        txId, usedId > 0 ? usedId : null, engineDecision, Timestamp.valueOf(LocalDateTime.now().withNano(0)),
+                        trim(e.getMessage()), stage);
             } catch (Exception ignored) {
                 log.warn("Não foi possível registrar a falha do modo sombra.");
             }
@@ -73,11 +96,12 @@ public class MachineLearningService {
 
     public List<Map<String, Object>> rows(String txId) {
         return jdbc.query("""
-                select model_id, algorithm, prediction, probability, engine_decision, latency_ms, error, at
+                select model_id, algorithm, prediction, probability, engine_decision, latency_ms, error, at, stage
                 from ml_shadow where tx_id = ? order by id
                 """, (rs, n) -> {
             Map<String, Object> row = new java.util.LinkedHashMap<>();
             row.put("modelId", rs.getObject("model_id"));
+            row.put("stage", rs.getString("stage"));
             row.put("algorithm", rs.getString("algorithm"));
             row.put("prediction", rs.getString("prediction"));
             row.put("probability", rs.getObject("probability"));
@@ -90,22 +114,34 @@ public class MachineLearningService {
         }, txId);
     }
 
-    private SavedModel approved() throws Exception {
+    private SavedModel approved(String featureSet) throws Exception {
         List<String> paths = new ArrayList<>();
         List<Long> ids = new ArrayList<>();
-        jdbc.query("select id, path from ml_model where status = 'APPROVED' order by id desc", rs -> {
-            ids.add(rs.getLong("id"));
-            paths.add(rs.getString("path"));
-        });
+        jdbc.query("select id, path from ml_model where status = 'APPROVED' and coalesce(feature_set, 'operation') = ? order by id desc",
+                rs -> {
+                    ids.add(rs.getLong("id"));
+                    paths.add(rs.getString("path"));
+                }, featureSet);
         if (ids.isEmpty()) return null;
         long id = ids.get(0);
         String path = paths.get(0);
-        if (model != null && modelId == id) return model;
+        boolean contextual = "context".equals(featureSet);
+        SavedModel cached = contextual ? contextModel : model;
+        long cachedId = contextual ? contextModelId : modelId;
+        if (cached != null && cachedId == id) return cached;
         synchronized (this) {
-            if (model != null && modelId == id) return model;
-            model = SavedModel.load(Path.of(path));
-            modelId = id;
-            return model;
+            cached = contextual ? contextModel : model;
+            cachedId = contextual ? contextModelId : modelId;
+            if (cached != null && cachedId == id) return cached;
+            SavedModel loaded = SavedModel.load(Path.of(path));
+            if (contextual) {
+                contextModel = loaded;
+                contextModelId = id;
+            } else {
+                model = loaded;
+                modelId = id;
+            }
+            return loaded;
         }
     }
 

@@ -81,10 +81,34 @@ public final class WeightSearch {
         out.put("suggestedWeights", improved ? best : Map.of());
         out.put("requestedCandidates", requested);
         out.put("independentConfirm", true);
+        boolean negativesFell = bestConfirm.falseNegatives < baselineConfirm.falseNegatives;
+        boolean positivesFell = bestConfirm.falsePositives < baselineConfirm.falsePositives;
         out.put("published", false);
-        out.put("note", improved
+        out.put("falseNegativesFellOnConfirm", negativesFell);
+        out.put("falsePositivesFellOnConfirm", positivesFell);
+        out.put("criticalFloorsRespected", true);
+        out.put("reasons", reasons(improved ? best : Map.of()));
+        String note = improved
                 ? "A sugestão reduziu o custo na busca e não piorou falso negativo nem custo na confirmação. Ela não foi publicada."
-                : "Nenhuma candidata melhorou a busca e se manteve na confirmação. A política ativa não muda.");
+                : "Nenhuma candidata melhorou a busca e se manteve na confirmação. A política ativa não muda.";
+        if (improved && positivesFell && !negativesFell)
+            note += " O falso positivo caiu na confirmação e o falso negativo não.";
+        out.put("note", note);
+        return out;
+    }
+
+    private static List<Map<String, Object>> reasons(Map<String, Integer> overlay) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map.Entry<String, Integer> change : overlay.entrySet()) {
+            Weights.Bound bound = Weights.bound(change.getKey());
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("key", change.getKey());
+            row.put("from", bound.fallback());
+            row.put("to", change.getValue());
+            row.put("safetyFloor", bound.safetyFloor());
+            row.put("why", bound.detail() + " O valor ficou dentro do limite " + bound.min() + "–" + bound.max() + ".");
+            out.add(row);
+        }
         return out;
     }
 
