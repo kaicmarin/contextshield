@@ -1,0 +1,10 @@
+target/
+node_modules/
+dist/
+perf/results/*.json
+!perf/results/2026-*.json
+.env
+*.log
+.DS_Store
+.idea/
+.vscode/
