@@ -2,10 +2,15 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
 COPY pom.xml .
+COPY machine-learning/pom.xml machine-learning/
 COPY services/risk-engine/pom.xml services/risk-engine/
 COPY services/core-api/pom.xml services/core-api/
+COPY services/ml-service/pom.xml services/ml-service/
+COPY services/threat-service/pom.xml services/threat-service/
+COPY services/investigation-service/pom.xml services/investigation-service/
 # baixa dependências numa camada própria: mudar código não baixa tudo de novo
 RUN mvn -B -q -pl services/core-api -am dependency:go-offline -DexcludeArtifactIds=risk-engine || true
+COPY machine-learning machine-learning
 COPY services services
 RUN mvn -B -q -pl services/core-api -am package -Dmaven.test.skip=true
 

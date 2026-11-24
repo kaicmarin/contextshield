@@ -1,0 +1,120 @@
+# Uma EC2, cinco processos. Portas internas ficam na rede Docker.
+# Só o proxy publica 80 e 443. Não sobe nada na AWS por conta própria.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: contextshield
+      POSTGRES_USER: contextshield
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD}
+      TZ: America/Sao_Paulo
+      CORE_DB_PASSWORD: ${CORE_DB_PASSWORD:?defina CORE_DB_PASSWORD}
+      THREAT_DB_PASSWORD: ${THREAT_DB_PASSWORD:?defina THREAT_DB_PASSWORD}
+      INVESTIGATION_DB_PASSWORD: ${INVESTIGATION_DB_PASSWORD:?defina INVESTIGATION_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U contextshield"]
+      interval: 5s
+      retries: 12
+    restart: unless-stopped
+    networks: [internal]
+
+  risk-engine:
+    build: { context: ., dockerfile: services/risk-engine/Dockerfile }
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      JAVA_OPTS: "-Xmx256m -XX:+UseSerialGC"
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
+    restart: unless-stopped
+    networks: [internal]
+
+  ml-service:
+    build: { context: ., dockerfile: services/ml-service/Dockerfile }
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      MODELS_DIR: /opt/models
+      JAVA_OPTS: "-Xmx512m -XX:+UseSerialGC"
+    mem_limit: 768m
+    restart: unless-stopped
+    networks: [internal]
+
+  threat-service:
+    build: { context: ., dockerfile: services/threat-service/Dockerfile }
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=threat
+      DATABASE_USER: threat_app
+      DATABASE_PASSWORD: ${THREAT_DB_PASSWORD:?defina THREAT_DB_PASSWORD}
+      FLYWAY_TABLE: flyway_threat_history
+      JAVA_OPTS: "-Xmx256m -XX:+UseSerialGC"
+    depends_on:
+      postgres: { condition: service_healthy }
+    mem_limit: 384m
+    restart: unless-stopped
+    networks: [internal]
+
+  investigation-service:
+    build: { context: ., dockerfile: services/investigation-service/Dockerfile }
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=investigation
+      DATABASE_USER: investigation_app
+      DATABASE_PASSWORD: ${INVESTIGATION_DB_PASSWORD:?defina INVESTIGATION_DB_PASSWORD}
+      FLYWAY_TABLE: flyway_investigation_history
+      JAVA_OPTS: "-Xmx256m -XX:+UseSerialGC"
+    depends_on:
+      postgres: { condition: service_healthy }
+    mem_limit: 384m
+    restart: unless-stopped
+    networks: [internal]
+
+  core-api:
+    build: { context: ., dockerfile: services/core-api/Dockerfile }
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield
+      DATABASE_USER: core_app
+      DATABASE_PASSWORD: ${CORE_DB_PASSWORD:?defina CORE_DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      RISK_ENGINE_URL: http://risk-engine:8081
+      ML_SERVICE_URL: http://ml-service:8082
+      THREAT_SERVICE_URL: http://threat-service:8083
+      INVESTIGATION_SERVICE_URL: http://investigation-service:8084
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost}
+      JAVA_OPTS: "-Xmx512m -XX:+UseSerialGC"
+    depends_on:
+      postgres: { condition: service_healthy }
+      risk-engine: { condition: service_healthy }
+    mem_limit: 768m
+    restart: unless-stopped
+    networks: [internal]
+
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./frontend:/srv/frontend:ro
+      - caddy-data:/data
+    mem_limit: 64m
+    depends_on: [core-api]
+    restart: unless-stopped
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  pgdata:
+  caddy-data:

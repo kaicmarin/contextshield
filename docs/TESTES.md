@@ -27,6 +27,8 @@ mvn verify
 
 **129 testes, 0 falhas** na execução de 24/11/2026 do mesmo comando. Os três testes novos conferem que a fraude que nega ajuda usa o mesmo vetor da compra habitual, que outra semente repete o empate e que um corte mais baixo no modelo publicado marca compras habituais. Nenhum modelo foi substituído.
 
+**137 testes, 0 falhas** na execução seguinte, com os três serviços novos. Entraram a equivalência do modelo publicado, a recusa de treino na requisição, o indicador que nasce não verificado, o caso que não vira rótulo de treino e a porta da core-api que não abre investigação para o cliente. Docker não estava instalado, então a suíte de contêiner não rodou.
+
 | Classe | Testes | O que cobre |
 |---|---|---|
 | `risk-engine` · `ParityTest` | 43 | O motor Java decide **igual ao protótipo original** em 43 cenários gravados: sinais, score, banda, confiança, decisão proposta e final, regra e fragilidade |

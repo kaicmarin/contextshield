@@ -60,6 +60,22 @@ class WeightPolicyTest {
     }
 
     @Test
+    void declaredDenialIsNotProofOfLegitimacy() {
+        var afternoon = habitual(LocalDateTime.of(2026, 6, 15, 15, 0));
+        var before = new RiskAssessor().assess(afternoon);
+        var denied = new RiskAssessor().assess(afternoon.withStage("recalculated",
+                new AssessmentInput.Answers("self", "no", "mine", "no", null, null, null)));
+        assertTrue(denied.signals().stream().anyMatch(s -> s.id().equals("VER_CLEAR") && s.basePoints() < 0));
+        assertTrue(denied.score() < before.score());
+        assertTrue("APPROVE".equals(denied.decision()) || "APPROVE_WITH_ALERT".equals(denied.decision()));
+        assertTrue("R8".equals(denied.ruleId()) || "S-R8".equals(denied.ruleId()));
+        var coached = new RiskAssessor().assess(afternoon.withStage("recalculated",
+                new AssessmentInput.Answers("asked", "phone", "mine", "yes", null, null, null)));
+        assertEquals("R2", coached.ruleId());
+        assertEquals("INTERVENE", coached.decision());
+    }
+
+    @Test
     void blockThresholdCannotBeWeakenedPast80() {
         assertEquals(80, Weights.value(Map.of("THRESHOLD_BLOCK", 95), "THRESHOLD_BLOCK"));
         assertEquals(20, Weights.value(Map.of("DESTINATION_IN_INCIDENT", 4), "DESTINATION_IN_INCIDENT"));

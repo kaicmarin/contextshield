@@ -55,6 +55,15 @@ contextshield:
     anchor-today: ${SEED_ANCHOR_TODAY:true}
   check:
     per-minute: ${CHECK_PER_MINUTE:40}
+  ml:
+    url: ${ML_SERVICE_URL:}
+    timeout-ms: ${ML_TIMEOUT_MS:800}
+  threat:
+    url: ${THREAT_SERVICE_URL:}
+    timeout-ms: ${THREAT_TIMEOUT_MS:800}
+  investigation:
+    url: ${INVESTIGATION_SERVICE_URL:}
+    timeout-ms: ${INVESTIGATION_TIMEOUT_MS:800}
 
 logging:
   pattern:
