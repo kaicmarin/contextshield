@@ -1,0 +1,22 @@
+# O endereço público vem de PUBLIC_HOST. Sem domínio, use localhost e só HTTP.
+# Com um domínio real, o Caddy pede o certificado sozinho. Isso não foi testado aqui.
+{$PUBLIC_HOST:localhost} {
+	encode gzip
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+	handle /api/* {
+		reverse_proxy core-api:8080
+	}
+	handle /actuator/* {
+		respond "fechado" 404
+	}
+	handle {
+		root * /srv/frontend
+		try_files {path} {path}.html /index.html
+		file_server
+	}
+}

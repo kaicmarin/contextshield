@@ -24,13 +24,15 @@ public class MachineLearningService {
     private static final Logger log = LoggerFactory.getLogger(MachineLearningService.class);
 
     private final JdbcTemplate jdbc;
+    private final MlClient remote;
     private volatile SavedModel model;
     private volatile long modelId = -1;
     private volatile SavedModel contextModel;
     private volatile long contextModelId = -1;
 
-    public MachineLearningService(JdbcTemplate jdbc) {
+    public MachineLearningService(JdbcTemplate jdbc, MlClient remote) {
         this.jdbc = jdbc;
+        this.remote = remote;
     }
 
     public Map<String, Object> shadow(String txId, Map<String, Object> checkout, String engineDecision) {
@@ -59,6 +61,7 @@ public class MachineLearningService {
         quiet.put("affectsDecision", false);
         long usedId = -1;
         try {
+            if (remote.enabled()) return predictRemote(txId, checkout, engineDecision, stage, featureSet, contextual, organizationId);
             SavedModel current = approved(featureSet, organizationId);
             if (current == null) return quiet;
             usedId = "context".equals(featureSet) ? contextModelId : modelId;
@@ -97,6 +100,52 @@ public class MachineLearningService {
             quiet.put("error", true);
             return quiet;
         }
+    }
+
+    private Map<String, Object> predictRemote(String txId, Map<String, Object> checkout, String engineDecision, String stage,
+                                              String featureSet, boolean contextual, long organizationId) {
+        List<Long> ids = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
+        jdbc.query("""
+                select id, path from ml_model
+                where status = 'APPROVED' and coalesce(feature_set, 'operation') = ? and coalesce(organization_id, 1) = ?
+                order by id desc
+                """, rs -> {
+            ids.add(rs.getLong("id"));
+            paths.add(rs.getString("path"));
+        }, featureSet, organizationId);
+        Map<String, Object> quiet = new java.util.LinkedHashMap<>();
+        quiet.put("mode", "shadow");
+        quiet.put("stage", stage);
+        quiet.put("featureSet", featureSet);
+        quiet.put("active", false);
+        quiet.put("affectsDecision", false);
+        if (ids.isEmpty()) return quiet;
+        String file = Path.of(paths.get(0)).getFileName().toString();
+        Map<String, Object> result = remote.predict(file, checkout, contextual, organizationId);
+        Object label = result.get("prediction");
+        if (!(result.get("probability") instanceof Number probability) || label == null) {
+            throw new IllegalStateException("Resposta do ML Service sem previsão.");
+        }
+        double ms = result.get("latencyMs") instanceof Number latency ? latency.doubleValue() : 0;
+        jdbc.update("""
+                insert into ml_shadow (tx_id, model_id, algorithm, prediction, probability, engine_decision, latency_ms, at, stage, organization_id)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, txId, ids.get(0), result.get("algorithm"), label, probability.doubleValue(),
+                engineDecision, ms, Timestamp.valueOf(LocalDateTime.now().withNano(0)), stage, organizationId);
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("mode", "shadow");
+        out.put("stage", stage);
+        out.put("featureSet", featureSet);
+        out.put("active", true);
+        out.put("affectsDecision", false);
+        out.put("modelId", ids.get(0));
+        out.put("algorithm", result.get("algorithm"));
+        out.put("prediction", label);
+        out.put("probability", probability.doubleValue());
+        out.put("latencyMs", ms);
+        out.put("explanation", explain(stage, String.valueOf(label), engineDecision));
+        return out;
     }
 
     public List<Map<String, Object>> rows(String txId) {

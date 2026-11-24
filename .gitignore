@@ -4,6 +4,7 @@ dist/
 perf/results/*.json
 !perf/results/2026-*.json
 .env
+backups/
 *.log
 .DS_Store
 .idea/

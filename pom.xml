@@ -21,6 +21,9 @@
   <modules>
     <module>services/risk-engine</module>
     <module>machine-learning</module>
+    <module>services/ml-service</module>
+    <module>services/threat-service</module>
+    <module>services/investigation-service</module>
     <module>services/core-api</module>
   </modules>
 

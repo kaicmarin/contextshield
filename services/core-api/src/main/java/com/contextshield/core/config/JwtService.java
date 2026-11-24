@@ -47,10 +47,17 @@ public class JwtService {
 
     /** Token curto que a core-api usa para chamar o risk-engine. */
     public String serviceToken() {
+        return serviceToken(null);
+    }
+
+    /** O id da organização sai da sessão já autenticada na core-api. O serviço interno não aceita o corpo. */
+    public String serviceToken(Long organizationId) {
         Instant now = Instant.now();
-        return Jwts.builder().subject("core-api").claim("role", "SERVICE")
+        var builder = Jwts.builder().subject("core-api").claim("role", "SERVICE")
                 .issuedAt(Date.from(now)).expiration(Date.from(now.plus(5, ChronoUnit.MINUTES)))
-                .issuer("contextshield-core").signWith(key).compact();
+                .issuer("contextshield-core");
+        if (organizationId != null) builder.claim("org", organizationId);
+        return builder.signWith(key).compact();
     }
 
     public Claims parse(String token) {

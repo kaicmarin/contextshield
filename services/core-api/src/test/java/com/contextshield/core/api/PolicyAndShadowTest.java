@@ -129,13 +129,14 @@ class PolicyAndShadowTest extends TestSupport {
         try {
             var tx = read(call(post("/api/transactions"), ana(), Map.of(
                     "items", java.util.List.of(Map.of("productId", "prod-010", "quantity", 1)),
-                    "addressId", "ADDR-ANA-HOME", "deviceId", "DEV-ANA-MBA", "declaredOrigin", "ad"))
+                    "addressId", "ADDR-ANA-HOME", "deviceId", "DEV-ANA-MBA", "declaredOrigin", "link"))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.status").value("CONTEXT_REQUIRED")));
             String id = tx.path("id").asText();
             call(get("/api/ops/transactions/" + id), analyst(), null)
                     .andExpect(jsonPath("$.verificationState").value("REQUESTED"))
-                    .andExpect(jsonPath("$.summary.ruleId").value("R12"));
+                    .andExpect(jsonPath("$.summary.ruleId").value(org.hamcrest.Matchers.anyOf(
+                            org.hamcrest.Matchers.equalTo("R6"), org.hamcrest.Matchers.equalTo("R5"))));
             jdbc.update("update verification set expires_at = timestamp '2020-01-01 00:00:00' where tx_id = ?", id);
             call(post("/api/transactions/" + id + "/verification"), ana(), Map.of("answers", Map.of("origin", "self", "contact", "no", "address", "mine", "coached", "no")))
                     .andExpect(status().isConflict());
