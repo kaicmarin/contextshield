@@ -41,6 +41,7 @@ public class MlLabService implements ApplicationRunner {
     private final RiskPolicyService policies;
     private final EngineInputBuilder inputs;
     private final com.contextshield.core.repo.TransactionRepository transactions;
+    private final OrganizationService organizations;
     private final AtomicBoolean busy = new AtomicBoolean(false);
     private final ExecutorService pool = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "ml-experiment");
@@ -49,13 +50,15 @@ public class MlLabService implements ApplicationRunner {
     });
 
     public MlLabService(JdbcTemplate jdbc, ObjectMapper mapper, AuditService audit, RiskPolicyService policies,
-                        EngineInputBuilder inputs, com.contextshield.core.repo.TransactionRepository transactions) {
+                        EngineInputBuilder inputs, com.contextshield.core.repo.TransactionRepository transactions,
+                        OrganizationService organizations) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.audit = audit;
         this.policies = policies;
         this.inputs = inputs;
         this.transactions = transactions;
+        this.organizations = organizations;
     }
 
     @Override
@@ -66,12 +69,12 @@ public class MlLabService implements ApplicationRunner {
         importContextIfMissing();
     }
 
-    public Map<String, Object> overview() {
+    public Map<String, Object> overview(long organizationId) {
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("models", models());
-        out.put("experiments", experiments());
-        out.put("suggestions", suggestions());
-        out.put("shadow", shadowSummary());
+        out.put("models", models(organizationId));
+        out.put("experiments", experiments(organizationId));
+        out.put("suggestions", suggestions(organizationId));
+        out.put("shadow", shadowSummary(organizationId));
         out.put("confirmed", jdbc.queryForObject("select count(*) from known_outcome where label in ('FRAUD', 'LEGIT')", Integer.class));
         out.put("limitation", "Métricas de arquivo ou de experimento vêm de operações sintéticas, salvo quando a linha diz a origem. Elas não medem fraude bancária real.");
         return out;
@@ -89,11 +92,12 @@ public class MlLabService implements ApplicationRunner {
 
     public Map<String, Object> experiment(long id) {
         List<Map<String, Object>> rows = jdbc.query("""
-                select id, kind, status, seed, example_count, requested_by, created_at, finished_at, error, report_json
+                select id, kind, status, seed, example_count, requested_by, created_at, finished_at, error, report_json, organization_id
                 from ml_experiment where id = ?
                 """, (rs, n) -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", rs.getLong("id"));
+            row.put("organizationId", rs.getLong("organization_id"));
             row.put("kind", rs.getString("kind"));
             row.put("status", rs.getString("status"));
             row.put("seed", rs.getLong("seed"));
@@ -110,21 +114,55 @@ public class MlLabService implements ApplicationRunner {
         return rows.get(0);
     }
 
+    public Map<String, Object> experiment(long id, long organizationId) {
+        Map<String, Object> row = experiment(id);
+        if (((Number) row.get("organizationId")).longValue() != organizationId) throw ApiException.notFound("Experimento");
+        return row;
+    }
+
     public Map<String, Object> approveModel(long id, String actor) {
-        String validation = jdbc.query("select validation from ml_model where id = ?", rs -> rs.next() ? rs.getString(1) : null, id);
-        if (validation == null) throw ApiException.notFound("Modelo");
-        if (!"PASS".equals(validation)) throw ApiException.conflict("A validação automática não passou. O modelo não pode ser aprovado.");
-        jdbc.update("update ml_model set status = 'VALIDATED' where status = 'APPROVED'");
-        jdbc.update("update ml_model set status = 'APPROVED', approved_by = ?, approved_at = ? where id = ?",
+        Map<String, Object> row = jdbc.query("""
+                select validation, coalesce(feature_set, 'operation') feature_set, coalesce(organization_id, 1) organization_id
+                from ml_model where id = ?
+                """, rs -> {
+            if (!rs.next()) return null;
+            Map<String, Object> found = new LinkedHashMap<>();
+            found.put("validation", rs.getString("validation"));
+            found.put("featureSet", rs.getString("feature_set"));
+            found.put("organizationId", rs.getLong("organization_id"));
+            return found;
+        }, id);
+        if (row == null) throw ApiException.notFound("Modelo");
+        long organizationId = ((Number) row.get("organizationId")).longValue();
+        if (organizationId != organizations.idOfEmail(actor)) throw ApiException.notFound("Modelo");
+        String validation = String.valueOf(row.get("validation"));
+        String featureSet = String.valueOf(row.get("featureSet"));
+        boolean contextShadow = "context".equals(featureSet) && "RECORDED".equals(validation);
+        if (!"PASS".equals(validation) && !contextShadow)
+            throw ApiException.conflict("A validação automática não passou. O modelo de operação não pode ser aprovado.");
+        jdbc.update("""
+                update ml_model set status = 'VALIDATED'
+                where status = 'APPROVED' and coalesce(feature_set, 'operation') = ? and coalesce(organization_id, 1) = ?
+                """, featureSet, organizationId);
+        jdbc.update("update ml_model set status = 'APPROVED', approved_by = ?, approved_at = ?, decision_authorized = false where id = ?",
                 actor, Timestamp.valueOf(LocalDateTime.now().withNano(0)), id);
-        jdbc.update("update ml_model set decision_authorized = false where id = ?", id);
-        audit.log(actor, "ML_APPROVED", String.valueOf(id), "Modo sombra. Não decide a compra.");
-        return Map.of("id", id, "status", "APPROVED", "usage", "shadow", "decisionAuthorized", false);
+        String detail = contextShadow
+                ? "Aprovado só para sombra. A meta de aceite não foi atingida e o modelo não decide a compra."
+                : "Modo sombra. Não decide a compra.";
+        audit.log(actor, "ML_APPROVED", String.valueOf(id), detail);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("id", id);
+        out.put("status", "APPROVED");
+        out.put("usage", "shadow");
+        out.put("featureSet", featureSet);
+        out.put("decisionAuthorized", false);
+        out.put("acceptanceGatePassed", "PASS".equals(validation));
+        out.put("message", detail);
+        return out;
     }
 
     public Map<String, Object> refuseDecisionUse(long id, String actor) {
-        Integer count = jdbc.queryForObject("select count(*) from ml_model where id = ?", Integer.class, id);
-        if (count == null || count == 0) throw ApiException.notFound("Modelo");
+        requireModel(id, actor);
         jdbc.update("update ml_model set decision_authorized = false where id = ?", id);
         audit.log(actor, "ML_DECISION_REFUSED", String.valueOf(id), "O modelo continua sem poder aprovar ou bloquear.");
         return Map.of("id", id, "decisionAuthorized", false,
@@ -132,6 +170,7 @@ public class MlLabService implements ApplicationRunner {
     }
 
     public Map<String, Object> rejectModel(long id, String actor) {
+        requireModel(id, actor);
         int n = jdbc.update("update ml_model set status = 'REJECTED' where id = ? and status <> 'APPROVED'", id);
         if (n == 0) throw ApiException.conflict("Desaprove o modelo em uso antes, ou ele não existe.");
         audit.log(actor, "ML_REJECTED", String.valueOf(id), null);
@@ -165,24 +204,27 @@ public class MlLabService implements ApplicationRunner {
         return Map.of("txId", txId, "label", label, "reviewState", "PENDING", "originKind", "REPORT", "usedAsTrainingLabel", false);
     }
 
-    public Map<String, Object> monitor() {
-        Integer predictions = jdbc.queryForObject("select count(*) from ml_shadow where error is null", Integer.class);
-        Integer failures = jdbc.queryForObject("select count(*) from ml_shadow where error is not null", Integer.class);
-        Double latency = jdbc.queryForObject("select avg(latency_ms) from ml_shadow where error is null", Double.class);
+    public Map<String, Object> monitor(long organizationId) {
+        Integer predictions = jdbc.queryForObject("select count(*) from ml_shadow where error is null and organization_id = ?", Integer.class, organizationId);
+        Integer failures = jdbc.queryForObject("select count(*) from ml_shadow where error is not null and organization_id = ?", Integer.class, organizationId);
+        Double latency = jdbc.queryForObject("select avg(latency_ms) from ml_shadow where error is null and organization_id = ?", Double.class, organizationId);
         Integer reviewed = jdbc.queryForObject("""
-                select count(*) from known_outcome
-                where review_state = 'REVIEWED' and origin_kind in ('VERIFIED', 'ANALYST') and label in ('FRAUD', 'LEGIT')
-                """, Integer.class);
+                select count(*) from known_outcome k
+                join transactions t on t.id = k.tx_id
+                where k.review_state = 'REVIEWED' and k.origin_kind in ('VERIFIED', 'ANALYST') and k.label in ('FRAUD', 'LEGIT')
+                  and coalesce(t.organization_id, 1) = ?
+                """, Integer.class, organizationId);
         List<Map<String, Object>> byPrediction = jdbc.query("""
                 select coalesce(stage, 'initial') stage, prediction, count(*) total
-                from ml_shadow where error is null group by coalesce(stage, 'initial'), prediction order by 1, 2
-                """, (rs, n) -> Map.of("stage", rs.getString(1), "prediction", rs.getString(2), "total", rs.getInt(3)));
+                from ml_shadow where error is null and organization_id = ?
+                group by coalesce(stage, 'initial'), prediction order by 1, 2
+                """, (rs, n) -> Map.of("stage", rs.getString(1), "prediction", rs.getString(2), "total", rs.getInt(3)), organizationId);
         Integer disagreements = jdbc.queryForObject("""
-                select count(*) from ml_shadow where error is null and (
+                select count(*) from ml_shadow where error is null and organization_id = ? and (
                     (prediction = 'FRAUD' and engine_decision in ('APPROVE', 'APPROVE_WITH_ALERT'))
                     or (prediction = 'LEGIT' and engine_decision in ('BLOCK', 'INTERVENE'))
                 )
-                """, Integer.class);
+                """, Integer.class, organizationId);
         int labels = reviewed == null ? 0 : reviewed;
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("predictions", predictions == null ? 0 : predictions);
@@ -241,12 +283,12 @@ public class MlLabService implements ApplicationRunner {
         Map<String, Object> metrics = (Map<String, Object>) model.get("metrics");
         jdbc.update("""
                 insert into ml_model (experiment_id, algorithm, status, path, metrics_json, data_origin, example_count,
-                    fraud_count, legit_count, library, library_version, validation, created_at, feature_set)
-                values (?, ?, 'TRAINED', ?, ?, 'sintetico', ?, ?, ?, 'smile-core', ?, ?, ?, ?)
+                    fraud_count, legit_count, library, library_version, validation, created_at, feature_set, organization_id)
+                values (?, ?, 'TRAINED', ?, ?, 'sintetico', ?, ?, ?, 'smile-core', ?, ?, ?, ?, ?)
                 """, experimentId, model.get("algorithm"), model.get("path"), write(metrics),
                 metrics.get("examples"), metrics.get("frauds"), metrics.get("legits"), report.get("libraryVersion"),
                 model.get("validation"), Timestamp.valueOf(LocalDateTime.now().withNano(0)),
-                model.get("featureSet") == null ? "operation" : model.get("featureSet"));
+                model.get("featureSet") == null ? "operation" : model.get("featureSet"), organizationOf(experimentId));
     }
 
     @SuppressWarnings("unchecked")
@@ -302,34 +344,46 @@ public class MlLabService implements ApplicationRunner {
     private void storeContext(long experimentId, String algorithm, Object path, Map<String, Object> metrics, Map<String, Object> report) {
         jdbc.update("""
                 insert into ml_model (experiment_id, algorithm, status, path, metrics_json, data_origin, example_count,
-                    fraud_count, legit_count, library, library_version, validation, created_at, feature_set)
-                values (?, ?, 'TRAINED', ?, ?, 'sintetico', ?, ?, ?, 'smile-core', ?, 'RECORDED', ?, 'context')
+                    fraud_count, legit_count, library, library_version, validation, created_at, feature_set, organization_id)
+                values (?, ?, 'TRAINED', ?, ?, 'sintetico', ?, ?, ?, 'smile-core', ?, 'RECORDED', ?, 'context', ?)
                 """, experimentId, algorithm, path, write(metrics),
                 metrics.get("examples"), metrics.get("frauds"), metrics.get("legits"),
                 String.valueOf(report.get("library")).replace("smile-core ", ""),
-                Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+                Timestamp.valueOf(LocalDateTime.now().withNano(0)), organizationOf(experimentId));
     }
 
     private long insertExperiment(int count, long seed, String actor) {
         GeneratedKeyHolder keys = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement(
-                    "insert into ml_experiment (kind, status, seed, example_count, requested_by, created_at) values ('TRAIN', 'QUEUED', ?, ?, ?, ?)",
+                    "insert into ml_experiment (kind, status, seed, example_count, requested_by, created_at, organization_id) values ('TRAIN', 'QUEUED', ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, seed);
             ps.setInt(2, count);
             ps.setString(3, actor);
             ps.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+            ps.setLong(5, organizations.idOfEmail(actor));
             return ps;
         }, keys);
         return GeneratedIds.of(keys);
     }
 
-    private List<Map<String, Object>> models() {
+    private long organizationOf(long experimentId) {
+        Long id = jdbc.queryForObject("select coalesce(organization_id, 1) from ml_experiment where id = ?", Long.class, experimentId);
+        return id == null ? 1L : id;
+    }
+
+    private void requireModel(long id, String actor) {
+        Long organizationId = jdbc.query("select organization_id from ml_model where id = ?",
+                rs -> rs.next() ? rs.getLong(1) : null, id);
+        if (organizationId == null || organizationId != organizations.idOfEmail(actor)) throw ApiException.notFound("Modelo");
+    }
+
+    private List<Map<String, Object>> models(long organizationId) {
         return jdbc.query("""
                 select id, algorithm, status, path, metrics_json, data_origin, example_count, fraud_count, legit_count,
                        library, library_version, validation, created_at, approved_by, decision_authorized, feature_set
-                from ml_model order by id desc
+                from ml_model where coalesce(organization_id, 1) = ? order by id desc
                 """, (rs, n) -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", rs.getLong("id"));
@@ -349,11 +403,11 @@ public class MlLabService implements ApplicationRunner {
             row.put("featureSet", rs.getString("feature_set"));
             row.put("usage", "APPROVED".equals(rs.getString("status")) ? "shadow" : "stored");
             return row;
-        });
+        }, organizationId);
     }
 
-    private List<Map<String, Object>> experiments() {
-        return jdbc.query("select id, status, seed, example_count, requested_by, created_at, finished_at, error from ml_experiment order by id desc",
+    private List<Map<String, Object>> experiments(long organizationId) {
+        return jdbc.query("select id, status, seed, example_count, requested_by, created_at, finished_at, error from ml_experiment where coalesce(organization_id, 1) = ? order by id desc",
                 (rs, n) -> {
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("id", rs.getLong(1));
@@ -366,11 +420,17 @@ public class MlLabService implements ApplicationRunner {
                     row.put("finishedAt", finished == null ? null : finished.toLocalDateTime());
                     row.put("error", rs.getString(8));
                     return row;
-                });
+                }, organizationId);
     }
 
-    private List<Map<String, Object>> suggestions() {
-        return jdbc.query("select id, status, note, weights_json, metrics_json, created_at from weight_suggestion order by id desc",
+    private List<Map<String, Object>> suggestions(long organizationId) {
+        return jdbc.query("""
+                select s.id, s.status, s.note, s.weights_json, s.metrics_json, s.created_at
+                from weight_suggestion s
+                join ml_experiment e on e.id = s.experiment_id
+                where coalesce(e.organization_id, 1) = ?
+                order by s.id desc
+                """,
                 (rs, n) -> {
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("id", rs.getLong("id"));
@@ -380,18 +440,18 @@ public class MlLabService implements ApplicationRunner {
                     row.put("metrics", read(rs.getString("metrics_json")));
                     row.put("createdAt", rs.getTimestamp("created_at").toLocalDateTime());
                     return row;
-                });
+                }, organizationId);
     }
 
-    private Map<String, Object> shadowSummary() {
-        Integer total = jdbc.queryForObject("select count(*) from ml_shadow", Integer.class);
-        Integer failures = jdbc.queryForObject("select count(*) from ml_shadow where error is not null", Integer.class);
+    private Map<String, Object> shadowSummary(long organizationId) {
+        Integer total = jdbc.queryForObject("select count(*) from ml_shadow where organization_id = ?", Integer.class, organizationId);
+        Integer failures = jdbc.queryForObject("select count(*) from ml_shadow where error is not null and organization_id = ?", Integer.class, organizationId);
         Integer agree = jdbc.queryForObject("""
-                select count(*) from ml_shadow where error is null and (
+                select count(*) from ml_shadow where error is null and organization_id = ? and (
                     (prediction = 'FRAUD' and engine_decision in ('BLOCK', 'INTERVENE', 'REQUEST_CONTEXT'))
                     or (prediction = 'LEGIT' and engine_decision in ('APPROVE', 'APPROVE_WITH_ALERT'))
                 )
-                """, Integer.class);
+                """, Integer.class, organizationId);
         return Map.of("predictions", total == null ? 0 : total, "failures", failures == null ? 0 : failures,
                 "sameDirection", agree == null ? 0 : agree);
     }

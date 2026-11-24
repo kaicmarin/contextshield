@@ -49,4 +49,18 @@ class ContextStudyTest {
         SavedModel loaded = SavedModel.load(dir.resolve("models/random-forest-context.ser"));
         assertEquals(ContextFeatures.NAMES.length, loaded.featureNames().length);
     }
+
+    @Test
+    void savedContextModelsReload() throws Exception {
+        Path logistic = Path.of("models", "logistic-context.ser");
+        Path forest = Path.of("models", "random-forest-context.ser");
+        org.junit.jupiter.api.Assumptions.assumeTrue(Files.isRegularFile(logistic) && Files.isRegularFile(forest));
+        SavedModel logisticModel = SavedModel.load(logistic);
+        SavedModel forestModel = SavedModel.load(forest);
+        assertEquals(ContextFeatures.NAMES.length, logisticModel.featureNames().length);
+        assertEquals(ContextFeatures.NAMES.length, forestModel.featureNames().length);
+        double[] row = ContextFeatures.vector(ContextCases.development(80, 1L).get(0).checkout());
+        assertTrue(logisticModel.predict(row).fraudProbability() >= 0);
+        assertTrue(forestModel.predict(row).fraudProbability() >= 0);
+    }
 }

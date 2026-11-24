@@ -67,12 +67,12 @@ public class PartnerAssessmentService {
         input.putIfAbsent("at", LocalDateTime.now().withNano(0).toString());
         input.putIfAbsent("unavailable", List.of());
         Map<String, Object> config = new LinkedHashMap<>(settings.config());
-        config.put("weights", policies.activeWeights(profile));
+        config.put("weights", policies.activeWeights(profile, orgId));
         input.put("config", config);
 
         JsonNode result = engine.assess(input);
         String decision = result.path("decision").asText();
-        Map<String, Object> ml = learning.shadow("PARCEIRO-" + orgId + "-" + idempotencyKey, input, decision);
+        Map<String, Object> ml = learning.shadow("PARCEIRO-" + orgId + "-" + idempotencyKey, input, decision, "initial", orgId);
         long id = insert(orgId, idempotencyKey, result, ml);
         audit.log(user.email(), "PARTNER_ASSESS", String.valueOf(id), decision + " · org " + org.get("code"));
         return view(id, org, result, ml, false);

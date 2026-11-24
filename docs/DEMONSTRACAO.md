@@ -18,11 +18,13 @@ A compra tem a cara da compra habitual e a indução só existe na conversa. Com
 
 ## D — Verificação contextual
 
-Um administrador liga `context-when-unknown` em Motor de risco. A mesma compra habitual passa a pedir verificação (R12) sem mudar o score. As perguntas deixam claro que a resposta é declarada. Se o prazo de 30 minutos vencer, a compra continua em `CONTEXT_REQUIRED`. A falta de resposta não aprova.
+A flag `context-when-unknown` continua desligada. Ligada, ela não interrompe toda compra habitual. R12 só pede verificação quando já existe um sinal de atenção calculado, como horário atípico, aparelho novo ou anúncio. O score não muda. Há teto de frequência (`context-probe-max`, padrão 1 em 24 horas). Uma simulação em `GET /api/ops/engine/context-probe` conta o efeito e não grava a compra. Se o prazo de 30 minutos vencer, a compra continua em `CONTEXT_REQUIRED`. A falta de resposta não aprova.
+
+Uma negativa completa, sem roteiro ou relato independente, deixa a verificação em `INCONCLUSIVE`. A resposta é declarada. O motor ainda aplica as regras que já existiam, inclusive `VER_CLEAR`, e pode liberar com alerta. Isso não confirma a negativa.
 
 ## E — Modelo e motor
 
-Abra a compra no Operations. A decisão exibida é a do motor. A previsão da sombra, quando existe, aparece ao lado e não aprova nem bloqueia. Em Modelos, as contagens são operacionais. Precisão e recall não aparecem sem rótulos revisados.
+Abra a compra no Operations. A decisão exibida é a do motor. A sombra mostra o estágio, o identificador do modelo, o algoritmo, a versão da biblioteca, a previsão e a explicação. `affectsDecision` fica falso. O modelo contextual só entra nessa lista depois de uma aprovação explícita para sombra. Essa aprovação não exige a meta de aceite e não autoriza o modelo a decidir. Em Modelos, as contagens são operacionais. Precisão e recall não aparecem sem rótulos revisados.
 
 ## F — Pesos
 
@@ -34,4 +36,4 @@ O analista cria um rascunho e não consegue publicar. O administrador aprova, pu
 
 ## H — Outra organização
 
-O analista da organização `market-demo` não lê a compra, a fila, o relato nem a inteligência da `nexa-demo`: a lista vem vazia ou a consulta responde 404. O identificador da empresa sai do usuário autenticado. Catálogo da loja, visão geral e auditoria ainda não estão isolados. Isso não é multiempresa comercial.
+O analista da organização `market-demo` não lê a compra, a fila, o relato, a inteligência, a visão geral, a auditoria, a política fintech nem o modelo da `nexa-demo`. A lista vem vazia, a consulta responde 404, ou a auditoria mostra só os eventos da própria organização. Ele vê a política de marketplace, porque ela já pertence a essa organização. O catálogo da loja NEXA continua compartilhado. Clientes e aparelhos da demonstração também. Isso não é multiempresa comercial.

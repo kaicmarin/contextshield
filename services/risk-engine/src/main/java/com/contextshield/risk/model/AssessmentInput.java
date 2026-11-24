@@ -53,13 +53,19 @@ public record AssessmentInput(
     public record Relation(String kind, String entityId, String reason, String association,
                            boolean crossCustomer, List<String> incidentIds) {}
 
-    public record EngineConfig(Map<String, Boolean> flags, Map<String, String> providers, Map<String, Integer> weights) {
+    public record EngineConfig(Map<String, Boolean> flags, Map<String, String> providers, Map<String, Integer> weights,
+                               List<String> contextProbes) {
         public EngineConfig {
             if (weights == null) weights = Map.of();
+            if (contextProbes == null) contextProbes = List.of();
         }
 
         public EngineConfig(Map<String, Boolean> flags, Map<String, String> providers) {
-            this(flags, providers, Map.of());
+            this(flags, providers, Map.of(), List.of());
+        }
+
+        public EngineConfig(Map<String, Boolean> flags, Map<String, String> providers, Map<String, Integer> weights) {
+            this(flags, providers, weights, List.of());
         }
 
         public static EngineConfig defaults() {

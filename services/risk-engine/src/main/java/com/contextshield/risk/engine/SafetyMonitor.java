@@ -33,7 +33,7 @@ public final class SafetyMonitor {
             issues.add(new Issue("INCONCLUSIVE_APPROVE", "Política propôs aprovação com nível inconclusivo; exige confirmação ou alerta.", "escalate"));
         if (liberating && a.confidence() < RiskModel.MIN_CONFIDENCE)
             issues.add(new Issue("LOW_CONFIDENCE", "Confiança " + a.confidence() + " abaixo do mínimo operacional (" + RiskModel.MIN_CONFIDENCE + ").", "escalate"));
-        if (liberating && "FRAGILE".equals(cert.status()))
+        if (liberating && "FRAGILE".equals(cert.status()) && !onlySelectiveVerification(cert))
             issues.add(new Issue("FRAGILE_CERTIFICATE", cert.summary(), "escalate"));
         if (!a.degraded().isEmpty() && liberating && !"LOW".equals(band))
             issues.add(new Issue("DEGRADED_SOURCES", "Decisão de liberação com fontes indisponíveis: " + String.join(", ", a.degraded()) + ".", "warn"));
@@ -55,6 +55,14 @@ public final class SafetyMonitor {
         else if (issues.stream().anyMatch(i -> i.severity().equals("escalate"))) fin = escalate(a.decision());
 
         return new SafetyEnvelope(POLICY_VERSION, a.decision(), fin, fin.equals(a.decision()) && issues.isEmpty(), issues, cert.status());
+    }
+
+    /** Uma perturbação que só acionaria a verificação seletiva não transforma uma compra habitual em alerta. */
+    private static boolean onlySelectiveVerification(Certificate cert) {
+        List<com.contextshield.risk.model.Assessment.Perturbation> flips = cert.perturbations().stream()
+                .filter(p -> p.crossesClass() || ("adulterada".equals(p.kind()) && p.changed()))
+                .toList();
+        return !flips.isEmpty() && flips.stream().allMatch(p -> "R12".equals(p.ruleId()) && "REQUEST_CONTEXT".equals(p.decision()));
     }
 
     static boolean hasSignal(List<Signal> signals, String id) {

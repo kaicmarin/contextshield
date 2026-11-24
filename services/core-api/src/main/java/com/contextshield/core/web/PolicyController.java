@@ -1,5 +1,6 @@
 package com.contextshield.core.web;
 
+import com.contextshield.core.service.OrganizationService;
 import com.contextshield.core.service.PolicySimulation;
 import com.contextshield.core.service.RiskPolicyService;
 import jakarta.validation.Valid;
@@ -15,31 +16,33 @@ public class PolicyController {
 
     private final RiskPolicyService policies;
     private final PolicySimulation simulation;
+    private final OrganizationService organizations;
 
-    public PolicyController(RiskPolicyService policies, PolicySimulation simulation) {
+    public PolicyController(RiskPolicyService policies, PolicySimulation simulation, OrganizationService organizations) {
         this.policies = policies;
         this.simulation = simulation;
+        this.organizations = organizations;
     }
 
     @GetMapping
     public Object list() {
-        return policies.list();
+        return policies.list(organizations.idOf(Auth.user()));
     }
 
     @GetMapping("/catalog")
     public Object catalog() {
-        return Map.of("profile", policies.activeProfile(), "signals", policies.catalog(),
-                "rules", "As regras R1 a R11, o desconto de sinais repetidos e a ordem de decisão não são editáveis.");
+        return Map.of("profile", policies.activeProfile(), "signals", policies.catalog(organizations.idOf(Auth.user())),
+                "rules", "As regras R1 a R11 continuam fixas. R12 fica desligada por padrão e, quando ligada, só pede verificação se já houver um sinal de atenção. O score não muda.");
     }
 
     @GetMapping("/compare")
     public Object compare(@RequestParam long left, @RequestParam long right) {
-        return policies.compare(left, right);
+        return policies.compare(left, right, organizations.idOf(Auth.user()));
     }
 
     @GetMapping("/{id}")
     public Object get(@PathVariable long id) {
-        return policies.get(id);
+        return policies.get(id, organizations.idOf(Auth.user()));
     }
 
     public record DraftRequest(@NotBlank String name, String profile, Map<String, Integer> weights, String note) {}
@@ -65,6 +68,6 @@ public class PolicyController {
 
     @PostMapping("/{id}/simulate")
     public Object simulate(@PathVariable long id, @Valid @RequestBody SimulateRequest req) {
-        return simulation.simulate(id, req.txId());
+        return simulation.simulate(id, req.txId(), Auth.user());
     }
 }

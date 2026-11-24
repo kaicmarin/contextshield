@@ -24,13 +24,15 @@ public class RiskPolicyService {
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
     private final AuditService audit;
+    private final OrganizationService organizations;
     private final String activeProfile;
 
-    public RiskPolicyService(JdbcTemplate jdbc, ObjectMapper mapper, AuditService audit,
+    public RiskPolicyService(JdbcTemplate jdbc, ObjectMapper mapper, AuditService audit, OrganizationService organizations,
                              @Value("${contextshield.policy.profile:fintech}") String activeProfile) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.audit = audit;
+        this.organizations = organizations;
         this.activeProfile = activeProfile;
     }
 
@@ -39,32 +41,42 @@ public class RiskPolicyService {
     }
 
     public Map<String, Integer> activeWeights() {
-        return activeWeights(activeProfile);
+        return activeWeights(activeProfile, 1L);
     }
 
     public Map<String, Integer> activeWeights(String profile) {
-        List<String> rows = jdbc.query("select weights_json from risk_policy where profile = ? and status = 'PUBLISHED' order by id desc",
-                (rs, n) -> rs.getString(1), profile);
+        return activeWeights(profile, 1L);
+    }
+
+    public Map<String, Integer> activeWeights(String profile, long organizationId) {
+        List<String> rows = jdbc.query("""
+                select weights_json from risk_policy
+                where profile = ? and status = 'PUBLISHED' and organization_id = ?
+                order by id desc
+                """, (rs, n) -> rs.getString(1), profile, organizationId);
         if (rows.isEmpty()) return Map.of();
         return read(rows.get(0));
     }
 
-    public List<Map<String, Object>> list() {
+    public List<Map<String, Object>> list(long organizationId) {
         return jdbc.query("""
-                select id, name, version, status, profile, note, created_by, created_at, published_by, published_at
-                from risk_policy order by id desc
-                """, (rs, n) -> head(rs));
+                select id, name, version, status, profile, organization_id, note, created_by, created_at, published_by, published_at
+                from risk_policy where organization_id = ? order by id desc
+                """, (rs, n) -> head(rs), organizationId);
     }
 
     public Map<String, Object> get(long id) {
-        Map<String, Object> row = one(id);
-        row.put("weights", Weights.merge(read(String.valueOf(row.remove("weightsJson")))));
-        row.put("events", events(id));
-        return row;
+        return present(one(id));
     }
 
-    public List<Map<String, Object>> catalog() {
-        Map<String, Integer> current = Weights.merge(activeWeights());
+    public Map<String, Object> get(long id, long organizationId) {
+        Map<String, Object> row = one(id);
+        if (((Number) row.get("organizationId")).longValue() != organizationId) throw ApiException.notFound("Política");
+        return present(row);
+    }
+
+    public List<Map<String, Object>> catalog(long organizationId) {
+        Map<String, Integer> current = Weights.merge(activeWeights(activeProfile, organizationId));
         return Weights.CATALOG.stream().map(bound -> {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("key", bound.key());
@@ -84,15 +96,17 @@ public class RiskPolicyService {
         if (!List.of("fintech", "marketplace", "ecommerce").contains(useProfile))
             throw ApiException.badRequest("Perfil desconhecido. Use fintech, marketplace ou ecommerce.");
         Map<String, Integer> stored = checked(weights);
-        int version = jdbc.queryForObject("select coalesce(max(version), 0) + 1 from risk_policy where profile = ?", Integer.class, useProfile);
-        long id = insertPolicy(name, version, "DRAFT", useProfile, stored, note, actor, null);
+        long organizationId = organizations.idOfEmail(actor);
+        int version = jdbc.queryForObject("select coalesce(max(version), 0) + 1 from risk_policy where profile = ? and organization_id = ?",
+                Integer.class, useProfile, organizationId);
+        long id = insertPolicy(name, version, "DRAFT", useProfile, organizationId, stored, note, actor, null);
         event(id, "CREATED", actor, "Rascunho da versão " + version);
         audit.log(actor, "POLICY_DRAFT", String.valueOf(id), name);
         return get(id);
     }
 
     public Map<String, Object> update(long id, Map<String, Integer> weights, String note, String actor) {
-        Map<String, Object> row = one(id);
+        Map<String, Object> row = owned(id, actor);
         if (!List.of("DRAFT", "REJECTED").contains(row.get("status")))
             throw ApiException.conflict("Só um rascunho ou uma versão rejeitada pode ser editado.");
         Map<String, Integer> stored = checked(weights);
@@ -103,6 +117,7 @@ public class RiskPolicyService {
     }
 
     public Map<String, Object> submit(long id, String actor) {
+        owned(id, actor);
         require(id, "DRAFT", "Envie um rascunho.");
         jdbc.update("update risk_policy set status = 'PENDING' where id = ?", id);
         event(id, "SUBMITTED", actor, "Aguardando aprovação");
@@ -111,6 +126,7 @@ public class RiskPolicyService {
     }
 
     public Map<String, Object> approve(long id, String actor) {
+        owned(id, actor);
         require(id, "PENDING", "Aprove uma versão enviada.");
         jdbc.update("update risk_policy set status = 'APPROVED' where id = ?", id);
         event(id, "APPROVED", actor, "Aprovada, ainda não publicada");
@@ -119,6 +135,7 @@ public class RiskPolicyService {
     }
 
     public Map<String, Object> reject(long id, String reason, String actor) {
+        owned(id, actor);
         require(id, "PENDING", "Rejeite uma versão enviada.");
         jdbc.update("update risk_policy set status = 'REJECTED', note = ? where id = ?", reason, id);
         event(id, "REJECTED", actor, reason);
@@ -127,10 +144,11 @@ public class RiskPolicyService {
     }
 
     public Map<String, Object> publish(long id, String actor) {
-        Map<String, Object> row = one(id);
+        Map<String, Object> row = owned(id, actor);
         if (!"APPROVED".equals(row.get("status"))) throw ApiException.conflict("Publique só uma versão já aprovada.");
         String profile = String.valueOf(row.get("profile"));
-        jdbc.update("update risk_policy set status = 'ARCHIVED' where profile = ? and status = 'PUBLISHED'", profile);
+        long organizationId = ((Number) row.get("organizationId")).longValue();
+        jdbc.update("update risk_policy set status = 'ARCHIVED' where profile = ? and organization_id = ? and status = 'PUBLISHED'", profile, organizationId);
         LocalDateTime now = LocalDateTime.now().withNano(0);
         jdbc.update("update risk_policy set status = 'PUBLISHED', published_by = ?, published_at = ? where id = ?", actor, Timestamp.valueOf(now), id);
         event(id, "PUBLISHED", actor, "Perfil " + profile);
@@ -140,21 +158,25 @@ public class RiskPolicyService {
 
     /** Volta uma versão que já esteve publicada. Continua exigindo papel de administração. */
     public Map<String, Object> rollback(long id, String actor) {
-        Map<String, Object> row = one(id);
+        Map<String, Object> row = owned(id, actor);
         if (!"ARCHIVED".equals(row.get("status"))) throw ApiException.conflict("A restauração parte de uma versão arquivada.");
         String profile = String.valueOf(row.get("profile"));
-        jdbc.update("update risk_policy set status = 'ARCHIVED' where profile = ? and status = 'PUBLISHED'", profile);
-        int version = jdbc.queryForObject("select coalesce(max(version), 0) + 1 from risk_policy where profile = ?", Integer.class, profile);
+        long organizationId = ((Number) row.get("organizationId")).longValue();
+        jdbc.update("update risk_policy set status = 'ARCHIVED' where profile = ? and organization_id = ? and status = 'PUBLISHED'", profile, organizationId);
+        int version = jdbc.queryForObject("select coalesce(max(version), 0) + 1 from risk_policy where profile = ? and organization_id = ?",
+                Integer.class, profile, organizationId);
         @SuppressWarnings("unchecked")
         Map<String, Integer> weights = (Map<String, Integer>) get(id).get("weights");
-        long copy = insertPolicy(String.valueOf(row.get("name")) + " restaurada", version, "PUBLISHED", profile, weights,
+        long copy = insertPolicy(String.valueOf(row.get("name")) + " restaurada", version, "PUBLISHED", profile, organizationId, weights,
                 "Restauração da versão " + row.get("version"), actor, actor);
         event(copy, "ROLLBACK", actor, "Cópia da política " + id);
         audit.log(actor, "POLICY_ROLLBACK", String.valueOf(copy), "origem " + id);
         return get(copy);
     }
 
-    public Map<String, Object> compare(long left, long right) {
+    public Map<String, Object> compare(long left, long right, long organizationId) {
+        get(left, organizationId);
+        get(right, organizationId);
         Map<String, Integer> a = weightsOf(left);
         Map<String, Integer> b = weightsOf(right);
         List<Map<String, Object>> diffs = Weights.CATALOG.stream()
@@ -185,9 +207,23 @@ public class RiskPolicyService {
         if (!status.equals(one(id).get("status"))) throw ApiException.conflict(message);
     }
 
+    private Map<String, Object> present(Map<String, Object> row) {
+        long id = ((Number) row.get("id")).longValue();
+        row.put("weights", Weights.merge(read(String.valueOf(row.remove("weightsJson")))));
+        row.put("events", events(id));
+        return row;
+    }
+
+    private Map<String, Object> owned(long id, String actor) {
+        Map<String, Object> row = one(id);
+        if (((Number) row.get("organizationId")).longValue() != organizations.idOfEmail(actor))
+            throw ApiException.notFound("Política");
+        return row;
+    }
+
     private Map<String, Object> one(long id) {
         List<Map<String, Object>> rows = jdbc.query("""
-                select id, name, version, status, profile, weights_json, note, created_by, created_at, published_by, published_at
+                select id, name, version, status, profile, organization_id, weights_json, note, created_by, created_at, published_by, published_at
                 from risk_policy where id = ?
                 """, (rs, n) -> {
             Map<String, Object> row = head(rs);
@@ -205,6 +241,7 @@ public class RiskPolicyService {
         row.put("version", rs.getInt("version"));
         row.put("status", rs.getString("status"));
         row.put("profile", rs.getString("profile"));
+        row.put("organizationId", rs.getLong("organization_id"));
         row.put("note", rs.getString("note"));
         row.put("createdBy", rs.getString("created_by"));
         row.put("createdAt", rs.getTimestamp("created_at").toLocalDateTime());
@@ -224,25 +261,26 @@ public class RiskPolicyService {
                 id, action, actor, detail, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
     }
 
-    private long insertPolicy(String name, int version, String status, String profile, Map<String, Integer> weights,
+    private long insertPolicy(String name, int version, String status, String profile, long organizationId, Map<String, Integer> weights,
                               String note, String actor, String publisher) {
         LocalDateTime now = LocalDateTime.now().withNano(0);
         GeneratedKeyHolder keys = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement("""
-                    insert into risk_policy (name, version, status, profile, weights_json, note, created_by, created_at, published_by, published_at)
-                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    insert into risk_policy (name, version, status, profile, organization_id, weights_json, note, created_by, created_at, published_by, published_at)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, name);
             ps.setInt(2, version);
             ps.setString(3, status);
             ps.setString(4, profile);
-            ps.setString(5, write(weights));
-            ps.setString(6, note);
-            ps.setString(7, actor);
-            ps.setTimestamp(8, Timestamp.valueOf(now));
-            ps.setString(9, publisher);
-            ps.setTimestamp(10, publisher == null ? null : Timestamp.valueOf(now));
+            ps.setLong(5, organizationId);
+            ps.setString(6, write(weights));
+            ps.setString(7, note);
+            ps.setString(8, actor);
+            ps.setTimestamp(9, Timestamp.valueOf(now));
+            ps.setString(10, publisher);
+            ps.setTimestamp(11, publisher == null ? null : Timestamp.valueOf(now));
             return ps;
         }, keys);
         return GeneratedIds.of(keys);

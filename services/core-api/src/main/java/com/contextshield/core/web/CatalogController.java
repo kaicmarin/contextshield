@@ -8,7 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-/** Catálogo público da loja NEXA e dados auxiliares da demonstração. */
+/**
+ * Catálogo público da loja NEXA. É compartilhado de propósito entre as organizações da demonstração:
+ * produto, categoria e vendedor não são dado privado de uma empresa.
+ */
 @RestController
 @RequestMapping("/api/catalog")
 public class CatalogController {

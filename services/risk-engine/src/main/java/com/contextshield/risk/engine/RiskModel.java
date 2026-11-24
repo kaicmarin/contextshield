@@ -138,7 +138,7 @@ public final class RiskModel {
             new FlagSpec("context-on-declared-guidance", "Contexto para orientação declarada (R6)", "Quando o cliente declara link ou indicação, a verificação é solicitada."),
             new FlagSpec("guidance-floor", "Intervenção mínima com orientação confirmada (R2)", "Se a verificação confirma pedido de terceiro com contato prévio, a compra pausa."),
             new FlagSpec("script-mirror", "Espelho do roteiro (R9, R10 e R11)", "Se a mensagem mandou o que responder e a resposta segue o roteiro, a compra pausa."),
-            new FlagSpec("context-when-unknown", "Verificação quando o contexto é desconhecido (R12)", "Desligada por padrão. Quando ligada, uma compra de score baixo sem link, indicação ou relato pede verificação. O score não muda."));
+            new FlagSpec("context-when-unknown", "Verificação seletiva quando o contexto é desconhecido (R12)", "Desligada por padrão. Quando ligada, só pede verificação se a compra de score baixo também tiver um sinal de atenção já calculado. Compra habitual sem esse sinal segue aprovada. O score não muda."));
 
     public static Optional<String> describeWeight(String signalId) {
         return Optional.ofNullable(SIGNAL_INDEX.get(signalId)).map(SignalSpec::weight);

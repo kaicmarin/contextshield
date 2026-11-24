@@ -21,12 +21,16 @@ mvn verify
 
 **101 testes, 0 falhas** (execução de 02/11/2026).
 
-**111 testes, 0 falhas** em 24/11/2026, com `mvn -pl services/core-api -am test` no JDK 21. O acréscimo sobre os 109 anteriores é o modo sombra com modelo real e o isolamento entre organizações, ambos em `PolicyAndShadowTest` (agora 5). O relatório de 4000 operações está em `docs/MACHINE-LEARNING.md`.
+**111 testes, 0 falhas** em 24/11/2026, com `mvn -pl services/core-api -am test` no JDK 21. O acréscimo sobre os 109 anteriores é o modo sombra com modelo real e o isolamento entre organizações.
+
+**126 testes, 0 falhas** na execução seguinte do mesmo comando, ainda em 24/11/2026. Entraram a verificação seletiva, o teto de frequência, a negativa inconclusiva, a sombra contextual, a aprovação de modelo contextual sem liberar decisão e a consulta cruzada de visão geral, auditoria, política e modelo. O relatório está em `docs/RELATORIO-PROTOTIPO.md`.
+
+**129 testes, 0 falhas** na execução de 24/11/2026 do mesmo comando. Os três testes novos conferem que a fraude que nega ajuda usa o mesmo vetor da compra habitual, que outra semente repete o empate e que um corte mais baixo no modelo publicado marca compras habituais. Nenhum modelo foi substituído.
 
 | Classe | Testes | O que cobre |
 |---|---|---|
 | `risk-engine` · `ParityTest` | 43 | O motor Java decide **igual ao protótipo original** em 43 cenários gravados: sinais, score, banda, confiança, decisão proposta e final, regra e fragilidade |
-| `risk-engine` · `WeightPolicyTest` | 3 | Política vazia reproduz o score antigo; peso maior de aparelho novo muda a regra; piso de segurança não deixa enfraquecer o bloqueio |
+| `risk-engine` · `WeightPolicyTest` | 5 | Política vazia reproduz o score antigo; peso maior de aparelho novo muda a regra; compra habitual com a flag ligada continua em R8; horário atípico pede R12 sem mudar o score; piso de segurança não deixa enfraquecer o bloqueio |
 | `risk-engine` · `RiskApiTest` | 5 | Sem token → 401; token de cliente → 403; token de serviço → 200; entrada inválida → 400 com campos; catálogo público |
 | `core-api` · `AuthApiTest` | 8 | Login gera JWT com papel; senha errada, rota sem token e token adulterado → 401; cliente não entra no painel → 403; rotas públicas; cadastro e e-mail repetido → 409; cadastro inválido lista campos |
 | `core-api` · `CheckoutFlowTest` | 9 | Compra habitual aprovada; indução pede contexto → pausa → cliente cancela → estado final não reabre; relato de um cliente bloqueia compra de outro no mesmo destino; isolamento entre clientes; validação de entrada; resposta inválida ou fora de hora; motor fora → 202 e retry; os 6 cenários da demonstração; verificador de mensagens (indução → RED, 0800 → GREEN) |
@@ -38,8 +42,10 @@ mvn verify
 | `core-api` · `CheckApiTest` | 1 | `POST /api/check`: entrega → alerta, NEXA legítima → GRAY, 0800 → GREEN, vazio/longo → 400 |
 | `core-api` · `IncidentAlertAdminApiTest` | 6 | CRUD de relato pelo cliente; relato em análise não pode ser alterado; consentimento obrigatório; avisos (listar, ler, apagar); CRUD de usuários pelo admin |
 | `core-api` · `OpsQueryTest` | 4 | Filtros e paginação do painel |
-| `core-api` · `PolicyAndShadowTest` | 3 | Catálogo de pesos; analista não publica; simulação não grava a compra; modelo sombra quebrado não muda a aprovação |
+| `core-api` · `PolicyAndShadowTest` | 14 | Catálogo de pesos; simulação não grava a compra; sombra quebrada não muda a aprovação; outra organização não lê compra, fila, visão geral, auditoria, política fintech nem modelo; teto de frequência; negativa inconclusiva; modelo contextual em sombra; aprovação contextual sem derrubar o modelo de operação |
 | `machine-learning` · `TrainingTest` | 2 | Treino Smile, gravação, releitura, previsão e busca de pesos sem publicar; grampos de peso |
+| `machine-learning` · `ContextStudyTest` | 4 | Vetores idênticos na fraude discreta; resposta ausente; treino sem usar o conjunto reservado; releitura de `logistic-context.ser` e `random-forest-context.ser` |
+| `machine-learning` · `FalseNegativeDiagnosisTest` | 3 | As 51 negações do conjunto 9901 coincidem com compras habituais; a semente 12011 repete o empate; o corte 0,5 erra as 51 e um corte menor marca compra habitual |
 | `core-api` · `PersistenceTest` | 6 | CRUD direto nos repositórios e restrições do banco |
 
 Os testes de API sobem a aplicação inteira (Spring Boot + Flyway + H2 em modo PostgreSQL) e usam o motor de risco real em memória, então exercitam o mesmo código que roda em produção.

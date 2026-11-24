@@ -24,4 +24,6 @@ public class AuditEntry {
     private String action;
     private String target;
     private String detail;
+    @Column(name = "organization_id")
+    private Long organizationId;
 }

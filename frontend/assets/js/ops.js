@@ -851,7 +851,7 @@ function paintTx(box, data, back) {
       assessments.length > 1 ? tabs({ value: String(idx), label: "Avaliações desta compra", onChange: (v) => { idx = Number(v); draw(); }, items: assessments.map((x, i) => ({ value: String(i), label: `${x.stage === "initial" ? "No checkout" : x.stage === "recalculated" ? "Após a verificação" : x.stage} · ${DECISION[x.decision] ?? x.decision}` })) }) : null,
       a ? verdict(a) : notice("muted", "Sem avaliação", "O motor ainda não respondeu para esta compra."),
       a ? signals(a) : null,
-      data.shadow?.length ? el("section", { class: "panel" }, el("h2", {}, "Modelo em modo sombra"), el("p", { class: "o-note" }, "Esta previsão não aprova nem bloqueia. A decisão da compra continua sendo a do motor."), el("ul", { class: "o-links" }, data.shadow.map((s) => el("li", {}, el("span", {}, s.error ? `Falha registrada: ${s.error}` : `${s.algorithm || "modelo"} · ${s.prediction || "—"} · probabilidade ${s.probability ?? "—"} · motor ${s.engineDecision || "—"}`))))) : null,
+      data.shadow?.length ? el("section", { class: "panel" }, el("h2", {}, "Modelo em modo sombra"), el("p", { class: "o-note" }, "A previsão fica registrada ao lado da decisão do motor. Quem decide a compra é o motor de regras."), el("ul", { class: "o-links" }, data.shadow.map((s) => el("li", {}, el("span", {}, s.error ? `Falha no estágio ${s.stage || "inicial"}. A decisão do motor permanece. ${s.error}` : `${s.stage === "recalculated" ? "Depois das respostas" : "No checkout"} · modelo ${s.modelId ?? "—"} · ${s.algorithm || "modelo"} · versão ${s.libraryVersion || "—"} · ${s.prediction || "—"} · probabilidade ${s.probability ?? "—"} · motor ${s.engineDecision || "—"}. ${s.explanation || ""}`))))) : null,
       a?.certificate ? certificate(a) : null,
       el(
         "form",
@@ -919,8 +919,10 @@ function context(data) {
       el("dt", {}, "Aparelho"), el("dd", {}, `${data.device?.name ?? "—"} · ${data.device?.detail ?? ""} `, data.device?.trusted ? pill("ok", "conhecido") : pill("warn", "novo")),
       el("dt", {}, "Entrega"), el("dd", {}, `${data.address?.line1 ?? ""}${data.address?.line2 ? `, ${data.address.line2}` : ""}`),
       el("dt", {}, "Cliente desde"), el("dd", {}, `${data.customer?.since ?? "—"} · ticket médio `, el("span", { class: "num" }, brl(data.customer?.avgTicket90d))),
+      el("dt", {}, "Verificação"), el("dd", {}, data.verificationState || "—"),
     ),
-    data.answers && Object.keys(data.answers).length ? el("div", {}, el("h3", {}, "Respostas da verificação"), el("dl", { class: "kv" }, Object.entries(data.answers).flatMap(([k, v]) => [el("dt", { class: "mono" }, k), el("dd", { class: "mono" }, v)]))) : null,
+    data.verificationReason ? el("p", { class: "o-note" }, data.verificationReason) : null,
+    data.answers && Object.keys(data.answers).length ? el("div", {}, el("h3", {}, "Respostas declaradas"), el("dl", { class: "kv" }, Object.entries(data.answers).flatMap(([k, v]) => [el("dt", { class: "mono" }, k), el("dd", { class: "mono" }, v)]))) : null,
     data.coachScript ? el("div", {}, el("h3", {}, "Roteiro recebido pelo cliente"), el("p", { class: "quote small", style: { whiteSpace: "pre-line" } }, data.coachScript)) : null,
   );
 }
@@ -2222,6 +2224,13 @@ function modelMonitor() {
         el("p", {}, data.qualityNote),
         el("p", { class: "muted" }, data.drift),
       );
+      return api("/api/ops/verifications", { area: "ops" });
+    })
+    .then((checks) => {
+      if (!checks) return;
+      const rate = checks.verificationRate == null ? "ainda sem compras para calcular a taxa" : `${checks.verificationRate}`;
+      const left = checks.abandonmentRate == null ? "ainda sem verificação para calcular o abandono" : `${checks.abandonmentRate}`;
+      box.append(el("p", {}, `Verificações: ${checks.total}. Expiradas: ${checks.expired}. Taxa de verificação: ${rate}. Abandono: ${left}.`));
     })
     .catch((error) => box.append(el("p", {}, error?.message || "Não foi possível carregar o monitoramento.")));
   return box;
