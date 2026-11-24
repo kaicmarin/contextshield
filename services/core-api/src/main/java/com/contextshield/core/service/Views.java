@@ -60,7 +60,7 @@ public class Views {
 
     public record OpsTx(TxSummary summary, List<Item> items, Map<String, Object> address, Map<String, Object> device,
                         Map<String, Object> customer, String merchant, String coachScript, List<JsonNode> assessments,
-                        Map<String, String> answers, List<StatusChange> statusLog, List<Incident> incidents,
+                        Map<String, String> answers, String verificationState, List<StatusChange> statusLog, List<Incident> incidents,
                         List<Map<String, Object>> shadow) {}
 
     private JsonNode parse(String json) {
@@ -142,13 +142,16 @@ public class Views {
             if (n.isObject()) ((com.fasterxml.jackson.databind.node.ObjectNode) n).put("recordId", a.getId());
             return n;
         }).toList();
-        Map<String, String> answers = verifications.findById(t.getId()).map(v -> {
+        Verification found = verifications.findById(t.getId()).orElse(null);
+        String verificationState = found == null || found.getState() == null ? "NOT_REQUIRED" : found.getState();
+        Map<String, String> answers = null;
+        if (found != null && found.getAnswers() != null && !found.getAnswers().isBlank()) {
             try {
-                return mapper.readValue(v.getAnswers(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                answers = mapper.readValue(found.getAnswers(), new com.fasterxml.jackson.core.type.TypeReference<>() {});
             } catch (Exception e) {
-                return Map.<String, String>of();
+                answers = Map.of();
             }
-        }).orElse(null);
+        }
         Map<String, Object> device = devices.findById(t.getDeviceId()).map(d -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", d.getId());
@@ -172,7 +175,7 @@ public class Views {
         }).orElse(Map.of());
         String merchant = merchants.findById(t.getMerchantId()).map(Merchant::getName).orElse("");
         return new OpsTx(summary(t), items(t.getId()), address(t.getAddressId()), device, customer, merchant, t.getCoachScript(),
-                list, answers, statusLog.findByTxIdOrderByIdAsc(t.getId()), incidents.findByTxId(t.getId()),
+                list, answers, verificationState, statusLog.findByTxIdOrderByIdAsc(t.getId()), incidents.findByTxId(t.getId()),
                 learning.rows(t.getId()));
     }
 

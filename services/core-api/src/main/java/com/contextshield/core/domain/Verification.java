@@ -20,4 +20,9 @@ public class Verification {
     private String txId;
     private String answers;
     private LocalDateTime answeredAt;
+    /** NOT_REQUIRED não é gravado. REQUESTED, ANSWERED, INCONCLUSIVE, EXPIRED ou COMPLETED. */
+    private String state = "COMPLETED";
+    private String reason;
+    private LocalDateTime requestedAt;
+    private LocalDateTime expiresAt;
 }

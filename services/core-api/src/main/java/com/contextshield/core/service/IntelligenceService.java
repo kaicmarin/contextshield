@@ -186,7 +186,10 @@ public class IntelligenceService {
                 .ifPresent(a -> candidates.add(new String[]{IntelText.destinationEntityId(a.getId()), "destination"}));
         for (String sid : sellerIds(tx)) candidates.add(new String[]{IntelText.sellerEntityId(sid), "seller"});
         for (String[] c : candidates) {
-            List<Incident> incs = activeIncidents(c[0], at);
+            long organizationId = tx.getOrganizationId() == null ? 1L : tx.getOrganizationId();
+            List<Incident> incs = activeIncidents(c[0], at).stream()
+                    .filter(incident -> organizationId == (incident.getOrganizationId() == null ? 1L : incident.getOrganizationId()))
+                    .toList();
             if (incs.isEmpty()) continue;
             List<String> incidentIds = incs.stream().map(Incident::getId).toList();
             List<String> owners = incs.stream().map(Incident::getCustomerId).filter(id -> !id.equals(tx.getCustomerId())).distinct().toList();
@@ -248,6 +251,25 @@ public class IntelligenceService {
         if (e.getValidUntil() != null && e.getValidUntil().isBefore(LocalDateTime.now())) status = "UNVERIFIED";
         if ("DISCARDED".equals(status)) return new IntelHint(0, "DISCARDED", e.getConfidence(), e.getValidUntil());
         return new IntelHint(activeIncidentIds(entityId, null).size(), status, e.getConfidence(), e.getValidUntil());
+    }
+
+    public List<EntityView> listFor(long organizationId) {
+        return list().stream().filter(view -> visible(view, organizationId)).toList();
+    }
+
+    public Optional<EntityView> findFor(String id, long organizationId) {
+        return find(id).filter(view -> visible(view, organizationId));
+    }
+
+    private boolean visible(EntityView view, long organizationId) {
+        if (view.incidentIds() == null || view.incidentIds().isEmpty()) return false;
+        for (String id : view.incidentIds()) {
+            Incident incident = incidents.findById(id).orElse(null);
+            if (incident == null) continue;
+            long owner = incident.getOrganizationId() == null ? 1L : incident.getOrganizationId();
+            if (owner == organizationId) return true;
+        }
+        return false;
     }
 
     public List<EntityView> list() {

@@ -69,7 +69,8 @@ class RiskApiTest {
     @Test
     void catalogoEhPublico() throws Exception {
         mvc.perform(get("/api/v1/model")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.rules.length()").value(11))
+                .andExpect(jsonPath("$.rules.length()").value(12))
+                .andExpect(jsonPath("$.rules[?(@.id == 'R12')].outcome").value("REQUEST_CONTEXT"))
                 .andExpect(jsonPath("$.signals.length()").value(31));
     }
 }

@@ -195,6 +195,22 @@ public final class SyntheticCases {
     }
 
     /**
+     * O checkout da fraude discreta e o de uma compra habitual gerados com a mesma semente.
+     * Serve para medir se os 19 atributos separam os dois. Não entra no treino.
+     */
+    public static Case[] hardFraudAndHabitualTwin(int index, long seed) {
+        Case fraud = hardFraud(new Random(seed + index), index);
+        Random legitRandom = new Random(seed + index);
+        int hour = day(legitRandom);
+        Map<String, String> clear = Map.of(
+                "origin", "self", "contact", "no", "address", "mine", "coached", "no",
+                "anchor", "home", "device", "mine", "amount", "chose");
+        Case legit = build("habitual-espelho", "LEGIT", false, legitRandom, index, 0.7, 1.3, 6, 14, 4, true, true, "home", true,
+                "established", "self", hour, clear, null, false);
+        return new Case[] {fraud, legit};
+    }
+
+    /**
      * Fraude cujo vetor de características é o de uma compra habitual.
      * O rótulo não vem das regras: a indução está só nas respostas, que o modelo não vê.
      */

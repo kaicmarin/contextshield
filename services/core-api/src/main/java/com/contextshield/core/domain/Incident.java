@@ -33,4 +33,10 @@ public class Incident {
     private LocalDateTime createdAt;
     private LocalDateTime assignedAt;
     private LocalDateTime closedAt;
+    private Long organizationId;
+
+    @PrePersist
+    void organizationDefault() {
+        if (organizationId == null) organizationId = 1L;
+    }
 }

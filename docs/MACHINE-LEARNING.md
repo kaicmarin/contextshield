@@ -270,4 +270,18 @@ Por isso:
 
 ## Critérios que o código não transforma em parâmetro
 
-Continuam no Java, iguais ao motor anterior quando a política está vazia: detecção dos sinais, desconto de dependência (metade dos pontos), confiança das fontes, ordem R1–R11, faixas padrão 30 / 55 / 80, score-base 22 e o comportamento de falha (motor fora deixa a compra em análise, sem cobrança).
+Continuam no Java, iguais ao motor anterior quando a política está vazia: detecção dos sinais, desconto de dependência (metade dos pontos), confiança das fontes, ordem R1–R11, faixas padrão 30 / 55 / 80, score-base 22 e o comportamento de falha (motor fora deixa a compra em análise, sem cobrança). A regra R12 só existe quando a flag `context-when-unknown` está ligada. Por padrão ela fica desligada e o score não muda.
+
+## 17. Segunda avaliação, 24/11/2026
+
+Os 19 atributos da primeira avaliação não separam uma fraude discreta de uma compra habitual feita com a mesma semente. Em 40 pares, os vetores ficaram idênticos. As respostas não entram nesse vetor. Trocar o algoritmo, inclusive por Gradient Boosting, não resolve pares idênticos. O Smile 3.1.1 também não foi estendido com outro modelo.
+
+A segunda avaliação acrescenta seis campos, só depois da resposta: pedido declarado, contato declarado, endereço passado, orientação declarada, resposta ausente e contradição. Um zero com resposta ausente não significa negação. Os hiperparâmetros continuam os da primeira avaliação. O conjunto reservado (semente 9901, 400 operações) não entra no treino nem na ordem dos modelos. Nenhum modelo contextual foi promovido.
+
+Desenvolvimento: 800 operações, semente 8801, 480 treino, 160 validação, 160 teste. Na validação, só com a operação, a logística ficou com F1 0,5676 e a floresta com 0,2680. Com as respostas, as duas ficaram com F1 0,8205, precisão 1,0000 e 21 falsos negativos. No teste do desenvolvimento, o F1 com respostas foi 0,8200 e os falsos negativos foram 18.
+
+No conjunto reservado, só com a operação, a logística teve F1 0,5682 (56 falsos negativos) e a floresta 0,4098 (108). Com as respostas, as duas tiveram precisão 1,0000, recall 0,6772, F1 0,8075 e 51 falsos negativos. Os 51 são o roteiro `fraude-que-nega`: a pessoa mente e o vetor fica igual ao de uma compra lícita. A orientação declarada foi capturada. Isso continua sendo dado sintético.
+
+No mesmo conjunto, a política padrão liberou as 158 fraudes, porque a compra habitual não pede verificação. Quando as respostas foram aplicadas só na comparação, 107 fraudes foram retidas e 51 continuaram liberadas. A flag que pede verificação nesse caso nasce desligada, para a política padrão não mudar.
+
+Os arquivos são `models/logistic-context.ser`, `models/random-forest-context.ser` e `reports/context-study.json`. O relatório da semente 42 não foi substituído. Os modelos contextuais entram no laboratório como treinados e registrados, sem aprovação para sombra. A decisão da compra continua no motor.

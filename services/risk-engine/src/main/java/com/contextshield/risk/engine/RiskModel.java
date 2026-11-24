@@ -105,7 +105,8 @@ public final class RiskModel {
             new Rule("R8", "Risco baixo", "Score < 30", "APPROVE"),
             new Rule("R9", "Questionário ensaiado", "A pessoa diz que alguém orientou o que responder", "INTERVENE"),
             new Rule("R10", "Espelho do roteiro", "A negação repete a frase da mensagem e o destino casa com o roteiro", "INTERVENE"),
-            new Rule("R11", "Endereço do roteiro", "A pessoa aponta o destino da compra como se fosse a casa do cadastro", "INTERVENE"));
+            new Rule("R11", "Endereço do roteiro", "A pessoa aponta o destino da compra como se fosse a casa do cadastro", "INTERVENE"),
+            new Rule("R12", "Contexto desconhecido", "Política ligada: a compra parece habitual e não há confirmação sobre contato de terceiro", "REQUEST_CONTEXT"));
 
     public static Rule rule(String id) {
         return RULES.stream().filter(r -> r.id().equals(id)).findFirst().orElseThrow();
@@ -136,7 +137,8 @@ public final class RiskModel {
             new FlagSpec("dependency-discount", "Desconto de evidências dependentes", "Sinais que repetem o mesmo fato contam pela metade."),
             new FlagSpec("context-on-declared-guidance", "Contexto para orientação declarada (R6)", "Quando o cliente declara link ou indicação, a verificação é solicitada."),
             new FlagSpec("guidance-floor", "Intervenção mínima com orientação confirmada (R2)", "Se a verificação confirma pedido de terceiro com contato prévio, a compra pausa."),
-            new FlagSpec("script-mirror", "Espelho do roteiro (R9, R10 e R11)", "Se a mensagem mandou o que responder e a resposta segue o roteiro, a compra pausa."));
+            new FlagSpec("script-mirror", "Espelho do roteiro (R9, R10 e R11)", "Se a mensagem mandou o que responder e a resposta segue o roteiro, a compra pausa."),
+            new FlagSpec("context-when-unknown", "Verificação quando o contexto é desconhecido (R12)", "Desligada por padrão. Quando ligada, uma compra de score baixo sem link, indicação ou relato pede verificação. O score não muda."));
 
     public static Optional<String> describeWeight(String signalId) {
         return Optional.ofNullable(SIGNAL_INDEX.get(signalId)).map(SignalSpec::weight);

@@ -40,8 +40,12 @@ public class OrganizationService {
     }
 
     public void requireSame(CurrentUser user, Long resourceOrganization) {
+        requireSame(user, resourceOrganization, "Transação");
+    }
+
+    public void requireSame(CurrentUser user, Long resourceOrganization, String resource) {
         long mine = idOf(user);
         long theirs = resourceOrganization == null ? 1L : resourceOrganization;
-        if (mine != theirs) throw ApiException.notFound("Transação");
+        if (mine != theirs) throw ApiException.notFound(resource);
     }
 }

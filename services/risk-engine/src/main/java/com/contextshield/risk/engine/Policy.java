@@ -98,6 +98,15 @@ public final class Policy {
         if (!recalculated && config.flag("context-on-declared-guidance") && (s.has("ORIGIN_LINK") || s.has("ORIGIN_GUIDED")))
             return outcome("R6", "REQUEST_CONTEXT", "cliente declarou que a compra começou por link ou indicação");
         if ("MEDIUM".equals(s.band())) return outcome("R7", "APPROVE_WITH_ALERT", "score " + s.score());
+        if (!recalculated && config.flag("context-when-unknown") && "LOW".equals(s.band()) && contextUnknown(s))
+            return outcome("R12", "REQUEST_CONTEXT",
+                    "a compra parece habitual, mas não há informação confirmada sobre contato de terceiro; a política pediu verificação");
         return outcome("R8", "APPROVE", "score " + s.score());
+    }
+
+    /** Não há link, indicação nem relato. A declaração "por conta própria" não confirma a ausência de contato. */
+    private static boolean contextUnknown(Scored s) {
+        return !s.has("ORIGIN_LINK") && !s.has("ORIGIN_GUIDED")
+                && !s.has("DESTINATION_IN_INCIDENT") && !s.has("SELLER_IN_INCIDENT");
     }
 }

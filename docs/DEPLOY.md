@@ -90,3 +90,5 @@ cd frontend && BASE=https://<seu-web>.onrender.com npm run test:e2e     # histó
 ```
 
 Guardem os números do teste de carga **na nuvem** para o relatório: eles serão maiores que os locais (rede e plano gratuito), e explicar a diferença conta ponto.
+
+O ambiente local desta máquina usa PostgreSQL 18. O Flyway que acompanha o Spring Boot 3.5 avisa que essa versão é mais nova do que a faixa que ele declara testada. As migrações V1 a V8 foram aplicadas e são aditivas: não apagam tabela. Para um piloto, use uma versão de PostgreSQL dentro da faixa declarada pelo Flyway, ou um Flyway que liste o PostgreSQL 18. O Docker Compose deste repositório não foi executado aqui porque o comando `docker` não está instalado.

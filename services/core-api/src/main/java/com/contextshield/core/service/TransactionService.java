@@ -171,8 +171,19 @@ public class TransactionService {
         transition(tx, to, r.getRuleText(), "Motor de risco", at);
         audit.log("risk-engine", "DECISION", tx.getId(), r.getDecision() + " · score " + r.getScore() + " · " + r.getRuleId(), at);
         intel.recordAttempt(tx);
-        learning.shadow(tx.getId(), input, r.getDecision());
+        learning.shadow(tx.getId(), input, r.getDecision(), stage);
+        if ("REQUEST_CONTEXT".equals(r.getDecision())) openVerification(tx.getId(), r.getRuleText(), at);
         return tx;
+    }
+
+    private void openVerification(String txId, String reason, LocalDateTime at) {
+        Verification v = verifications.findById(txId).orElseGet(Verification::new);
+        v.setTxId(txId);
+        v.setState("REQUESTED");
+        v.setReason(reason);
+        v.setRequestedAt(at);
+        v.setExpiresAt(at.plusMinutes(30));
+        verifications.save(v);
     }
 
     // ---------------------------------------------------------------- verificação e intervenção
@@ -192,14 +203,23 @@ public class TransactionService {
         if (tx.getStatus() != TransactionStatus.CONTEXT_REQUIRED)
             throw ApiException.conflict("Esta compra não está aguardando verificação (status " + tx.getStatus() + ")");
         if (answers == null || answers.isEmpty()) throw ApiException.badRequest("Responda pelo menos uma pergunta");
+        LocalDateTime at = when != null ? when : LocalDateTime.now().withNano(0);
+        Verification existing = verifications.findById(tx.getId()).orElse(null);
+        if (existing != null && "EXPIRED".equals(existing.getState()))
+            throw ApiException.conflict("A verificação expirou. A falta de resposta não libera a compra.");
+        if (existing != null && existing.getExpiresAt() != null && existing.getExpiresAt().isBefore(at)) {
+            existing.setState("EXPIRED");
+            verifications.save(existing);
+            throw ApiException.conflict("A verificação expirou. A falta de resposta não libera a compra.");
+        }
         Map<String, String> clean = new LinkedHashMap<>();
         answers.forEach((k, v) -> {
             if (!VALID_ANSWERS.containsKey(k) || !VALID_ANSWERS.get(k).contains(v))
                 throw ApiException.badRequest("Resposta inválida para " + k);
             clean.put(k, v);
         });
-        LocalDateTime at = when != null ? when : LocalDateTime.now().withNano(0);
-        Verification v = new Verification();
+        boolean complete = clean.keySet().containsAll(Set.of("origin", "contact", "address", "coached"));
+        Verification v = existing == null ? new Verification() : existing;
         v.setTxId(tx.getId());
         try {
             v.setAnswers(mapper.writeValueAsString(clean));
@@ -207,9 +227,13 @@ public class TransactionService {
             throw ApiException.badRequest("Respostas inválidas");
         }
         v.setAnsweredAt(at);
+        v.setState(complete ? "ANSWERED" : "INCONCLUSIVE");
         verifications.save(v);
-        audit.log(user.email(), "VERIFICATION_ANSWERED", tx.getId(), clean.toString(), at);
-        return evaluate(tx, "recalculated", clean, at);
+        audit.log(user.email(), "VERIFICATION_ANSWERED", tx.getId(), (complete ? "completa" : "incompleta"), at);
+        Transaction done = evaluate(tx, "recalculated", clean, at);
+        v.setState(complete ? "COMPLETED" : "INCONCLUSIVE");
+        verifications.save(v);
+        return done;
     }
 
     @Transactional

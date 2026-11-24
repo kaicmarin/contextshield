@@ -14,7 +14,7 @@ import java.util.Map;
 @Service
 public class EngineSettings {
     public static final List<String> FLAGS = List.of("intelligence-matching", "dependency-discount",
-            "context-on-declared-guidance", "guidance-floor", "script-mirror");
+            "context-on-declared-guidance", "guidance-floor", "script-mirror", "context-when-unknown");
     public static final List<String> PROVIDERS = List.of("history", "device", "merchant", "intelligence");
 
     private final JdbcTemplate jdbc;
@@ -34,7 +34,11 @@ public class EngineSettings {
     public Map<String, Object> config() {
         Map<String, String> raw = raw();
         Map<String, Boolean> flags = new LinkedHashMap<>();
-        for (String f : FLAGS) flags.put(f, !"false".equals(raw.get("flag." + f)));
+        for (String f : FLAGS) {
+            String value = raw.get("flag." + f);
+            boolean on = "context-when-unknown".equals(f) ? "true".equals(value) : !"false".equals(value);
+            flags.put(f, on);
+        }
         Map<String, String> providers = new LinkedHashMap<>();
         for (String p : PROVIDERS) providers.put(p, "down".equals(raw.get("provider." + p)) ? "down" : "up");
         return Map.of("flags", flags, "providers", providers);

@@ -94,4 +94,56 @@ class PolicyAndShadowTest extends TestSupport {
             jdbc.update("delete from ml_model where path = 'C:/nao-existe/modelo.ser'");
         }
     }
+
+    @Test
+    void anotherOrganizationSeesAnEmptyQueue() throws Exception {
+        jdbc.update("update app_user set organization_id = 2 where email = 'analista@contextshield.example'");
+        try {
+            call(get("/api/ops/transactions"), analyst(), null).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.total").value(0));
+            call(get("/api/ops/incidents"), analyst(), null).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(0));
+            call(get("/api/ops/intelligence"), analyst(), null).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(0));
+        } finally {
+            jdbc.update("update app_user set organization_id = 1 where email = 'analista@contextshield.example'");
+        }
+    }
+
+    @Test
+    void contextualVerificationExpiresWithoutApproving() throws Exception {
+        jdbc.update("delete from engine_setting where setting_key = 'flag.context-when-unknown'");
+        jdbc.update("insert into engine_setting (setting_key, setting_value) values ('flag.context-when-unknown', 'true')");
+        try {
+            var tx = read(call(post("/api/transactions"), ana(), Map.of(
+                    "items", java.util.List.of(Map.of("productId", "prod-010", "quantity", 1)),
+                    "addressId", "ADDR-ANA-HOME", "deviceId", "DEV-ANA-MBA", "declaredOrigin", "self"))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.status").value("CONTEXT_REQUIRED")));
+            String id = tx.path("id").asText();
+            call(get("/api/ops/transactions/" + id), analyst(), null)
+                    .andExpect(jsonPath("$.verificationState").value("REQUESTED"))
+                    .andExpect(jsonPath("$.summary.ruleId").value("R12"));
+            jdbc.update("update verification set expires_at = timestamp '2020-01-01 00:00:00' where tx_id = ?", id);
+            call(post("/api/transactions/" + id + "/verification"), ana(), Map.of("answers", Map.of("origin", "self", "contact", "no", "address", "mine", "coached", "no")))
+                    .andExpect(status().isConflict());
+            call(get("/api/transactions/" + id), ana(), null).andExpect(jsonPath("$.status").value("CONTEXT_REQUIRED"));
+        } finally {
+            jdbc.update("delete from engine_setting where setting_key = 'flag.context-when-unknown'");
+        }
+    }
+
+    @Test
+    void unreviewedReportDoesNotBecomeATrainingLabel() throws Exception {
+        var tx = read(call(post("/api/transactions"), ana(), Map.of(
+                "items", java.util.List.of(Map.of("productId", "prod-010", "quantity", 1)),
+                "addressId", "ADDR-ANA-HOME", "deviceId", "DEV-ANA-MBA", "declaredOrigin", "self")).andExpect(status().isCreated()));
+        call(post("/api/admin/outcomes/reports"), admin(), Map.of("txId", tx.path("id").asText(), "label", "FRAUD"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.usedAsTrainingLabel").value(false))
+                .andExpect(jsonPath("$.reviewState").value("PENDING"));
+        call(get("/api/ops/ml/monitor"), analyst(), null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.qualityAvailable").value(false));
+    }
 }

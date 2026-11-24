@@ -55,6 +55,7 @@ A documentação interativa (OpenAPI 3 / Swagger) é gerada a partir do código 
 | POST | `/api/ops/policies/{id}/submit` | Envia o rascunho para aprovação (`PENDING`) |
 | POST | `/api/ops/policies/{id}/simulate` | Corpo `{ "txId" }`. Recalcula com os pesos da versão e não grava a compra |
 | GET | `/api/ops/ml` | Laboratório: modelos, experimentos, sugestões e contagem da sombra. As métricas vêm do relatório gravado |
+| GET | `/api/ops/ml/monitor` | Contagens da sombra, falhas, latência média e divergências com o motor. Não calcula precisão sem rótulo revisado |
 | GET | `/api/ops/ml/experiments/{id}` | Status de um experimento |
 | POST | `/api/ops/ml/experiments` | Corpo `{ "examples", "seed" }`. `examples` entre 200 e 4000. A resposta volta na hora; o treino segue no servidor. Um experimento por vez (409 se já houver um) |
 | GET | `/api/ops/audit?page=&size=&action=&q=` | Página da auditoria, mais recentes primeiro (`id` decrescente). `size` de 1 a 100 |
@@ -73,7 +74,8 @@ A documentação interativa (OpenAPI 3 / Swagger) é gerada a partir do código 
 | POST | `/api/admin/policies/{id}/approve` · `/reject` · `/publish` · `/rollback` | Aprova, rejeita, publica ou restaura política. Analista recebe 403 |
 | POST | `/api/admin/ml/models/{id}/approve` · `/reject` | Aprova só modelo com validação `PASS`. Rejeita um modelo que não esteja aprovado |
 | POST | `/api/admin/ml/suggestions/{id}/draft` | Copia a sugestão de pesos para um rascunho fintech. Não publica |
-| POST | `/api/admin/outcomes` | Corpo `{ "txId", "label" }`. `label` é `FRAUD`, `LEGIT` ou `INCONCLUSIVE`. Entra em treinos futuros, não treina na hora |
+| POST | `/api/admin/outcomes` | Corpo `{ "txId", "label" }`. `label` é `FRAUD`, `LEGIT` ou `INCONCLUSIVE`. Fica revisado e verificado. A decisão do motor não vira rótulo. Entra em treinos futuros, não treina na hora |
+| POST | `/api/admin/outcomes/reports` | Mesmo corpo. Fica pendente, como denúncia. Não entra no treino |
 | POST | `/api/admin/ml/models/{id}/decision` | Recusa o uso do modelo na decisão. A resposta traz `decisionAuthorized: false` |
 
 ### Integração (`ANALYST` ou `ADMIN`, organização do token)

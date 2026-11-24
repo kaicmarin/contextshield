@@ -5,6 +5,7 @@ import com.contextshield.core.domain.AppUser;
 import com.contextshield.core.repo.AppUserRepository;
 import com.contextshield.core.repo.CustomerRepository;
 import com.contextshield.core.service.AuditService;
+import com.contextshield.core.service.OrganizationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -26,22 +27,30 @@ public class AdminController {
     private final CustomerRepository customers;
     private final PasswordEncoder encoder;
     private final AuditService audit;
+    private final OrganizationService organizations;
 
-    public AdminController(AppUserRepository users, CustomerRepository customers, PasswordEncoder encoder, AuditService audit) {
+    public AdminController(AppUserRepository users, CustomerRepository customers, PasswordEncoder encoder, AuditService audit,
+                           OrganizationService organizations) {
         this.users = users;
         this.customers = customers;
         this.encoder = encoder;
         this.audit = audit;
+        this.organizations = organizations;
     }
 
     @GetMapping
     public List<AuthController.UserView> list() {
-        return users.findAll(org.springframework.data.domain.Sort.by("id")).stream().map(AuthController.UserView::of).toList();
+        long organizationId = organizations.idOf(Auth.user());
+        return users.findAll(org.springframework.data.domain.Sort.by("id")).stream()
+                .filter(user -> organizationId == (user.getOrganizationId() == null ? 1L : user.getOrganizationId()))
+                .map(AuthController.UserView::of).toList();
     }
 
     @GetMapping("/{id}")
     public AuthController.UserView get(@PathVariable Long id) {
-        return AuthController.UserView.of(users.findById(id).orElseThrow(() -> ApiException.notFound("Usuário")));
+        AppUser user = users.findById(id).orElseThrow(() -> ApiException.notFound("Usuário"));
+        organizations.requireSame(Auth.user(), user.getOrganizationId(), "Usuário");
+        return AuthController.UserView.of(user);
     }
 
     public record CreateUser(@NotBlank @Email String email, @NotBlank @Size(max = 120) String name,
@@ -62,6 +71,7 @@ public class AdminController {
         u.setPasswordHash(encoder.encode(req.password()));
         u.setActive(true);
         u.setCreatedAt(LocalDateTime.now());
+        u.setOrganizationId(organizations.idOf(Auth.user()));
         users.save(u);
         audit.log(Auth.user().email(), "USER_CREATED", u.getEmail(), u.getRole().name());
         return AuthController.UserView.of(u);
@@ -74,6 +84,7 @@ public class AdminController {
     public AuthController.UserView update(@PathVariable Long id, @Valid @RequestBody UpdateUser req) {
         AppUser u = users.findById(id).orElseThrow(() -> ApiException.notFound("Usuário"));
         CurrentUser me = Auth.user();
+        organizations.requireSame(me, u.getOrganizationId(), "Usuário");
         if (u.getEmail().equalsIgnoreCase(me.email()) && (Boolean.FALSE.equals(req.active()) || (req.role() != null && !"ADMIN".equals(req.role()))))
             throw ApiException.conflict("Você não pode remover o seu próprio acesso de administrador");
         if (req.name() != null && !req.name().isBlank()) u.setName(req.name().trim());
@@ -92,6 +103,7 @@ public class AdminController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         AppUser u = users.findById(id).orElseThrow(() -> ApiException.notFound("Usuário"));
+        organizations.requireSame(Auth.user(), u.getOrganizationId(), "Usuário");
         if (u.getEmail().equalsIgnoreCase(Auth.user().email())) throw ApiException.conflict("Você não pode excluir a sua própria conta");
         users.delete(u);
         audit.log(Auth.user().email(), "USER_DELETED", u.getEmail(), null);

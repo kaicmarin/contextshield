@@ -43,13 +43,13 @@ public class QueueService {
         this.jdbc = jdbc;
     }
 
-    public Map<String, Object> page(String status, String q, Integer days, String band, int page, int size, String sort, String dir) {
+    public Map<String, Object> page(String status, String q, Integer days, String band, int page, int size, String sort, String dir, long organizationId) {
         LocalDateTime from = MetricsService.windowStart(days);
         String order = SORTS.getOrDefault(sort, "t.created_at");
         String direction = "asc".equalsIgnoreCase(dir) ? "asc" : "desc";
 
         List<Object> args = new ArrayList<>();
-        String where = where(from, blank(band), blank(q), blank(status), args);
+        String where = where(from, blank(band), blank(q), blank(status), organizationId, args);
         Long total = jdbc.queryForObject("select count(*) " + FROM + where, Long.class, args.toArray());
         long count = total == null ? 0 : total;
 
@@ -87,14 +87,14 @@ public class QueueService {
         out.put("size", size);
         out.put("total", count);
         out.put("pages", size == 0 ? 0 : (int) Math.ceil(count / (double) size));
-        out.put("counts", counts(from, blank(band), blank(q)));
+        out.put("counts", counts(from, blank(band), blank(q), organizationId));
         out.put("items", items);
         return out;
     }
 
-    private Map<String, Long> counts(LocalDateTime from, String band, String q) {
+    private Map<String, Long> counts(LocalDateTime from, String band, String q, long organizationId) {
         List<Object> args = new ArrayList<>();
-        String where = where(from, band, q, null, args);
+        String where = where(from, band, q, null, organizationId, args);
         Map<String, Long> byStatus = new LinkedHashMap<>();
         jdbc.query("select t.status, count(*) " + FROM + where + " group by t.status", args.toArray(), rs -> {
             byStatus.put(rs.getString(1), rs.getLong(2));
@@ -112,8 +112,9 @@ public class QueueService {
         return names.stream().mapToLong(n -> byStatus.getOrDefault(n, 0L)).sum();
     }
 
-    private static String where(LocalDateTime from, String band, String q, String status, List<Object> args) {
-        StringBuilder sql = new StringBuilder(" where 1=1 ");
+    private static String where(LocalDateTime from, String band, String q, String status, long organizationId, List<Object> args) {
+        StringBuilder sql = new StringBuilder(" where coalesce(t.organization_id, 1) = ? ");
+        args.add(organizationId);
         if (from != null) {
             sql.append(" and t.created_at >= ? ");
             args.add(Timestamp.valueOf(from));
