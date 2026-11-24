@@ -1,0 +1,2440 @@
+{
+ "customers": [
+  {
+   "id": "CUST-001",
+   "name": "Ana Martins",
+   "firstName": "Ana",
+   "initials": "AM",
+   "email": "ana.martins@correio.example",
+   "phoneMask": "(11) 9••••-4102",
+   "city": "São Paulo",
+   "since": "2021-03-14",
+   "segment": "Platinum",
+   "spend": {
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   }
+  },
+  {
+   "id": "CUST-002",
+   "name": "Carlos Menezes",
+   "firstName": "Carlos",
+   "initials": "CM",
+   "email": "carlos.menezes@correio.example",
+   "phoneMask": "(19) 9••••-2217",
+   "city": "Campinas",
+   "since": "2019-08-02",
+   "segment": "Gold",
+   "spend": {
+    "avgTicket90d": 920,
+    "purchases90d": 9
+   }
+  },
+  {
+   "id": "CUST-003",
+   "name": "Mariana Rocha",
+   "firstName": "Mariana",
+   "initials": "MR",
+   "email": "mariana.rocha@correio.example",
+   "phoneMask": "(11) 9••••-7730",
+   "city": "São Paulo",
+   "since": "2022-06-20",
+   "segment": "Platinum",
+   "spend": {
+    "avgTicket90d": 1170,
+    "purchases90d": 7
+   }
+  },
+  {
+   "id": "CUST-004",
+   "name": "Rafael Nunes",
+   "firstName": "Rafael",
+   "initials": "RN",
+   "email": "rafael.nunes@correio.example",
+   "phoneMask": "(11) 9••••-5561",
+   "city": "Guarulhos",
+   "since": "2020-11-05",
+   "segment": "Essencial",
+   "spend": {
+    "avgTicket90d": 250,
+    "purchases90d": 14
+   }
+  },
+  {
+   "id": "CUST-005",
+   "name": "Beatriz Lima",
+   "firstName": "Beatriz",
+   "initials": "BL",
+   "email": "beatriz.lima@correio.example",
+   "phoneMask": "(11) 9••••-8840",
+   "city": "São Paulo",
+   "since": "2023-02-11",
+   "segment": "Platinum",
+   "spend": {
+    "avgTicket90d": 1410,
+    "purchases90d": 6
+   }
+  },
+  {
+   "id": "CUST-006",
+   "name": "Diego Faria",
+   "firstName": "Diego",
+   "initials": "DF",
+   "email": "diego.faria@correio.example",
+   "phoneMask": "(13) 9••••-3391",
+   "city": "Santos",
+   "since": "2018-04-30",
+   "segment": "Gold",
+   "spend": {
+    "avgTicket90d": 1100,
+    "purchases90d": 8
+   }
+  },
+  {
+   "id": "CUST-007",
+   "name": "Helena Prado",
+   "firstName": "Helena",
+   "initials": "HP",
+   "email": "helena.prado@correio.example",
+   "phoneMask": "(15) 9••••-0926",
+   "city": "Sorocaba",
+   "since": "2024-04-09",
+   "segment": "Essencial",
+   "spend": {
+    "avgTicket90d": 140,
+    "purchases90d": 2
+   }
+  },
+  {
+   "id": "CUST-008",
+   "name": "Pedro Alves",
+   "firstName": "Pedro",
+   "initials": "PA",
+   "email": "pedro.alves@correio.example",
+   "phoneMask": "(11) 9••••-6612",
+   "city": "Osasco",
+   "since": "2021-10-18",
+   "segment": "Gold",
+   "spend": {
+    "avgTicket90d": 780,
+    "purchases90d": 5
+   }
+  },
+  {
+   "id": "CUST-009",
+   "name": "Joana Ribeiro",
+   "firstName": "Joana",
+   "initials": "JR",
+   "email": "joana.ribeiro@correio.example",
+   "phoneMask": "(11) 9••••-1453",
+   "city": "São Paulo",
+   "since": "2017-01-23",
+   "segment": "Platinum",
+   "spend": {
+    "avgTicket90d": 900,
+    "purchases90d": 10
+   }
+  }
+ ],
+ "cards": [
+  {
+   "id": "CARD-SIM-4417",
+   "customerId": "CUST-001",
+   "last4": "4417",
+   "holder": "ANA MARTINS",
+   "product": "Aureon Platinum",
+   "kind": "Crédito",
+   "expiry": "08/31",
+   "limit": 18000,
+   "available": 14860,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-2290",
+   "customerId": "CUST-002",
+   "last4": "2290",
+   "holder": "CARLOS MENEZES",
+   "product": "Aureon Gold",
+   "kind": "Crédito",
+   "expiry": "03/30",
+   "limit": 9000,
+   "available": 6420,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-7731",
+   "customerId": "CUST-003",
+   "last4": "7731",
+   "holder": "MARIANA ROCHA",
+   "product": "Aureon Platinum",
+   "kind": "Crédito",
+   "expiry": "11/29",
+   "limit": 15000,
+   "available": 11980,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-5102",
+   "customerId": "CUST-004",
+   "last4": "5102",
+   "holder": "RAFAEL NUNES",
+   "product": "Aureon Essencial",
+   "kind": "Crédito",
+   "expiry": "06/29",
+   "limit": 4000,
+   "available": 2870,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-8846",
+   "customerId": "CUST-005",
+   "last4": "8846",
+   "holder": "BEATRIZ LIMA",
+   "product": "Aureon Platinum",
+   "kind": "Crédito",
+   "expiry": "01/32",
+   "limit": 20000,
+   "available": 15310,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-3368",
+   "customerId": "CUST-006",
+   "last4": "3368",
+   "holder": "DIEGO FARIA",
+   "product": "Aureon Gold",
+   "kind": "Crédito",
+   "expiry": "09/30",
+   "limit": 12000,
+   "available": 8930,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-9024",
+   "customerId": "CUST-007",
+   "last4": "9024",
+   "holder": "HELENA PRADO",
+   "product": "Aureon Essencial",
+   "kind": "Crédito",
+   "expiry": "04/31",
+   "limit": 3000,
+   "available": 2710,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-6615",
+   "customerId": "CUST-008",
+   "last4": "6615",
+   "holder": "PEDRO ALVES",
+   "product": "Aureon Gold",
+   "kind": "Crédito",
+   "expiry": "12/29",
+   "limit": 8000,
+   "available": 5080,
+   "status": "Ativo"
+  },
+  {
+   "id": "CARD-SIM-1459",
+   "customerId": "CUST-009",
+   "last4": "1459",
+   "holder": "JOANA RIBEIRO",
+   "product": "Aureon Platinum",
+   "kind": "Crédito",
+   "expiry": "07/30",
+   "limit": 16000,
+   "available": 13240,
+   "status": "Ativo"
+  }
+ ],
+ "devices": [
+  {
+   "id": "DEV-ANA-MBA",
+   "customerId": "CUST-001",
+   "name": "MacBook Air",
+   "detail": "macOS · Safari",
+   "kind": "laptop",
+   "location": "São Paulo",
+   "firstSeen": "2024-02-10T20:14:00",
+   "lastSeen": "2026-09-28T11:46:10",
+   "trusted": true
+  },
+  {
+   "id": "DEV-ANA-IPH",
+   "customerId": "CUST-001",
+   "name": "iPhone 14",
+   "detail": "iOS · App Aureon",
+   "kind": "phone",
+   "location": "São Paulo",
+   "firstSeen": "2023-05-02T09:30:00",
+   "lastSeen": "2026-09-28T09:05:00",
+   "trusted": true
+  },
+  {
+   "id": "DEV-ANA-W11",
+   "customerId": "CUST-001",
+   "name": "Computador Windows",
+   "detail": "Windows 11 · Chrome",
+   "kind": "desktop",
+   "location": "São Paulo (rede diferente da habitual)",
+   "firstSeen": "2026-09-28T14:29:48",
+   "lastSeen": "2026-09-28T14:31:02",
+   "trusted": false
+  },
+  {
+   "id": "DEV-CAR-PIX",
+   "customerId": "CUST-002",
+   "name": "Pixel 8",
+   "detail": "Android · Chrome",
+   "kind": "phone",
+   "location": "Campinas",
+   "firstSeen": "2024-01-18T19:02:00",
+   "lastSeen": "2026-09-28T08:11:40",
+   "trusted": true
+  },
+  {
+   "id": "DEV-MAR-IPH",
+   "customerId": "CUST-003",
+   "name": "iPhone 13",
+   "detail": "iOS · Safari",
+   "kind": "phone",
+   "location": "São Paulo",
+   "firstSeen": "2022-07-03T12:40:00",
+   "lastSeen": "2026-09-25T15:43:00",
+   "trusted": true
+  },
+  {
+   "id": "DEV-RAF-MOTO",
+   "customerId": "CUST-004",
+   "name": "Moto G84",
+   "detail": "Android · Chrome",
+   "kind": "phone",
+   "location": "Guarulhos",
+   "firstSeen": "2024-06-11T08:20:00",
+   "lastSeen": "2026-09-21T19:47:00",
+   "trusted": true
+  },
+  {
+   "id": "DEV-BEA-S23",
+   "customerId": "CUST-005",
+   "name": "Galaxy S23",
+   "detail": "Android · Samsung Internet",
+   "kind": "phone",
+   "location": "São Paulo",
+   "firstSeen": "2023-03-01T10:00:00",
+   "lastSeen": "2026-09-28T09:43:00",
+   "trusted": true
+  },
+  {
+   "id": "DEV-DIE-XPS",
+   "customerId": "CUST-006",
+   "name": "Notebook Dell",
+   "detail": "Windows 11 · Edge",
+   "kind": "laptop",
+   "location": "Santos",
+   "firstSeen": "2026-09-27T18:31:00",
+   "lastSeen": "2026-09-27T18:50:00",
+   "trusted": false
+  },
+  {
+   "id": "DEV-DIE-IPH",
+   "customerId": "CUST-006",
+   "name": "iPhone 15",
+   "detail": "iOS · App Aureon",
+   "kind": "phone",
+   "location": "Santos",
+   "firstSeen": "2023-11-20T07:45:00",
+   "lastSeen": "2026-09-27T12:10:00",
+   "trusted": true
+  },
+  {
+   "id": "DEV-HEL-A54",
+   "customerId": "CUST-007",
+   "name": "Galaxy A54",
+   "detail": "Android · Chrome",
+   "kind": "phone",
+   "location": "Sorocaba",
+   "firstSeen": "2024-04-09T18:00:00",
+   "lastSeen": "2026-09-28T10:57:00",
+   "trusted": true
+  },
+  {
+   "id": "DEV-PED-IPH",
+   "customerId": "CUST-008",
+   "name": "iPhone 12",
+   "detail": "iOS · Safari",
+   "kind": "phone",
+   "location": "Osasco",
+   "firstSeen": "2022-01-15T21:10:00",
+   "lastSeen": "2026-09-24T21:07:00",
+   "trusted": true
+  },
+  {
+   "id": "DEV-JOA-IPAD",
+   "customerId": "CUST-009",
+   "name": "iPad Air",
+   "detail": "iPadOS · Safari",
+   "kind": "tablet",
+   "location": "São Paulo",
+   "firstSeen": "2023-08-08T16:30:00",
+   "lastSeen": "2026-09-14T16:21:00",
+   "trusted": true
+  }
+ ],
+ "addresses": [
+  {
+   "id": "ADDR-ANA-HOME",
+   "customerIds": [
+    "CUST-001"
+   ],
+   "label": "Casa",
+   "line1": "Rua das Acácias Brancas, 212",
+   "line2": "apto 52",
+   "district": "Jardim Aurora",
+   "city": "São Paulo",
+   "zip": "04012-212",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-ANA-WORK",
+   "customerIds": [
+    "CUST-001"
+   ],
+   "label": "Trabalho",
+   "line1": "Av. Horizonte Azul, 1500",
+   "line2": "9º andar",
+   "district": "Vila Médici",
+   "city": "São Paulo",
+   "zip": "01315-150",
+   "kind": "work"
+  },
+  {
+   "id": "ADDR-PICKUP-880",
+   "customerIds": [],
+   "label": "Ponto de retirada",
+   "line1": "Rua Pedra Lisa, 880",
+   "line2": "loja 3",
+   "district": "Vila Serena",
+   "city": "São Paulo",
+   "zip": "03318-880",
+   "kind": "pickup"
+  },
+  {
+   "id": "ADDR-PICKUP-2110",
+   "customerIds": [],
+   "label": "Ponto de retirada",
+   "line1": "Av. Rio Claro Novo, 2110",
+   "line2": "box 14",
+   "district": "Parque Industrial",
+   "city": "Osasco",
+   "zip": "06226-210",
+   "kind": "pickup"
+  },
+  {
+   "id": "ADDR-CAR-HOME",
+   "customerIds": [
+    "CUST-002"
+   ],
+   "label": "Casa",
+   "line1": "Rua Monte Verde Alto, 318",
+   "district": "Jardim das Oliveiras",
+   "city": "Campinas",
+   "zip": "13044-318",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-MAR-HOME",
+   "customerIds": [
+    "CUST-003"
+   ],
+   "label": "Casa",
+   "line1": "Rua Vale do Sol, 45",
+   "line2": "casa 2",
+   "district": "Jardim Primavera",
+   "city": "São Paulo",
+   "zip": "02241-045",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-RAF-HOME",
+   "customerIds": [
+    "CUST-004"
+   ],
+   "label": "Casa",
+   "line1": "Rua Serra Dourada, 77",
+   "district": "Vila Rosa Clara",
+   "city": "Guarulhos",
+   "zip": "07133-077",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-BEA-HOME",
+   "customerIds": [
+    "CUST-005"
+   ],
+   "label": "Casa",
+   "line1": "Rua Lago Azul, 940",
+   "line2": "apto 131",
+   "district": "Jardim Esmeralda",
+   "city": "São Paulo",
+   "zip": "05588-940",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-DIE-HOME",
+   "customerIds": [
+    "CUST-006"
+   ],
+   "label": "Casa",
+   "line1": "Av. Maré Mansa, 1020",
+   "district": "Ponta Clara",
+   "city": "Santos",
+   "zip": "11065-020",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-HEL-HOME",
+   "customerIds": [
+    "CUST-007"
+   ],
+   "label": "Casa",
+   "line1": "Rua dos Girassóis Altos, 56",
+   "district": "Vila Campestre",
+   "city": "Sorocaba",
+   "zip": "18047-056",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-PED-HOME",
+   "customerIds": [
+    "CUST-008"
+   ],
+   "label": "Casa",
+   "line1": "Rua Barão do Rio Seco, 403",
+   "district": "Centro Novo",
+   "city": "Osasco",
+   "zip": "06018-403",
+   "kind": "home"
+  },
+  {
+   "id": "ADDR-JOA-HOME",
+   "customerIds": [
+    "CUST-009"
+   ],
+   "label": "Casa",
+   "line1": "Rua Cedro Rosa, 1188",
+   "line2": "apto 34",
+   "district": "Vila Amparo",
+   "city": "São Paulo",
+   "zip": "04126-188",
+   "kind": "home"
+  }
+ ],
+ "merchants": [
+  {
+   "id": "MER-001",
+   "name": "NEXA",
+   "legalName": "NEXA Comércio Digital Ltda.",
+   "domain": "nexa.example",
+   "cnpj": "41.832.905/0001-05",
+   "city": "São Paulo",
+   "category": "Marketplace de tecnologia e casa",
+   "mcc": "5399",
+   "since": "2016-05-02",
+   "verified": true,
+   "marketplace": true
+  },
+  {
+   "id": "MER-002",
+   "name": "Lumen Tech",
+   "legalName": "Lumen Tecnologia e Varejo Ltda.",
+   "domain": "lumentech.example",
+   "cnpj": "27.441.038/0001-56",
+   "city": "Curitiba",
+   "category": "Eletrônicos",
+   "mcc": "5732",
+   "since": "2014-09-15",
+   "verified": true,
+   "marketplace": false
+  },
+  {
+   "id": "MER-003",
+   "name": "Livraria Alto",
+   "legalName": "Alto Livros e Papelaria S.A.",
+   "domain": "livrariaalto.example",
+   "cnpj": "09.331.572/0001-28",
+   "city": "São Paulo",
+   "category": "Livros e vale-presente",
+   "mcc": "5942",
+   "since": "2011-03-08",
+   "verified": true,
+   "marketplace": false
+  },
+  {
+   "id": "MER-004",
+   "name": "Casa Vértice",
+   "legalName": "Vértice Casa e Decoração Ltda.",
+   "domain": "casavertice.example",
+   "cnpj": "33.102.764/0001-47",
+   "city": "Belo Horizonte",
+   "category": "Casa e decoração",
+   "mcc": "5712",
+   "since": "2017-11-21",
+   "verified": true,
+   "marketplace": false
+  }
+ ],
+ "sellers": [
+  {
+   "id": "SEL-001",
+   "name": "NEXA Oficial",
+   "initials": "NX",
+   "color": "#161616",
+   "tagline": "Loja oficial da NEXA",
+   "about": "Estoque próprio, nota fiscal emitida pela NEXA e troca facilitada em até 30 dias.",
+   "since": "2016-05-02",
+   "city": "São Paulo, SP",
+   "cnpj": "41.832.905/0001-05",
+   "categories": [
+    "informatica",
+    "celulares",
+    "acessorios"
+   ],
+   "sales": 184320,
+   "rating": 4.8,
+   "reviewCount": 52410,
+   "tier": "oficial",
+   "responseTime": "até 1 hora",
+   "onTimeRate": 98,
+   "cancellationRate": 0.4,
+   "claimsRate": 0.3,
+   "verifiedDocs": true
+  },
+  {
+   "id": "SEL-002",
+   "name": "Estúdio Onda",
+   "initials": "EO",
+   "color": "#2C4A5A",
+   "tagline": "Áudio e fotografia",
+   "about": "Especialista em áudio e fotografia desde 2018. Todos os produtos com garantia nacional.",
+   "since": "2018-02-19",
+   "city": "Florianópolis, SC",
+   "cnpj": "29.017.445/0001-66",
+   "categories": [
+    "audio",
+    "foto"
+   ],
+   "sales": 62870,
+   "rating": 4.9,
+   "reviewCount": 18204,
+   "tier": "platinum",
+   "responseTime": "até 2 horas",
+   "onTimeRate": 97,
+   "cancellationRate": 0.6,
+   "claimsRate": 0.4,
+   "verifiedDocs": true
+  },
+  {
+   "id": "SEL-003",
+   "name": "Casa Prática",
+   "initials": "CP",
+   "color": "#7A5A3C",
+   "tagline": "Eletroportáteis e casa conectada",
+   "about": "Eletroportáteis, robôs de limpeza e segurança residencial com entrega em todo o Brasil.",
+   "since": "2020-07-06",
+   "city": "Campinas, SP",
+   "cnpj": "37.661.298/0001-90",
+   "categories": [
+    "eletrodomesticos",
+    "casa"
+   ],
+   "sales": 31540,
+   "rating": 4.7,
+   "reviewCount": 9812,
+   "tier": "gold",
+   "responseTime": "até 3 horas",
+   "onTimeRate": 95,
+   "cancellationRate": 1.1,
+   "claimsRate": 0.8,
+   "verifiedDocs": true
+  },
+  {
+   "id": "SEL-004",
+   "name": "Ferramenta Certa",
+   "initials": "FC",
+   "color": "#3E5A35",
+   "tagline": "Ferramentas para casa e obra",
+   "about": "Ferramentas elétricas e manuais de marcas nacionais, com assistência técnica própria.",
+   "since": "2016-10-12",
+   "city": "Joinville, SC",
+   "cnpj": "26.045.513/0001-02",
+   "categories": [
+    "ferramentas"
+   ],
+   "sales": 48120,
+   "rating": 4.8,
+   "reviewCount": 12650,
+   "tier": "gold",
+   "responseTime": "até 2 horas",
+   "onTimeRate": 96,
+   "cancellationRate": 0.8,
+   "claimsRate": 0.5,
+   "verifiedDocs": true
+  },
+  {
+   "id": "SEL-005",
+   "name": "Escritório Norte",
+   "initials": "EN",
+   "color": "#3B4B6B",
+   "tagline": "Home office e periféricos",
+   "about": "Periféricos, cadeiras e iluminação para quem trabalha em casa.",
+   "since": "2021-05-17",
+   "city": "Belo Horizonte, MG",
+   "cnpj": "41.207.866/0001-55",
+   "categories": [
+    "escritorio",
+    "informatica",
+    "acessorios"
+   ],
+   "sales": 9410,
+   "rating": 4.6,
+   "reviewCount": 2870,
+   "tier": "estabelecido",
+   "responseTime": "até 4 horas",
+   "onTimeRate": 94,
+   "cancellationRate": 1.4,
+   "claimsRate": 0.9,
+   "verifiedDocs": true
+  },
+  {
+   "id": "SEL-006",
+   "name": "Estação Games",
+   "initials": "EG",
+   "color": "#4B3B6B",
+   "tagline": "Consoles e acessórios",
+   "about": "Consoles, controles e acessórios originais, com lançamentos no dia da estreia.",
+   "since": "2017-03-28",
+   "city": "Recife, PE",
+   "cnpj": "27.489.321/0001-58",
+   "categories": [
+    "games"
+   ],
+   "sales": 71260,
+   "rating": 4.8,
+   "reviewCount": 21330,
+   "tier": "platinum",
+   "responseTime": "até 1 hora",
+   "onTimeRate": 97,
+   "cancellationRate": 0.7,
+   "claimsRate": 0.4,
+   "verifiedDocs": true
+  },
+  {
+   "id": "SEL-007",
+   "name": "Conecta Outlet",
+   "initials": "CO",
+   "color": "#5A6470",
+   "tagline": "Tecnologia com preço de outlet",
+   "about": "Smartphones, tablets e notebooks lacrados com pronta entrega.",
+   "since": "2026-09-02",
+   "city": "São Paulo, SP",
+   "cnpj": "61.204.733/0001-32",
+   "categories": [
+    "celulares",
+    "informatica"
+   ],
+   "sales": 38,
+   "rating": 4.1,
+   "reviewCount": 21,
+   "tier": "novo",
+   "responseTime": "até 12 horas",
+   "onTimeRate": 89,
+   "cancellationRate": 2.6,
+   "claimsRate": 1.9,
+   "verifiedDocs": true
+  },
+  {
+   "id": "SEL-008",
+   "name": "Prime Eletrônicos",
+   "initials": "PE",
+   "color": "#6B4A3B",
+   "tagline": "Importados com desconto",
+   "about": "Eletrônicos importados com preço abaixo da média. Garantia limitada de 90 dias.",
+   "since": "2025-11-03",
+   "city": "São Paulo, SP",
+   "cnpj": "58.712.094/0001-01",
+   "categories": [
+    "audio",
+    "celulares"
+   ],
+   "sales": 1240,
+   "rating": 3.9,
+   "reviewCount": 410,
+   "tier": "estabelecido",
+   "responseTime": "até 24 horas",
+   "onTimeRate": 82,
+   "cancellationRate": 6.1,
+   "claimsRate": 4.8,
+   "verifiedDocs": true
+  }
+ ],
+ "categories": [
+  {
+   "slug": "informatica",
+   "name": "Informática",
+   "blurb": "Notebooks, monitores e periféricos para trabalhar bem."
+  },
+  {
+   "slug": "celulares",
+   "name": "Celulares e tablets",
+   "blurb": "Telas nítidas, câmeras sérias e bateria para o dia todo."
+  },
+  {
+   "slug": "audio",
+   "name": "Áudio",
+   "blurb": "Fones e caixas com som limpo, em casa ou na rua."
+  },
+  {
+   "slug": "games",
+   "name": "Games",
+   "blurb": "Consoles e controles para jogar com calma ou com pressa."
+  },
+  {
+   "slug": "foto",
+   "name": "Câmeras e foto",
+   "blurb": "Câmeras e lentes para quem leva a imagem a sério."
+  },
+  {
+   "slug": "casa",
+   "name": "Casa conectada",
+   "blurb": "Segurança e limpeza automáticas para uma casa mais simples."
+  },
+  {
+   "slug": "eletrodomesticos",
+   "name": "Eletroportáteis",
+   "blurb": "Cozinha rápida, café bom e menos louça na pia."
+  },
+  {
+   "slug": "escritorio",
+   "name": "Escritório",
+   "blurb": "Cadeiras, luz e organização para o home office."
+  },
+  {
+   "slug": "ferramentas",
+   "name": "Ferramentas",
+   "blurb": "Para pendurar, montar e consertar sem chamar ninguém."
+  },
+  {
+   "slug": "acessorios",
+   "name": "Acessórios",
+   "blurb": "Carregadores, mochilas e o que acompanha você."
+  }
+ ],
+ "products": [
+  {
+   "id": "prod-001",
+   "sku": "NX-ORX14-16-512",
+   "name": "Notebook Orion X 14",
+   "line": "16 GB · SSD 512 GB",
+   "categorySlug": "informatica",
+   "kind": "notebook",
+   "sellerId": "SEL-001",
+   "price": 4799.9,
+   "oldPrice": 5299.9,
+   "installments": 10,
+   "rating": 4.8,
+   "reviewCount": 1284,
+   "stock": 23,
+   "deliveryDays": 2,
+   "finish": "silver",
+   "tag": "Mais vendido",
+   "description": "Chassi em alumínio, tela de 14 polegadas com cores precisas e bateria para um dia inteiro de trabalho. Leve o bastante para ir com você, firme o bastante para durar.",
+   "highlights": [
+    "Tela 14\" 2.8K a 120 Hz",
+    "Até 16 h de bateria",
+    "1,28 kg em alumínio"
+   ],
+   "specs": [
+    {
+     "label": "Processador",
+     "value": "10 núcleos, até 4,6 GHz"
+    },
+    {
+     "label": "Memória",
+     "value": "16 GB LPDDR5"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "SSD 512 GB NVMe"
+    },
+    {
+     "label": "Tela",
+     "value": "14\" 2.8K, 120 Hz"
+    },
+    {
+     "label": "Peso",
+     "value": "1,28 kg"
+    },
+    {
+     "label": "Garantia",
+     "value": "12 meses"
+    }
+   ]
+  },
+  {
+   "id": "prod-002",
+   "sku": "NX-NVP-256",
+   "name": "Smartphone Nova Pro",
+   "line": "256 GB · Grafite",
+   "categorySlug": "celulares",
+   "kind": "phone",
+   "sellerId": "SEL-001",
+   "price": 3499.9,
+   "oldPrice": 3899.9,
+   "installments": 10,
+   "rating": 4.7,
+   "reviewCount": 2311,
+   "stock": 41,
+   "deliveryDays": 1,
+   "finish": "graphite",
+   "tag": "Lançamento",
+   "description": "Tela OLED de 6,7\", câmera tripla e recarga rápida. Um telefone nítido, discreto e resistente à água.",
+   "highlights": [
+    "OLED 6,7\" a 120 Hz",
+    "Câmera principal de 108 MP",
+    "Resistência IP68"
+   ],
+   "specs": [
+    {
+     "label": "Tela",
+     "value": "OLED 6,7\", 120 Hz"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "256 GB"
+    },
+    {
+     "label": "Câmeras",
+     "value": "108 + 12 + 10 MP"
+    },
+    {
+     "label": "Bateria",
+     "value": "5.000 mAh"
+    },
+    {
+     "label": "Resistência",
+     "value": "IP68"
+    },
+    {
+     "label": "Garantia",
+     "value": "12 meses"
+    }
+   ]
+  },
+  {
+   "id": "prod-003",
+   "sku": "EO-PULSE-ANC",
+   "name": "Headset Pulse ANC",
+   "line": "Cancelamento ativo · Areia",
+   "categorySlug": "audio",
+   "kind": "headset",
+   "sellerId": "SEL-002",
+   "price": 429.9,
+   "oldPrice": 499.9,
+   "installments": 5,
+   "rating": 4.6,
+   "reviewCount": 842,
+   "stock": 58,
+   "deliveryDays": 3,
+   "finish": "sand",
+   "description": "Cancelamento de ruído ativo, almofadas macias e até 30 horas de uso. Para reuniões longas e viagens mais silenciosas.",
+   "highlights": [
+    "Cancelamento de ruído ativo",
+    "Até 30 h de bateria",
+    "Multiponto Bluetooth 5.3"
+   ],
+   "specs": [
+    {
+     "label": "Conexão",
+     "value": "Bluetooth 5.3 multiponto"
+    },
+    {
+     "label": "Bateria",
+     "value": "até 30 h"
+    },
+    {
+     "label": "Recarga",
+     "value": "USB-C, 10 min = 5 h"
+    },
+    {
+     "label": "Peso",
+     "value": "248 g"
+    }
+   ]
+  },
+  {
+   "id": "prod-004",
+   "sku": "EN-VIS27-QHD",
+   "name": "Monitor Vision 27",
+   "line": "QHD · 144 Hz · USB-C",
+   "categorySlug": "informatica",
+   "kind": "monitor",
+   "sellerId": "SEL-005",
+   "price": 1799.9,
+   "oldPrice": 2099.9,
+   "installments": 10,
+   "rating": 4.7,
+   "reviewCount": 516,
+   "stock": 18,
+   "deliveryDays": 4,
+   "finish": "graphite",
+   "description": "27 polegadas, painel IPS QHD e 144 Hz. Um monitor limpo, com cores fiéis e sem brilho excessivo.",
+   "highlights": [
+    "27\" QHD IPS",
+    "144 Hz",
+    "USB-C com 65 W"
+   ],
+   "specs": [
+    {
+     "label": "Painel",
+     "value": "IPS 27\" 2560×1440"
+    },
+    {
+     "label": "Taxa",
+     "value": "144 Hz"
+    },
+    {
+     "label": "Conexões",
+     "value": "USB-C 65 W, HDMI, DisplayPort"
+    },
+    {
+     "label": "Ajuste",
+     "value": "Altura, inclinação e rotação"
+    }
+   ]
+  },
+  {
+   "id": "prod-005",
+   "sku": "EG-VTX-1TB",
+   "name": "Console Vertex",
+   "line": "SSD 1 TB · controle incluso",
+   "categorySlug": "games",
+   "kind": "console",
+   "sellerId": "SEL-006",
+   "price": 3999.9,
+   "oldPrice": 4299.9,
+   "installments": 10,
+   "rating": 4.9,
+   "reviewCount": 3020,
+   "stock": 9,
+   "deliveryDays": 2,
+   "finish": "white",
+   "tag": "Últimas unidades",
+   "description": "Jogos em 4K, carregamento rápido e um controle que parece feito para a sua mão.",
+   "highlights": [
+    "Até 4K a 120 fps",
+    "SSD de 1 TB",
+    "Controle sem fio incluso"
+   ],
+   "specs": [
+    {
+     "label": "Resolução",
+     "value": "até 4K, 120 fps"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "SSD 1 TB"
+    },
+    {
+     "label": "Mídia",
+     "value": "Digital"
+    },
+    {
+     "label": "Garantia",
+     "value": "12 meses"
+    }
+   ]
+  },
+  {
+   "id": "prod-006",
+   "sku": "NX-FLOW2-40",
+   "name": "Smartwatch Flow 2",
+   "line": "Caixa 40 mm · GPS",
+   "categorySlug": "celulares",
+   "kind": "watch",
+   "sellerId": "SEL-001",
+   "price": 899.9,
+   "oldPrice": 1099.9,
+   "installments": 10,
+   "rating": 4.5,
+   "reviewCount": 1106,
+   "stock": 34,
+   "deliveryDays": 1,
+   "finish": "sage",
+   "description": "Caixa fina, GPS integrado e monitoramento de sono e atividade. Uma semana longe do carregador.",
+   "highlights": [
+    "GPS integrado",
+    "Resistência 5 ATM",
+    "Até 7 dias de bateria"
+   ],
+   "specs": [
+    {
+     "label": "Tela",
+     "value": "AMOLED 1,4\""
+    },
+    {
+     "label": "Resistência",
+     "value": "5 ATM"
+    },
+    {
+     "label": "Bateria",
+     "value": "até 7 dias"
+    },
+    {
+     "label": "Sensores",
+     "value": "Frequência cardíaca, SpO2"
+    }
+   ]
+  },
+  {
+   "id": "prod-007",
+   "sku": "EO-AIRS-ANC",
+   "name": "Fones Air Sense",
+   "line": "In-ear · ANC adaptativo",
+   "categorySlug": "audio",
+   "kind": "earbuds",
+   "sellerId": "SEL-002",
+   "price": 599.9,
+   "oldPrice": 699.9,
+   "installments": 6,
+   "rating": 4.6,
+   "reviewCount": 1932,
+   "stock": 72,
+   "deliveryDays": 2,
+   "finish": "white",
+   "description": "Fones intra-auriculares com ajuste firme, estojo compacto e chamadas claras mesmo na rua.",
+   "highlights": [
+    "ANC adaptativo",
+    "28 h com o estojo",
+    "Resistência IPX4"
+   ],
+   "specs": [
+    {
+     "label": "Bateria",
+     "value": "7 h + 21 h no estojo"
+    },
+    {
+     "label": "Resistência",
+     "value": "IPX4"
+    },
+    {
+     "label": "Conexão",
+     "value": "Bluetooth 5.3"
+    },
+    {
+     "label": "Estojo",
+     "value": "USB-C e sem fio"
+    }
+   ]
+  },
+  {
+   "id": "prod-008",
+   "sku": "EO-DRIFT-40",
+   "name": "Caixa de som Drift",
+   "line": "360° · IP67",
+   "categorySlug": "audio",
+   "kind": "speaker",
+   "sellerId": "SEL-002",
+   "price": 699.9,
+   "installments": 6,
+   "rating": 4.7,
+   "reviewCount": 604,
+   "stock": 25,
+   "deliveryDays": 3,
+   "finish": "sage",
+   "description": "Som de 360°, graves firmes e bateria para o fim de semana. Resistente a respingos e poeira.",
+   "highlights": [
+    "Som em 360°",
+    "Até 24 h de bateria",
+    "Resistência IP67"
+   ],
+   "specs": [
+    {
+     "label": "Potência",
+     "value": "40 W RMS"
+    },
+    {
+     "label": "Bateria",
+     "value": "até 24 h"
+    },
+    {
+     "label": "Resistência",
+     "value": "IP67"
+    },
+    {
+     "label": "Peso",
+     "value": "980 g"
+    }
+   ]
+  },
+  {
+   "id": "prod-009",
+   "sku": "EN-ARC-LP",
+   "name": "Teclado mecânico Arc",
+   "line": "Perfil baixo · silencioso",
+   "categorySlug": "informatica",
+   "kind": "keyboard",
+   "sellerId": "SEL-005",
+   "price": 549.9,
+   "oldPrice": 629.9,
+   "installments": 5,
+   "rating": 4.8,
+   "reviewCount": 377,
+   "stock": 30,
+   "deliveryDays": 3,
+   "finish": "graphite",
+   "description": "Teclado mecânico de perfil baixo, silencioso e com conexão para três dispositivos.",
+   "highlights": [
+    "Switches lineares silenciosos",
+    "Três dispositivos",
+    "Retroiluminação ajustável"
+   ],
+   "specs": [
+    {
+     "label": "Switches",
+     "value": "Lineares silenciosos"
+    },
+    {
+     "label": "Conexão",
+     "value": "Bluetooth e USB-C"
+    },
+    {
+     "label": "Layout",
+     "value": "ABNT2"
+    },
+    {
+     "label": "Bateria",
+     "value": "até 3 meses sem luz"
+    }
+   ]
+  },
+  {
+   "id": "prod-010",
+   "sku": "EN-GLIDE-W",
+   "name": "Mouse Glide sem fio",
+   "line": "Ergonômico · 8.000 DPI",
+   "categorySlug": "informatica",
+   "kind": "mouse",
+   "sellerId": "SEL-005",
+   "price": 249.9,
+   "installments": 3,
+   "rating": 4.6,
+   "reviewCount": 1245,
+   "stock": 88,
+   "deliveryDays": 2,
+   "finish": "graphite",
+   "description": "Ergonômico, preciso e com rolagem livre para planilhas longas.",
+   "highlights": [
+    "Sensor de 8.000 DPI",
+    "Rolagem livre",
+    "Até 70 dias de bateria"
+   ],
+   "specs": [
+    {
+     "label": "Sensor",
+     "value": "8.000 DPI"
+    },
+    {
+     "label": "Conexão",
+     "value": "Bluetooth e receptor USB"
+    },
+    {
+     "label": "Bateria",
+     "value": "até 70 dias"
+    }
+   ]
+  },
+  {
+   "id": "prod-011",
+   "sku": "CP-HALO-2K",
+   "name": "Câmera de segurança Halo",
+   "line": "2K · visão noturna",
+   "categorySlug": "casa",
+   "kind": "camera",
+   "sellerId": "SEL-003",
+   "price": 459.9,
+   "oldPrice": 529.9,
+   "installments": 5,
+   "rating": 4.4,
+   "reviewCount": 688,
+   "stock": 26,
+   "deliveryDays": 3,
+   "finish": "white",
+   "description": "Câmera interna 2K com visão noturna e privacidade física: a lente recolhe quando você chega.",
+   "highlights": [
+    "Imagem 2K",
+    "Visão noturna",
+    "Lente recolhível"
+   ],
+   "specs": [
+    {
+     "label": "Resolução",
+     "value": "2K"
+    },
+    {
+     "label": "Campo de visão",
+     "value": "110°"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "microSD ou nuvem"
+    },
+    {
+     "label": "Conexão",
+     "value": "Wi-Fi 2,4 GHz"
+    }
+   ]
+  },
+  {
+   "id": "prod-012",
+   "sku": "EG-VTX-CTRL",
+   "name": "Controle Vertex sem fio",
+   "line": "Gatilhos adaptáveis",
+   "categorySlug": "games",
+   "kind": "controller",
+   "sellerId": "SEL-006",
+   "price": 449.9,
+   "installments": 5,
+   "rating": 4.8,
+   "reviewCount": 2140,
+   "stock": 44,
+   "deliveryDays": 2,
+   "finish": "midnight",
+   "description": "Gatilhos adaptáveis e vibração precisa. Compatível com o Console Vertex e com PC.",
+   "highlights": [
+    "Gatilhos adaptáveis",
+    "Até 40 h de bateria",
+    "USB-C"
+   ],
+   "specs": [
+    {
+     "label": "Bateria",
+     "value": "até 40 h"
+    },
+    {
+     "label": "Conexão",
+     "value": "Sem fio e USB-C"
+    },
+    {
+     "label": "Compatibilidade",
+     "value": "Console Vertex e PC"
+    }
+   ]
+  },
+  {
+   "id": "prod-013",
+   "sku": "NX-SLATE11-128",
+   "name": "Tablet Slate 11",
+   "line": "128 GB · Wi-Fi",
+   "categorySlug": "celulares",
+   "kind": "tablet",
+   "sellerId": "SEL-001",
+   "price": 2499.9,
+   "oldPrice": 2799.9,
+   "installments": 10,
+   "rating": 4.6,
+   "reviewCount": 731,
+   "stock": 19,
+   "deliveryDays": 2,
+   "finish": "silver",
+   "description": "Tela de 11\" com cores fiéis, caneta com baixa latência e bateria para um dia de aulas.",
+   "highlights": [
+    "Tela 11\" 2.5K",
+    "Compatível com caneta",
+    "Até 12 h de bateria"
+   ],
+   "specs": [
+    {
+     "label": "Tela",
+     "value": "LCD 11\" 2.5K, 90 Hz"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "128 GB"
+    },
+    {
+     "label": "Conexão",
+     "value": "Wi-Fi 6"
+    },
+    {
+     "label": "Peso",
+     "value": "480 g"
+    }
+   ]
+  },
+  {
+   "id": "prod-014",
+   "sku": "EO-M50-1545",
+   "name": "Câmera mirrorless Onda M50",
+   "line": "Com lente 15–45 mm",
+   "categorySlug": "foto",
+   "kind": "mirrorless",
+   "sellerId": "SEL-002",
+   "price": 3199,
+   "oldPrice": 3599,
+   "installments": 10,
+   "rating": 4.8,
+   "reviewCount": 289,
+   "stock": 11,
+   "deliveryDays": 3,
+   "finish": "graphite",
+   "description": "Sensor APS-C de 24 MP, foco automático rápido e vídeo 4K. Leve para viajar, séria o bastante para trabalhar.",
+   "highlights": [
+    "Sensor APS-C 24 MP",
+    "Vídeo 4K",
+    "Tela articulada"
+   ],
+   "specs": [
+    {
+     "label": "Sensor",
+     "value": "APS-C 24,1 MP"
+    },
+    {
+     "label": "Vídeo",
+     "value": "4K 30p"
+    },
+    {
+     "label": "Lente",
+     "value": "15–45 mm f/3.5–6.3"
+    },
+    {
+     "label": "Peso",
+     "value": "387 g (corpo)"
+    }
+   ]
+  },
+  {
+   "id": "prod-015",
+   "sku": "CP-BRASA-5L",
+   "name": "Fritadeira elétrica Brasa",
+   "line": "5 litros · 1.500 W",
+   "categorySlug": "eletrodomesticos",
+   "kind": "airfryer",
+   "sellerId": "SEL-003",
+   "price": 399.9,
+   "oldPrice": 549.9,
+   "installments": 5,
+   "rating": 4.7,
+   "reviewCount": 4812,
+   "stock": 64,
+   "deliveryDays": 2,
+   "finish": "graphite",
+   "tag": "Oferta do dia",
+   "description": "Cesto de 5 litros antiaderente, painel digital e oito programas prontos. Menos óleo, mesma crocância.",
+   "highlights": [
+    "Cesto de 5 L",
+    "Painel digital",
+    "8 programas automáticos"
+   ],
+   "specs": [
+    {
+     "label": "Capacidade",
+     "value": "5 L"
+    },
+    {
+     "label": "Potência",
+     "value": "1.500 W"
+    },
+    {
+     "label": "Voltagem",
+     "value": "127 V ou 220 V"
+    },
+    {
+     "label": "Temperatura",
+     "value": "80 °C a 200 °C"
+    }
+   ]
+  },
+  {
+   "id": "prod-016",
+   "sku": "CP-AROMA-15",
+   "name": "Cafeteira espresso Aroma",
+   "line": "15 bar · vaporizador",
+   "categorySlug": "eletrodomesticos",
+   "kind": "espresso",
+   "sellerId": "SEL-003",
+   "price": 899.9,
+   "oldPrice": 1049.9,
+   "installments": 8,
+   "rating": 4.6,
+   "reviewCount": 953,
+   "stock": 21,
+   "deliveryDays": 3,
+   "finish": "silver",
+   "description": "Bomba de 15 bar, vaporizador para leite e reservatório removível. Café de padaria na cozinha de casa.",
+   "highlights": [
+    "Pressão de 15 bar",
+    "Vaporizador de leite",
+    "Reservatório de 1,2 L"
+   ],
+   "specs": [
+    {
+     "label": "Pressão",
+     "value": "15 bar"
+    },
+    {
+     "label": "Reservatório",
+     "value": "1,2 L"
+    },
+    {
+     "label": "Potência",
+     "value": "1.350 W"
+    },
+    {
+     "label": "Material",
+     "value": "Aço escovado"
+    }
+   ]
+  },
+  {
+   "id": "prod-017",
+   "sku": "CP-ORBITA-R",
+   "name": "Robô aspirador Órbita",
+   "line": "Mapeamento a laser",
+   "categorySlug": "casa",
+   "kind": "robot",
+   "sellerId": "SEL-003",
+   "price": 1499.9,
+   "oldPrice": 1899.9,
+   "installments": 10,
+   "rating": 4.5,
+   "reviewCount": 1377,
+   "stock": 15,
+   "deliveryDays": 4,
+   "finish": "white",
+   "description": "Mapeia a casa a laser, aspira e passa pano. Volta sozinho para a base quando termina.",
+   "highlights": [
+    "Mapeamento a laser",
+    "Aspira e passa pano",
+    "Controle pelo app"
+   ],
+   "specs": [
+    {
+     "label": "Sucção",
+     "value": "4.000 Pa"
+    },
+    {
+     "label": "Autonomia",
+     "value": "até 150 min"
+    },
+    {
+     "label": "Navegação",
+     "value": "LiDAR"
+    },
+    {
+     "label": "Reservatório",
+     "value": "450 ml"
+    }
+   ]
+  },
+  {
+   "id": "prod-018",
+   "sku": "EN-ATLAS-ERG",
+   "name": "Cadeira ergonômica Atlas",
+   "line": "Encosto em tela · apoio lombar",
+   "categorySlug": "escritorio",
+   "kind": "chair",
+   "sellerId": "SEL-005",
+   "price": 1290,
+   "oldPrice": 1590,
+   "installments": 10,
+   "rating": 4.6,
+   "reviewCount": 402,
+   "stock": 12,
+   "deliveryDays": 5,
+   "finish": "graphite",
+   "description": "Encosto em tela respirável, apoio lombar ajustável e braços 4D. Para jornadas longas sem dor nas costas.",
+   "highlights": [
+    "Apoio lombar ajustável",
+    "Braços 4D",
+    "Suporta até 130 kg"
+   ],
+   "specs": [
+    {
+     "label": "Encosto",
+     "value": "Tela respirável"
+    },
+    {
+     "label": "Ajustes",
+     "value": "Altura, lombar, braços 4D"
+    },
+    {
+     "label": "Carga máxima",
+     "value": "130 kg"
+    },
+    {
+     "label": "Garantia",
+     "value": "3 anos na estrutura"
+    }
+   ]
+  },
+  {
+   "id": "prod-019",
+   "sku": "EN-FARO-LED",
+   "name": "Luminária de mesa Faro",
+   "line": "LED · temperatura ajustável",
+   "categorySlug": "escritorio",
+   "kind": "lamp",
+   "sellerId": "SEL-005",
+   "price": 189.9,
+   "installments": 2,
+   "rating": 4.7,
+   "reviewCount": 318,
+   "stock": 47,
+   "deliveryDays": 2,
+   "finish": "sand",
+   "description": "Braço articulado, cinco temperaturas de cor e base com carregador USB-C.",
+   "highlights": [
+    "5 temperaturas de cor",
+    "Braço articulado",
+    "Base com USB-C"
+   ],
+   "specs": [
+    {
+     "label": "Potência",
+     "value": "10 W LED"
+    },
+    {
+     "label": "Temperatura",
+     "value": "2.700 K a 6.500 K"
+    },
+    {
+     "label": "Alimentação",
+     "value": "Bivolt"
+    }
+   ]
+  },
+  {
+   "id": "prod-020",
+   "sku": "FC-TORQUE-12",
+   "name": "Parafusadeira Torque 12 V",
+   "line": "2 baterias · maleta",
+   "categorySlug": "ferramentas",
+   "kind": "drill",
+   "sellerId": "SEL-004",
+   "price": 379.9,
+   "oldPrice": 449.9,
+   "installments": 5,
+   "rating": 4.8,
+   "reviewCount": 1566,
+   "stock": 39,
+   "deliveryDays": 3,
+   "finish": "sage",
+   "description": "Compacta, com duas baterias e 18 ajustes de torque. Monta móveis e fura parede sem esforço.",
+   "highlights": [
+    "Duas baterias inclusas",
+    "18 ajustes de torque",
+    "Luz LED frontal"
+   ],
+   "specs": [
+    {
+     "label": "Tensão",
+     "value": "12 V"
+    },
+    {
+     "label": "Torque",
+     "value": "até 30 Nm"
+    },
+    {
+     "label": "Mandril",
+     "value": "10 mm"
+    },
+    {
+     "label": "Itens",
+     "value": "2 baterias, carregador e maleta"
+    }
+   ]
+  },
+  {
+   "id": "prod-021",
+   "sku": "FC-OFIC-110",
+   "name": "Jogo de ferramentas Oficina",
+   "line": "110 peças · maleta",
+   "categorySlug": "ferramentas",
+   "kind": "toolkit",
+   "sellerId": "SEL-004",
+   "price": 289.9,
+   "oldPrice": 349.9,
+   "installments": 4,
+   "rating": 4.7,
+   "reviewCount": 822,
+   "stock": 53,
+   "deliveryDays": 3,
+   "finish": "clay",
+   "description": "Chaves, soquetes e bits em aço cromo-vanádio, organizados em maleta rígida.",
+   "highlights": [
+    "110 peças",
+    "Aço cromo-vanádio",
+    "Maleta rígida"
+   ],
+   "specs": [
+    {
+     "label": "Peças",
+     "value": "110"
+    },
+    {
+     "label": "Material",
+     "value": "Cromo-vanádio"
+    },
+    {
+     "label": "Maleta",
+     "value": "Polipropileno com trava"
+    }
+   ]
+  },
+  {
+   "id": "prod-022",
+   "sku": "NX-VOLT-20K",
+   "name": "Carregador portátil Volt",
+   "line": "20.000 mAh · 30 W",
+   "categorySlug": "acessorios",
+   "kind": "powerbank",
+   "sellerId": "SEL-001",
+   "price": 219.9,
+   "oldPrice": 259.9,
+   "installments": 3,
+   "rating": 4.6,
+   "reviewCount": 2874,
+   "stock": 120,
+   "deliveryDays": 1,
+   "finish": "graphite",
+   "description": "Carrega o celular quatro vezes e o notebook uma vez. Duas saídas USB-C e visor de carga.",
+   "highlights": [
+    "20.000 mAh",
+    "Recarga rápida 30 W",
+    "Duas saídas USB-C"
+   ],
+   "specs": [
+    {
+     "label": "Capacidade",
+     "value": "20.000 mAh"
+    },
+    {
+     "label": "Potência",
+     "value": "30 W"
+    },
+    {
+     "label": "Saídas",
+     "value": "2× USB-C, 1× USB-A"
+    },
+    {
+     "label": "Peso",
+     "value": "360 g"
+    }
+   ]
+  },
+  {
+   "id": "prod-023",
+   "sku": "EN-URB-15",
+   "name": "Mochila Urbana 15\"",
+   "line": "Impermeável · compartimento acolchoado",
+   "categorySlug": "acessorios",
+   "kind": "backpack",
+   "sellerId": "SEL-005",
+   "price": 329.9,
+   "installments": 4,
+   "rating": 4.7,
+   "reviewCount": 511,
+   "stock": 36,
+   "deliveryDays": 3,
+   "finish": "midnight",
+   "description": "Tecido impermeável, compartimento acolchoado para notebook de até 15\" e bolso antifurto nas costas.",
+   "highlights": [
+    "Compartimento para 15\"",
+    "Tecido impermeável",
+    "Bolso antifurto"
+   ],
+   "specs": [
+    {
+     "label": "Capacidade",
+     "value": "22 L"
+    },
+    {
+     "label": "Notebook",
+     "value": "até 15,6\""
+    },
+    {
+     "label": "Material",
+     "value": "Poliéster reciclado"
+    }
+   ]
+  },
+  {
+   "id": "prod-024",
+   "sku": "CO-NVP-256-LAC",
+   "name": "Smartphone Nova Pro",
+   "line": "256 GB · lacrado",
+   "categorySlug": "celulares",
+   "kind": "phone",
+   "sellerId": "SEL-007",
+   "price": 3299,
+   "oldPrice": 3899.9,
+   "installments": 12,
+   "rating": 4.1,
+   "reviewCount": 21,
+   "stock": 6,
+   "deliveryDays": 1,
+   "finish": "midnight",
+   "description": "Smartphone Nova Pro 256 GB, unidade lacrada com nota fiscal. Pronta entrega e retirada.",
+   "highlights": [
+    "Lacrado com nota fiscal",
+    "Pronta entrega",
+    "Retirada disponível"
+   ],
+   "specs": [
+    {
+     "label": "Tela",
+     "value": "OLED 6,7\", 120 Hz"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "256 GB"
+    },
+    {
+     "label": "Garantia",
+     "value": "90 dias do vendedor"
+    }
+   ]
+  },
+  {
+   "id": "prod-025",
+   "sku": "CO-ORX14-PE",
+   "name": "Notebook Orion X 14",
+   "line": "16 GB · pronta entrega",
+   "categorySlug": "informatica",
+   "kind": "notebook",
+   "sellerId": "SEL-007",
+   "price": 4390,
+   "oldPrice": 5299.9,
+   "installments": 12,
+   "rating": 4,
+   "reviewCount": 9,
+   "stock": 3,
+   "deliveryDays": 1,
+   "finish": "graphite",
+   "description": "Notebook Orion X 14 com 16 GB e SSD de 512 GB. Unidades lacradas, envio no mesmo dia.",
+   "highlights": [
+    "Lacrado",
+    "Envio no mesmo dia",
+    "Retirada disponível"
+   ],
+   "specs": [
+    {
+     "label": "Memória",
+     "value": "16 GB"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "SSD 512 GB"
+    },
+    {
+     "label": "Garantia",
+     "value": "90 dias do vendedor"
+    }
+   ]
+  },
+  {
+   "id": "prod-026",
+   "sku": "CO-SLATE11-LAC",
+   "name": "Tablet Slate 11",
+   "line": "128 GB · lacrado",
+   "categorySlug": "celulares",
+   "kind": "tablet",
+   "sellerId": "SEL-007",
+   "price": 2099,
+   "oldPrice": 2799.9,
+   "installments": 12,
+   "rating": 4.2,
+   "reviewCount": 14,
+   "stock": 5,
+   "deliveryDays": 1,
+   "finish": "graphite",
+   "description": "Tablet Slate 11 lacrado, 128 GB. Envio imediato e retirada em ponto parceiro.",
+   "highlights": [
+    "Lacrado",
+    "Envio imediato",
+    "Retirada em ponto parceiro"
+   ],
+   "specs": [
+    {
+     "label": "Tela",
+     "value": "11\" 2.5K"
+    },
+    {
+     "label": "Armazenamento",
+     "value": "128 GB"
+    },
+    {
+     "label": "Garantia",
+     "value": "90 dias do vendedor"
+    }
+   ]
+  },
+  {
+   "id": "prod-027",
+   "sku": "PE-AIRS-IMP",
+   "name": "Fones Air Sense",
+   "line": "Versão importada",
+   "categorySlug": "audio",
+   "kind": "earbuds",
+   "sellerId": "SEL-008",
+   "price": 389,
+   "oldPrice": 699.9,
+   "installments": 6,
+   "rating": 3.9,
+   "reviewCount": 147,
+   "stock": 40,
+   "deliveryDays": 6,
+   "finish": "graphite",
+   "description": "Versão importada dos Fones Air Sense. Manual em inglês e carregador com adaptador.",
+   "highlights": [
+    "Versão importada",
+    "Estojo de recarga",
+    "Envio de São Paulo"
+   ],
+   "specs": [
+    {
+     "label": "Bateria",
+     "value": "7 h + 21 h no estojo"
+    },
+    {
+     "label": "Garantia",
+     "value": "90 dias do vendedor"
+    }
+   ]
+  },
+  {
+   "id": "prod-028",
+   "sku": "PE-FLOW2-IMP",
+   "name": "Smartwatch Flow 2",
+   "line": "Versão importada · 44 mm",
+   "categorySlug": "celulares",
+   "kind": "watch",
+   "sellerId": "SEL-008",
+   "price": 649,
+   "oldPrice": 1099.9,
+   "installments": 6,
+   "rating": 3.8,
+   "reviewCount": 96,
+   "stock": 22,
+   "deliveryDays": 7,
+   "finish": "midnight",
+   "description": "Versão importada do Smartwatch Flow 2, caixa de 44 mm. Pulseira extra inclusa.",
+   "highlights": [
+    "Caixa de 44 mm",
+    "Pulseira extra",
+    "Versão importada"
+   ],
+   "specs": [
+    {
+     "label": "Tela",
+     "value": "AMOLED 1,6\""
+    },
+    {
+     "label": "Bateria",
+     "value": "até 6 dias"
+    },
+    {
+     "label": "Garantia",
+     "value": "90 dias do vendedor"
+    }
+   ]
+  }
+ ],
+ "scenarios": [
+  {
+   "id": "normal",
+   "code": "A",
+   "title": "Compra habitual",
+   "summary": "Ana compra um mouse no notebook de sempre, com entrega em casa.",
+   "customerId": "CUST-001",
+   "deviceId": "DEV-ANA-MBA",
+   "addressId": "ADDR-ANA-HOME",
+   "cart": [
+    {
+     "productId": "prod-010",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "self",
+   "canonicalAt": "2026-09-28T12:10:30",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine"
+   },
+   "expected": "Aprovada: dispositivo conhecido, destino habitual e valor dentro do padrão da Ana."
+  },
+  {
+   "id": "attention",
+   "code": "B",
+   "title": "Compra com atenção",
+   "summary": "Ana compra uma câmera acima do seu gasto habitual, para o endereço do trabalho usado pela primeira vez.",
+   "customerId": "CUST-001",
+   "deviceId": "DEV-ANA-IPH",
+   "addressId": "ADDR-ANA-WORK",
+   "cart": [
+    {
+     "productId": "prod-014",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "ad",
+   "canonicalAt": "2026-09-28T13:05:12",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine"
+   },
+   "expected": "Aprovada com alerta: a compra segue e a Aureon envia um aviso para ela confirmar."
+  },
+  {
+   "id": "hard",
+   "code": "H",
+   "title": "Parece legítima, mas não é",
+   "summary": "Beatriz compra um console de vendedor conhecido, no celular dela, para a casa dela — orientada por telefone.",
+   "customerId": "CUST-005",
+   "deviceId": "DEV-BEA-S23",
+   "addressId": "ADDR-BEA-HOME",
+   "cart": [
+    {
+     "productId": "prod-005",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "guided",
+   "canonicalAt": "2026-09-28T13:40:05",
+   "answers": {
+    "origin": "asked",
+    "contact": "phone",
+    "address": "mine"
+   },
+   "expected": "Tecnicamente tudo parece normal. Só o contexto revela a indução e leva à intervenção.",
+   "outside": {
+    "channel": "Ligação telefônica",
+    "sender": "“Setor de prêmios” de uma operadora",
+    "messages": [
+     {
+      "at": "13:31",
+      "text": "Parabéns, a senhora foi sorteada. Para liberar o prêmio precisamos de uma compra de ativação."
+     },
+     {
+      "at": "13:34",
+      "text": "Compre o Console Vertex na NEXA, na loja Estação Games. O valor volta na próxima fatura."
+     },
+     {
+      "at": "13:37",
+      "text": "Não desligue. Fique na linha que eu acompanho a senhora até o fim."
+     }
+    ]
+   }
+  },
+  {
+   "id": "induction",
+   "code": "I",
+   "title": "Possível indução",
+   "summary": "Ana recebe mensagens de uma falsa central e é orientada a comprar um notebook para um ponto de retirada.",
+   "customerId": "CUST-001",
+   "deviceId": "DEV-ANA-W11",
+   "addressId": "ADDR-PICKUP-880",
+   "providedAddress": true,
+   "cart": [
+    {
+     "productId": "prod-001",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "link",
+   "canonicalAt": "2026-09-28T14:31:02",
+   "answers": {
+    "origin": "asked",
+    "contact": "message",
+    "address": "given"
+   },
+   "expected": "Contexto solicitado, respostas confirmam orientação de terceiro, intervenção. Ana interrompe a compra e depois registra o caso.",
+   "outside": {
+    "channel": "Aplicativo de mensagens",
+    "sender": "“Central de Segurança”",
+    "messages": [
+     {
+      "at": "14:18",
+      "text": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417."
+     },
+     {
+      "at": "14:19",
+      "text": "Para cancelar, faça o procedimento de segurança em aureon-protecao.example"
+     },
+     {
+      "at": "14:22",
+      "text": "Abra a NEXA e compre o notebook indicado. O valor é estornado em seguida."
+     },
+     {
+      "at": "14:23",
+      "text": "Use o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada."
+     },
+     {
+      "at": "14:24",
+      "text": "Se aparecer alguma pergunta de segurança, responda que ninguém está ajudando você."
+     }
+    ]
+   },
+   "incidentTemplate": {
+    "type": "impersonation",
+    "channel": "whatsapp",
+    "contactHandle": "(11) 90000-2184",
+    "contactLink": "aureon-protecao.example",
+    "destinationText": "Rua Pedra Lisa, 880 — loja 3",
+    "description": "Recebi mensagens de uma “Central de Segurança” dizendo que meu cartão tinha uma operação suspeita. Pediram para eu comprar um notebook na NEXA e entregar na Rua Pedra Lisa, 880 para cancelar a operação. O número era (11) 90000-2184 e o site aureon-protecao.example.",
+    "occurredAt": "2026-09-28T14:18:00"
+   }
+  },
+  {
+   "id": "related",
+   "code": "C/D",
+   "title": "Nova compra relacionada",
+   "summary": "Mariana, outra cliente, é orientada a comprar um smartphone para o mesmo ponto de retirada.",
+   "customerId": "CUST-003",
+   "deviceId": "DEV-MAR-IPH",
+   "addressId": "ADDR-PICKUP-880",
+   "providedAddress": true,
+   "cart": [
+    {
+     "productId": "prod-024",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "guided",
+   "canonicalAt": "2026-09-28T17:06:15",
+   "answers": {
+    "origin": "asked",
+    "contact": "phone",
+    "address": "given"
+   },
+   "expected": "Antes do relato da Ana: contexto solicitado e intervenção. Depois do relato: o destino já está ligado a um incidente e a compra é bloqueada sem depender das respostas.",
+   "outside": {
+    "channel": "Ligação telefônica",
+    "sender": "“Central de Segurança”",
+    "messages": [
+     {
+      "at": "16:58",
+      "text": "Senhora Mariana, detectamos uma clonagem no seu cartão final 7731."
+     },
+     {
+      "at": "17:01",
+      "text": "Para bloquear, faça uma compra de segurança do Smartphone Nova Pro na NEXA."
+     },
+     {
+      "at": "17:03",
+      "text": "Entregue na Rua Pedra Lisa, 880 — loja 3, nosso setor de perícia."
+     }
+    ]
+   }
+  },
+  {
+   "id": "fragile",
+   "code": "E",
+   "title": "Aprovada, porém frágil",
+   "summary": "Carlos compra um console no celular de sempre. A aprovação depende quase toda de uma única fonte: o dispositivo.",
+   "customerId": "CUST-002",
+   "deviceId": "DEV-CAR-PIX",
+   "addressId": "ADDR-CAR-HOME",
+   "cart": [
+    {
+     "productId": "prod-005",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "self",
+   "canonicalAt": "2026-09-28T16:20:40",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine"
+   },
+   "expected": "Aprovada. O certificado de fragilidade mostra que, se a identificação do dispositivo estiver errada, a decisão muda."
+  }
+ ],
+ "declaredOriginOptions": [
+  {
+   "id": "self",
+   "label": "Encontrei por conta própria",
+   "hint": "Pesquisei ou já conhecia o produto."
+  },
+  {
+   "id": "ad",
+   "label": "Vi um anúncio ou promoção",
+   "hint": "Em rede social, e-mail ou site."
+  },
+  {
+   "id": "link",
+   "label": "Recebi um link por mensagem",
+   "hint": "SMS, e-mail ou aplicativo de mensagens."
+  },
+  {
+   "id": "guided",
+   "label": "Alguém me indicou esta compra",
+   "hint": "Por telefone, mensagem ou pessoalmente."
+  }
+ ],
+ "seedPurchases": [
+  {
+   "seq": 131,
+   "at": "2026-09-14T16:22:05",
+   "customerId": "CUST-009",
+   "merchantId": "MER-004",
+   "deviceId": "DEV-JOA-IPAD",
+   "addressId": "ADDR-JOA-HOME",
+   "description": "Conjunto de panelas e utensílios",
+   "amount": 1240
+  },
+  {
+   "seq": 136,
+   "at": "2026-09-16T10:08:44",
+   "customerId": "CUST-002",
+   "merchantId": "MER-002",
+   "deviceId": "DEV-CAR-PIX",
+   "addressId": "ADDR-CAR-HOME",
+   "description": "Impressora multifuncional",
+   "amount": 1299
+  },
+  {
+   "seq": 142,
+   "at": "2026-09-18T19:40:12",
+   "customerId": "CUST-003",
+   "merchantId": "MER-004",
+   "deviceId": "DEV-MAR-IPH",
+   "addressId": "ADDR-MAR-HOME",
+   "description": "Luminárias e tapete",
+   "amount": 890
+  },
+  {
+   "seq": 147,
+   "at": "2026-09-19T20:05:31",
+   "customerId": "CUST-005",
+   "merchantId": "MER-002",
+   "deviceId": "DEV-BEA-S23",
+   "addressId": "ADDR-BEA-HOME",
+   "description": "Notebook para estudos",
+   "amount": 3180
+  },
+  {
+   "seq": 149,
+   "at": "2026-09-20T12:31:09",
+   "customerId": "CUST-005",
+   "merchantId": "MER-001",
+   "deviceId": "DEV-BEA-S23",
+   "addressId": "ADDR-BEA-HOME",
+   "items": [
+    {
+     "productId": "prod-012",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "self"
+  },
+  {
+   "seq": 152,
+   "at": "2026-09-21T19:48:26",
+   "customerId": "CUST-004",
+   "merchantId": "MER-003",
+   "deviceId": "DEV-RAF-MOTO",
+   "addressId": "ADDR-RAF-HOME",
+   "description": "Vale-presente digital",
+   "amount": 389
+  },
+  {
+   "seq": 158,
+   "at": "2026-09-22T18:15:40",
+   "customerId": "CUST-001",
+   "merchantId": "MER-002",
+   "deviceId": "DEV-ANA-MBA",
+   "addressId": "ADDR-ANA-HOME",
+   "description": "Fone e suporte para notebook",
+   "amount": 1120
+  },
+  {
+   "seq": 164,
+   "at": "2026-09-24T13:02:18",
+   "customerId": "CUST-001",
+   "merchantId": "MER-004",
+   "deviceId": "DEV-ANA-IPH",
+   "addressId": "ADDR-ANA-HOME",
+   "description": "Jogo de cama",
+   "amount": 312
+  },
+  {
+   "seq": 168,
+   "at": "2026-09-24T21:08:03",
+   "customerId": "CUST-008",
+   "merchantId": "MER-001",
+   "deviceId": "DEV-PED-IPH",
+   "addressId": "ADDR-PICKUP-2110",
+   "items": [
+    {
+     "productId": "prod-026",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine"
+   }
+  },
+  {
+   "seq": 170,
+   "at": "2026-09-25T15:44:52",
+   "customerId": "CUST-003",
+   "merchantId": "MER-001",
+   "deviceId": "DEV-MAR-IPH",
+   "addressId": "ADDR-MAR-HOME",
+   "items": [
+    {
+     "productId": "prod-017",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "self"
+  },
+  {
+   "seq": 171,
+   "at": "2026-09-26T09:12:37",
+   "customerId": "CUST-001",
+   "merchantId": "MER-003",
+   "deviceId": "DEV-ANA-IPH",
+   "addressId": "ADDR-ANA-HOME",
+   "description": "Livros",
+   "amount": 86.4
+  },
+  {
+   "seq": 175,
+   "at": "2026-09-27T18:50:15",
+   "customerId": "CUST-006",
+   "merchantId": "MER-004",
+   "deviceId": "DEV-DIE-XPS",
+   "addressId": "ADDR-DIE-HOME",
+   "description": "Sofá retrátil",
+   "amount": 2349
+  },
+  {
+   "seq": 176,
+   "at": "2026-09-28T08:12:22",
+   "customerId": "CUST-002",
+   "merchantId": "MER-001",
+   "deviceId": "DEV-CAR-PIX",
+   "addressId": "ADDR-CAR-HOME",
+   "items": [
+    {
+     "productId": "prod-009",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "self"
+  },
+  {
+   "seq": 179,
+   "at": "2026-09-28T09:44:08",
+   "customerId": "CUST-005",
+   "merchantId": "MER-002",
+   "deviceId": "DEV-BEA-S23",
+   "addressId": "ADDR-BEA-HOME",
+   "description": "Cafeteira e moedor",
+   "amount": 612
+  },
+  {
+   "seq": 182,
+   "at": "2026-09-28T10:58:41",
+   "customerId": "CUST-007",
+   "merchantId": "MER-003",
+   "deviceId": "DEV-HEL-A54",
+   "addressId": "ADDR-HEL-HOME",
+   "description": "Livros",
+   "amount": 158,
+   "providersDown": [
+    "device"
+   ]
+  },
+  {
+   "seq": 183,
+   "at": "2026-09-28T11:47:20",
+   "customerId": "CUST-001",
+   "merchantId": "MER-001",
+   "deviceId": "DEV-ANA-MBA",
+   "addressId": "ADDR-ANA-HOME",
+   "items": [
+    {
+     "productId": "prod-003",
+     "quantity": 1
+    }
+   ],
+   "declaredOrigin": "self"
+  }
+ ],
+ "seedReports": [
+  {
+   "seq": 1247,
+   "at": "2026-09-15T09:30:14",
+   "customerId": "CUST-009",
+   "txSeq": 131,
+   "type": "unrecognized",
+   "channel": "none",
+   "description": "Não reconheci a compra na fatura. Depois descobri que foi meu filho usando o cartão salvo no tablet.",
+   "occurredAt": "2026-09-14T16:22:00",
+   "assignedAt": "2026-09-15T10:40:00",
+   "closedAt": "2026-09-15T11:03:00",
+   "closeNote": "Compra familiar confirmada pela cliente. Sem relação com golpe."
+  },
+  {
+   "seq": 1261,
+   "at": "2026-09-21T21:10:48",
+   "customerId": "CUST-004",
+   "txSeq": 152,
+   "type": "impersonation",
+   "channel": "phone",
+   "contactHandle": "(11) 90000-2184",
+   "description": "Recebi uma ligação de alguém dizendo ser da central de segurança do cartão. A pessoa pediu que eu comprasse um vale-presente para “validar o cancelamento” de uma compra suspeita e me passasse o código.",
+   "occurredAt": "2026-09-21T19:35:00",
+   "assignedAt": "2026-09-22T08:40:00"
+  },
+  {
+   "seq": 1270,
+   "at": "2026-09-25T10:05:22",
+   "customerId": "CUST-008",
+   "txSeq": 168,
+   "type": "link",
+   "channel": "sms",
+   "contactLink": "aureon-protecao.example/validar",
+   "destinationText": "Av. Rio Claro Novo, 2110 — box 14",
+   "description": "Recebi um SMS dizendo que meu cartão seria bloqueado. O link abriu uma página parecida com a do banco, que mandou comprar um tablet na NEXA como “compra de validação”, com retirada em um ponto indicado. A página dizia para responder que a compra era minha.",
+   "occurredAt": "2026-09-24T20:52:00",
+   "assignedAt": "2026-09-25T10:30:00"
+  }
+ ],
+ "incidentTypes": [
+  "guided",
+  "message",
+  "link",
+  "impersonation",
+  "unrecognized",
+  "other"
+ ],
+ "incidentChannels": [
+  "whatsapp",
+  "phone",
+  "sms",
+  "email",
+  "social",
+  "site",
+  "none"
+ ]
+}

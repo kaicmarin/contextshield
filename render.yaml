@@ -1,0 +1,58 @@
+# Blueprint do Render (render.com → New → Blueprint → aponte para este repositório).
+# Cria o banco PostgreSQL gerenciado e os três serviços a partir dos Dockerfiles.
+# No plano gratuito um serviço web não recebe tráfego da rede privada do Render,
+# então a core-api fala com o motor, e o front com a core-api, pelas URLs públicas
+# (https://<serviço>.onrender.com). O Render pede esses dois valores ao criar o Blueprint.
+# O banco gratuito expira 30 dias depois de criado: veja docs/DEPLOY.md antes de aplicar.
+databases:
+  - name: contextshield-db
+    databaseName: contextshield
+    user: contextshield
+    plan: free
+
+services:
+  - type: web
+    name: contextshield-risk-engine
+    runtime: docker
+    dockerfilePath: services/risk-engine/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: contextshield-core-api
+    runtime: docker
+    dockerfilePath: services/core-api/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase: { name: contextshield-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: contextshield-db, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: contextshield-db, property: database }
+      - key: DATABASE_USER
+        fromDatabase: { name: contextshield-db, property: user }
+      - key: DATABASE_PASSWORD
+        fromDatabase: { name: contextshield-db, property: password }
+      - key: JWT_SECRET
+        fromService: { type: web, name: contextshield-risk-engine, envVarKey: JWT_SECRET }
+      - key: RISK_ENGINE_URL   # ex.: https://contextshield-risk-engine.onrender.com
+        sync: false
+      - key: RISK_ENGINE_TIMEOUT_MS
+        value: "5000"
+
+  - type: web
+    name: contextshield-web
+    runtime: docker
+    dockerfilePath: frontend/Dockerfile
+    dockerContext: frontend
+    plan: free
+    envVars:
+      - key: API_URL           # ex.: https://contextshield-core-api.onrender.com
+        sync: false

@@ -1,0 +1,261 @@
+{
+  "executedAt" : "2026-11-24T06:26:43.956971100Z",
+  "library" : "smile-core",
+  "libraryVersion" : "3.1.1",
+  "java" : "21.0.13.0.2+1-LTS",
+  "origin" : "sintético",
+  "limitation" : "Os rótulos foram inventados pelo gerador, com uma semente fixa. Eles não são fraudes bancárias reais e não medem a eficácia do ContextShield em produção. Há fraudes com o mesmo vetor de uma compra habitual e compras lícitas com vários sinais. Um caso em que a mentira só aparece nas respostas fica fora do modelo quando marcado assim, porque essa resposta ainda não existe na primeira decisão. Os 30 registros que faltavam na soma anterior são essas fraudes discretas: geradas, fora do treino do modelo e dentro da busca de pesos.",
+  "seed" : 42,
+  "requestedExamples" : 4000,
+  "generatedExamples" : 4000,
+  "inconclusiveExcluded" : 99,
+  "stealthExcluded" : 41,
+  "modelFrauds" : 1312,
+  "modelLegits" : 2548,
+  "accountedExamples" : 4000,
+  "trainExamples" : 1930,
+  "confirmedInTrain" : 0,
+  "testExamples" : 772,
+  "trainClassBalance" : {
+    "fraud" : 656,
+    "legit" : 1274
+  },
+  "testClassBalance" : {
+    "fraud" : 262,
+    "legit" : 510
+  },
+  "features" : [ "amountRatio", "purchases90d", "tenureYears", "unusualHour", "newDevice", "locationMatch", "habitualDest", "newOwnDest", "thirdDest", "pickup", "sellerRecent", "sellerClaims", "sellerEstablished", "originSelf", "originAd", "originLink", "originGuided", "destIncident", "sellerIncident" ],
+  "logistic" : {
+    "algorithm" : "logistic-regression",
+    "hyperparameters" : {
+      "lambda" : 0.1,
+      "maxIterations" : 200,
+      "tolerance" : 1.0E-5
+    },
+    "path" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\logistic-regression.ser",
+    "trainMs" : 351.9,
+    "metrics" : {
+      "examples" : 772,
+      "frauds" : 262,
+      "legits" : 510,
+      "precision" : 1.0,
+      "recall" : 0.7252,
+      "f1" : 0.8407,
+      "accuracy" : 0.9067,
+      "falsePositives" : 0,
+      "falseNegatives" : 72,
+      "truePositives" : 190,
+      "trueNegatives" : 510,
+      "confusion" : {
+        "legitLegit" : 510,
+        "fraudFraud" : 190,
+        "legitFraud" : 0,
+        "fraudLegit" : 72
+      },
+      "prAuc" : 0.9316,
+      "calibrationError" : 0.0176,
+      "meanInferenceMs" : 0.0022
+    },
+    "validation" : "PASS",
+    "approved" : false
+  },
+  "forest" : {
+    "algorithm" : "random-forest",
+    "hyperparameters" : {
+      "trees" : 80,
+      "mtry" : 4,
+      "sampling" : 1.0,
+      "maxDepth" : 12,
+      "classWeight" : "inverso da frequência",
+      "split" : "GINI",
+      "minNode" : 5
+    },
+    "path" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\random-forest.ser",
+    "trainMs" : 430.59,
+    "metrics" : {
+      "examples" : 772,
+      "frauds" : 262,
+      "legits" : 510,
+      "precision" : 1.0,
+      "recall" : 0.7252,
+      "f1" : 0.8407,
+      "accuracy" : 0.9067,
+      "falsePositives" : 0,
+      "falseNegatives" : 72,
+      "truePositives" : 190,
+      "trueNegatives" : 510,
+      "confusion" : {
+        "legitLegit" : 510,
+        "fraudFraud" : 190,
+        "legitFraud" : 0,
+        "fraudLegit" : 72
+      },
+      "prAuc" : 0.9282,
+      "calibrationError" : 0.0516,
+      "meanInferenceMs" : 0.0275
+    },
+    "validation" : "PASS",
+    "approved" : false
+  },
+  "reloadMatchedTraining" : true,
+  "acceptance" : {
+    "minFrauds" : 30,
+    "minLegits" : 30,
+    "minPrecision" : 0.7,
+    "minRecall" : 0.7,
+    "maxFalseNegativeRate" : 0.3,
+    "maxMeanInferenceMs" : 5.0,
+    "minF1" : 0.7
+  },
+  "winnerByF1ThenRecall" : "empate prático: a diferença não sustenta uma conclusão",
+  "winnerNote" : "A escolha usa F1 e, no empate, o recall. Acurácia não decide. Dados sintéticos não provam detecção de fraude real.",
+  "holdoutChecks" : [ {
+    "logistic" : "LEGIT",
+    "story" : "fraude-poucos-sinais",
+    "logisticProbability" : 0.316,
+    "truth" : "FRAUD",
+    "forest" : "LEGIT",
+    "forestProbability" : 0.133
+  }, {
+    "logistic" : "FRAUD",
+    "story" : "falsa-cobranca",
+    "logisticProbability" : 1.0,
+    "truth" : "FRAUD",
+    "forest" : "FRAUD",
+    "forestProbability" : 0.972
+  }, {
+    "logistic" : "FRAUD",
+    "story" : "destino-denunciado",
+    "logisticProbability" : 0.984,
+    "truth" : "FRAUD",
+    "forest" : "FRAUD",
+    "forestProbability" : 0.747
+  }, {
+    "logistic" : "FRAUD",
+    "story" : "falsa-cobranca",
+    "logisticProbability" : 1.0,
+    "truth" : "FRAUD",
+    "forest" : "FRAUD",
+    "forestProbability" : 0.97
+  }, {
+    "logistic" : "FRAUD",
+    "story" : "induzida",
+    "logisticProbability" : 0.982,
+    "truth" : "FRAUD",
+    "forest" : "FRAUD",
+    "forestProbability" : 0.878
+  }, {
+    "logistic" : "LEGIT",
+    "story" : "fraude-poucos-sinais",
+    "logisticProbability" : 0.302,
+    "truth" : "FRAUD",
+    "forest" : "LEGIT",
+    "forestProbability" : 0.128
+  }, {
+    "logistic" : "FRAUD",
+    "story" : "falsa-cobranca",
+    "logisticProbability" : 1.0,
+    "truth" : "FRAUD",
+    "forest" : "FRAUD",
+    "forestProbability" : 0.967
+  }, {
+    "logistic" : "LEGIT",
+    "story" : "fraude-poucos-sinais",
+    "logisticProbability" : 0.308,
+    "truth" : "FRAUD",
+    "forest" : "LEGIT",
+    "forestProbability" : 0.135
+  } ],
+  "generalization" : {
+    "note" : "Mistura diferente da do treino. Estes exemplos não entram no ajuste do modelo nem na busca de pesos.",
+    "examples" : 800,
+    "frauds" : 434,
+    "legits" : 366,
+    "logistic" : {
+      "examples" : 800,
+      "frauds" : 434,
+      "legits" : 366,
+      "precision" : 0.0,
+      "recall" : 0.0,
+      "f1" : 0.0,
+      "accuracy" : 0.4575,
+      "falsePositives" : 0,
+      "falseNegatives" : 434,
+      "truePositives" : 0,
+      "trueNegatives" : 366,
+      "confusion" : {
+        "legitLegit" : 366,
+        "fraudFraud" : 0,
+        "legitFraud" : 0,
+        "fraudLegit" : 434
+      },
+      "prAuc" : 1.0,
+      "calibrationError" : 0.3975,
+      "meanInferenceMs" : 4.0E-4
+    },
+    "forest" : {
+      "examples" : 800,
+      "frauds" : 434,
+      "legits" : 366,
+      "precision" : 0.0,
+      "recall" : 0.0,
+      "f1" : 0.0,
+      "accuracy" : 0.4575,
+      "falsePositives" : 0,
+      "falseNegatives" : 434,
+      "truePositives" : 0,
+      "trueNegatives" : 366,
+      "confusion" : {
+        "legitLegit" : 366,
+        "fraudFraud" : 0,
+        "legitFraud" : 0,
+        "fraudLegit" : 434
+      },
+      "prAuc" : 0.9689,
+      "calibrationError" : 0.4365,
+      "meanInferenceMs" : 0.0049
+    }
+  },
+  "optimization" : {
+    "method" : "busca aleatória estruturada",
+    "candidates" : 36,
+    "cost" : "5 * falso negativo + 1 * falso positivo",
+    "definition" : "Falso negativo: fraude liberada (aprovada ou aprovada com alerta). Falso positivo: operação legítima não liberada.",
+    "searchExamples" : 599,
+    "confirmExamples" : 600,
+    "baselineSearch" : {
+      "falseNegatives" : 74,
+      "cost" : 448,
+      "falsePositives" : 78
+    },
+    "baselineConfirm" : {
+      "falseNegatives" : 85,
+      "cost" : 494,
+      "falsePositives" : 69
+    },
+    "bestSearch" : {
+      "falseNegatives" : 74,
+      "cost" : 442,
+      "falsePositives" : 72
+    },
+    "bestConfirm" : {
+      "falseNegatives" : 85,
+      "cost" : 490,
+      "falsePositives" : 65
+    },
+    "improvedOnBothSets" : true,
+    "suggestedWeights" : {
+      "SELLER_IN_INCIDENT" : 11,
+      "THRESHOLD_HIGH" : 56,
+      "VER_ADDRESS_GIVEN" : 10,
+      "ORIGIN_AD" : 1,
+      "AMOUNT_ABOVE_MID" : 9,
+      "ORIGIN_SELF" : -1
+    },
+    "requestedCandidates" : 36,
+    "independentConfirm" : true,
+    "published" : false,
+    "note" : "A sugestão reduziu o custo na busca e não piorou falso negativo nem custo na confirmação. Ela não foi publicada."
+  },
+  "totalSeconds" : 6.72
+}

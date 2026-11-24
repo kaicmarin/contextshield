@@ -1,0 +1,24 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: risk-engine
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+contextshield:
+  jwt:
+    # Em produção vem da variável de ambiente JWT_SECRET (mínimo 32 caracteres).
+    secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}

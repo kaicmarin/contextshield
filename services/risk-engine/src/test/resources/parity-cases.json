@@ -1,0 +1,4621 @@
+[
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-14T16:22:07",
+   "amount": 1240,
+   "customer": {
+    "id": "CUST-009",
+    "firstName": "Joana",
+    "city": "São Paulo",
+    "since": "2017-01-23",
+    "avgTicket90d": 900,
+    "purchases90d": 10
+   },
+   "device": {
+    "id": "DEV-JOA-IPAD",
+    "name": "iPad Air",
+    "detail": "iPadOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2023-08-08T16:30:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-JOA-HOME",
+    "customerIds": [
+     "CUST-009"
+    ],
+    "label": "Casa",
+    "line1": "Rua Cedro Rosa, 1188",
+    "line2": "apto 34",
+    "district": "Vila Amparo",
+    "city": "São Paulo",
+    "zip": "04126-188",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-JOA-HOME",
+    "customerIds": [
+     "CUST-009"
+    ],
+    "label": "Casa",
+    "line1": "Rua Cedro Rosa, 1188",
+    "line2": "apto 34",
+    "district": "Vila Amparo",
+    "city": "São Paulo",
+    "zip": "04126-188",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-004",
+    "name": "Casa Vértice",
+    "marketplace": false,
+    "verified": true,
+    "since": "2017-11-21"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 7,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-16T10:08:46",
+   "amount": 1299,
+   "customer": {
+    "id": "CUST-002",
+    "firstName": "Carlos",
+    "city": "Campinas",
+    "since": "2019-08-02",
+    "avgTicket90d": 920,
+    "purchases90d": 9
+   },
+   "device": {
+    "id": "DEV-CAR-PIX",
+    "name": "Pixel 8",
+    "detail": "Android · Chrome",
+    "location": "Campinas",
+    "firstSeen": "2024-01-18T19:02:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-002",
+    "name": "Lumen Tech",
+    "marketplace": false,
+    "verified": true,
+    "since": "2014-09-15"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 7,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-18T19:40:14",
+   "amount": 890,
+   "customer": {
+    "id": "CUST-003",
+    "firstName": "Mariana",
+    "city": "São Paulo",
+    "since": "2022-06-20",
+    "avgTicket90d": 1170,
+    "purchases90d": 7
+   },
+   "device": {
+    "id": "DEV-MAR-IPH",
+    "name": "iPhone 13",
+    "detail": "iOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2022-07-03T12:40:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-MAR-HOME",
+    "customerIds": [
+     "CUST-003"
+    ],
+    "label": "Casa",
+    "line1": "Rua Vale do Sol, 45",
+    "line2": "casa 2",
+    "district": "Jardim Primavera",
+    "city": "São Paulo",
+    "zip": "02241-045",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-MAR-HOME",
+    "customerIds": [
+     "CUST-003"
+    ],
+    "label": "Casa",
+    "line1": "Rua Vale do Sol, 45",
+    "line2": "casa 2",
+    "district": "Jardim Primavera",
+    "city": "São Paulo",
+    "zip": "02241-045",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-004",
+    "name": "Casa Vértice",
+    "marketplace": false,
+    "verified": true,
+    "since": "2017-11-21"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 7,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-19T20:05:33",
+   "amount": 3180,
+   "customer": {
+    "id": "CUST-005",
+    "firstName": "Beatriz",
+    "city": "São Paulo",
+    "since": "2023-02-11",
+    "avgTicket90d": 1410,
+    "purchases90d": 6
+   },
+   "device": {
+    "id": "DEV-BEA-S23",
+    "name": "Galaxy S23",
+    "detail": "Android · Samsung Internet",
+    "location": "São Paulo",
+    "firstSeen": "2023-03-01T10:00:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-002",
+    "name": "Lumen Tech",
+    "marketplace": false,
+    "verified": true,
+    "since": "2014-09-15"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 14,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R8",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:5",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-20T12:31:11",
+   "amount": 449.9,
+   "customer": {
+    "id": "CUST-005",
+    "firstName": "Beatriz",
+    "city": "São Paulo",
+    "since": "2023-02-11",
+    "avgTicket90d": 1410,
+    "purchases90d": 6
+   },
+   "device": {
+    "id": "DEV-BEA-S23",
+    "name": "Galaxy S23",
+    "detail": "Android · Samsung Internet",
+    "location": "São Paulo",
+    "firstSeen": "2023-03-01T10:00:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 6,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 75,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-21T19:48:28",
+   "amount": 389,
+   "customer": {
+    "id": "CUST-004",
+    "firstName": "Rafael",
+    "city": "Guarulhos",
+    "since": "2020-11-05",
+    "avgTicket90d": 250,
+    "purchases90d": 14
+   },
+   "device": {
+    "id": "DEV-RAF-MOTO",
+    "name": "Moto G84",
+    "detail": "Android · Chrome",
+    "location": "Guarulhos",
+    "firstSeen": "2024-06-11T08:20:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-RAF-HOME",
+    "customerIds": [
+     "CUST-004"
+    ],
+    "label": "Casa",
+    "line1": "Rua Serra Dourada, 77",
+    "district": "Vila Rosa Clara",
+    "city": "Guarulhos",
+    "zip": "07133-077",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-RAF-HOME",
+    "customerIds": [
+     "CUST-004"
+    ],
+    "label": "Casa",
+    "line1": "Rua Serra Dourada, 77",
+    "district": "Vila Rosa Clara",
+    "city": "Guarulhos",
+    "zip": "07133-077",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-003",
+    "name": "Livraria Alto",
+    "marketplace": false,
+    "verified": true,
+    "since": "2011-03-08"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 14,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R8",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:5",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-22T18:15:42",
+   "amount": 1120,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-MBA",
+    "name": "MacBook Air",
+    "detail": "macOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2024-02-10T20:14:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-002",
+    "name": "Lumen Tech",
+    "marketplace": false,
+    "verified": true,
+    "since": "2014-09-15"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 14,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R8",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:5",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-24T13:02:20",
+   "amount": 312,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-IPH",
+    "name": "iPhone 14",
+    "detail": "iOS · App Aureon",
+    "location": "São Paulo",
+    "firstSeen": "2023-05-02T09:30:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-004",
+    "name": "Casa Vértice",
+    "marketplace": false,
+    "verified": true,
+    "since": "2017-11-21"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 7,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-24T21:08:05",
+   "amount": 2099,
+   "customer": {
+    "id": "CUST-008",
+    "firstName": "Pedro",
+    "city": "Osasco",
+    "since": "2021-10-18",
+    "avgTicket90d": 780,
+    "purchases90d": 5
+   },
+   "device": {
+    "id": "DEV-PED-IPH",
+    "name": "iPhone 12",
+    "detail": "iOS · Safari",
+    "location": "Osasco",
+    "firstSeen": "2022-01-15T21:10:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-PICKUP-2110",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Av. Rio Claro Novo, 2110",
+    "line2": "box 14",
+    "district": "Parque Industrial",
+    "city": "Osasco",
+    "zip": "06226-210",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-PED-HOME",
+    "customerIds": [
+     "CUST-008"
+    ],
+    "label": "Casa",
+    "line1": "Rua Barão do Rio Seco, 403",
+    "district": "Centro Novo",
+    "city": "Osasco",
+    "zip": "06018-403",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-007",
+     "name": "Conecta Outlet",
+     "since": "2026-09-02",
+     "claimsRate": 1.9,
+     "rating": 4.1,
+     "tier": "novo",
+     "sales": 38
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 46,
+   "band": "MEDIUM",
+   "level": "MEDIUM",
+   "confidence": 65,
+   "proposedDecision": "REQUEST_CONTEXT",
+   "decision": "REQUEST_CONTEXT",
+   "ruleId": "R6",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "RECENT_SELLER:6",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-24T21:08:57",
+   "amount": 2099,
+   "customer": {
+    "id": "CUST-008",
+    "firstName": "Pedro",
+    "city": "Osasco",
+    "since": "2021-10-18",
+    "avgTicket90d": 780,
+    "purchases90d": 5
+   },
+   "device": {
+    "id": "DEV-PED-IPH",
+    "name": "iPhone 12",
+    "detail": "iOS · Safari",
+    "location": "Osasco",
+    "firstSeen": "2022-01-15T21:10:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-PICKUP-2110",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Av. Rio Claro Novo, 2110",
+    "line2": "box 14",
+    "district": "Parque Industrial",
+    "city": "Osasco",
+    "zip": "06226-210",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-PED-HOME",
+    "customerIds": [
+     "CUST-008"
+    ],
+    "label": "Casa",
+    "line1": "Rua Barão do Rio Seco, 403",
+    "district": "Centro Novo",
+    "city": "Osasco",
+    "zip": "06018-403",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-007",
+     "name": "Conecta Outlet",
+     "since": "2026-09-02",
+     "claimsRate": 1.9,
+     "rating": 4.1,
+     "tier": "novo",
+     "sales": 38
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine"
+   },
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 44,
+   "band": "MEDIUM",
+   "level": "MEDIUM",
+   "confidence": 75,
+   "proposedDecision": "APPROVE_WITH_ALERT",
+   "decision": "INTERVENE",
+   "ruleId": "S-R7",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "EVIDENCE_DIVERGENCE:6",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "RECENT_SELLER:6",
+    "SESSION_CONSISTENT:-2",
+    "VER_CLEAR:-8"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-25T15:44:54",
+   "amount": 1499.9,
+   "customer": {
+    "id": "CUST-003",
+    "firstName": "Mariana",
+    "city": "São Paulo",
+    "since": "2022-06-20",
+    "avgTicket90d": 1170,
+    "purchases90d": 7
+   },
+   "device": {
+    "id": "DEV-MAR-IPH",
+    "name": "iPhone 13",
+    "detail": "iOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2022-07-03T12:40:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-MAR-HOME",
+    "customerIds": [
+     "CUST-003"
+    ],
+    "label": "Casa",
+    "line1": "Rua Vale do Sol, 45",
+    "line2": "casa 2",
+    "district": "Jardim Primavera",
+    "city": "São Paulo",
+    "zip": "02241-045",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-MAR-HOME",
+    "customerIds": [
+     "CUST-003"
+    ],
+    "label": "Casa",
+    "line1": "Rua Vale do Sol, 45",
+    "line2": "casa 2",
+    "district": "Jardim Primavera",
+    "city": "São Paulo",
+    "zip": "02241-045",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-003",
+     "name": "Casa Prática",
+     "since": "2020-07-06",
+     "claimsRate": 0.8,
+     "rating": 4.7,
+     "tier": "gold",
+     "sales": 31540
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 6,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 75,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-26T09:12:39",
+   "amount": 86.4,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-IPH",
+    "name": "iPhone 14",
+    "detail": "iOS · App Aureon",
+    "location": "São Paulo",
+    "firstSeen": "2023-05-02T09:30:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-003",
+    "name": "Livraria Alto",
+    "marketplace": false,
+    "verified": true,
+    "since": "2011-03-08"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 7,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-27T18:50:17",
+   "amount": 2349,
+   "customer": {
+    "id": "CUST-006",
+    "firstName": "Diego",
+    "city": "Santos",
+    "since": "2018-04-30",
+    "avgTicket90d": 1100,
+    "purchases90d": 8
+   },
+   "device": {
+    "id": "DEV-DIE-XPS",
+    "name": "Notebook Dell",
+    "detail": "Windows 11 · Edge",
+    "location": "Santos",
+    "firstSeen": "2026-09-27T18:31:00",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-DIE-HOME",
+    "customerIds": [
+     "CUST-006"
+    ],
+    "label": "Casa",
+    "line1": "Av. Maré Mansa, 1020",
+    "district": "Ponta Clara",
+    "city": "Santos",
+    "zip": "11065-020",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-DIE-HOME",
+    "customerIds": [
+     "CUST-006"
+    ],
+    "label": "Casa",
+    "line1": "Av. Maré Mansa, 1020",
+    "district": "Ponta Clara",
+    "city": "Santos",
+    "zip": "11065-020",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-004",
+    "name": "Casa Vértice",
+    "marketplace": false,
+    "verified": true,
+    "since": "2017-11-21"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 31,
+   "band": "MEDIUM",
+   "level": "MEDIUM",
+   "confidence": 66,
+   "proposedDecision": "APPROVE_WITH_ALERT",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "R7",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:5",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "LONG_TENURE:-1",
+    "NEW_DEVICE:8",
+    "SESSION_ANOMALY:2"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T08:12:24",
+   "amount": 549.9,
+   "customer": {
+    "id": "CUST-002",
+    "firstName": "Carlos",
+    "city": "Campinas",
+    "since": "2019-08-02",
+    "avgTicket90d": 920,
+    "purchases90d": 9
+   },
+   "device": {
+    "id": "DEV-CAR-PIX",
+    "name": "Pixel 8",
+    "detail": "Android · Chrome",
+    "location": "Campinas",
+    "firstSeen": "2024-01-18T19:02:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-005",
+     "name": "Escritório Norte",
+     "since": "2021-05-17",
+     "claimsRate": 0.9,
+     "rating": 4.6,
+     "tier": "estabelecido",
+     "sales": 9410
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 6,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 75,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T09:44:10",
+   "amount": 612,
+   "customer": {
+    "id": "CUST-005",
+    "firstName": "Beatriz",
+    "city": "São Paulo",
+    "since": "2023-02-11",
+    "avgTicket90d": 1410,
+    "purchases90d": 6
+   },
+   "device": {
+    "id": "DEV-BEA-S23",
+    "name": "Galaxy S23",
+    "detail": "Android · Samsung Internet",
+    "location": "São Paulo",
+    "firstSeen": "2023-03-01T10:00:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-002",
+    "name": "Lumen Tech",
+    "marketplace": false,
+    "verified": true,
+    "since": "2014-09-15"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 7,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 66,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T10:58:43",
+   "amount": 158,
+   "customer": {
+    "id": "CUST-007",
+    "firstName": "Helena",
+    "city": "Sorocaba",
+    "since": "2024-04-09",
+    "avgTicket90d": 140,
+    "purchases90d": 2
+   },
+   "device": {
+    "id": "DEV-HEL-A54",
+    "name": "Galaxy A54",
+    "detail": "Android · Chrome",
+    "location": "Sorocaba",
+    "firstSeen": "2024-04-09T18:00:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-HEL-HOME",
+    "customerIds": [
+     "CUST-007"
+    ],
+    "label": "Casa",
+    "line1": "Rua dos Girassóis Altos, 56",
+    "district": "Vila Campestre",
+    "city": "Sorocaba",
+    "zip": "18047-056",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-HEL-HOME",
+    "customerIds": [
+     "CUST-007"
+    ],
+    "label": "Casa",
+    "line1": "Rua dos Girassóis Altos, 56",
+    "district": "Vila Campestre",
+    "city": "Sorocaba",
+    "zip": "18047-056",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-003",
+    "name": "Livraria Alto",
+    "marketplace": false,
+    "verified": true,
+    "since": "2011-03-08"
+   },
+   "sellers": [],
+   "declaredOrigin": null,
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": [
+    "device"
+   ]
+  },
+  "expected": {
+   "score": 18,
+   "band": "LOW",
+   "level": "INCONCLUSIVE",
+   "confidence": 37,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R3",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "HISTORY_SPARSE:3"
+   ],
+   "fragility": "INCONCLUSIVE"
+  }
+ },
+ {
+  "label": "seed",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T11:47:22",
+   "amount": 429.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-MBA",
+    "name": "MacBook Air",
+    "detail": "macOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2024-02-10T20:14:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-002",
+     "name": "Estúdio Onda",
+     "since": "2018-02-19",
+     "claimsRate": 0.4,
+     "rating": 4.9,
+     "tier": "platinum",
+     "sales": 62870
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 6,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 75,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "normal",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T12:10:32",
+   "amount": 274.8,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-MBA",
+    "name": "MacBook Air",
+    "detail": "macOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2024-02-10T20:14:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-005",
+     "name": "Escritório Norte",
+     "since": "2021-05-17",
+     "claimsRate": 0.9,
+     "rating": 4.6,
+     "tier": "estabelecido",
+     "sales": 9410
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 6,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 75,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "attention",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T13:05:14",
+   "amount": 3199,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-IPH",
+    "name": "iPhone 14",
+    "detail": "iOS · App Aureon",
+    "location": "São Paulo",
+    "firstSeen": "2023-05-02T09:30:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-WORK",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Trabalho",
+    "line1": "Av. Horizonte Azul, 1500",
+    "line2": "9º andar",
+    "district": "Vila Médici",
+    "city": "São Paulo",
+    "zip": "01315-150",
+    "kind": "work"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-002",
+     "name": "Estúdio Onda",
+     "since": "2018-02-19",
+     "claimsRate": 0.4,
+     "rating": 4.9,
+     "tier": "platinum",
+     "sales": 62870
+    }
+   ],
+   "declaredOrigin": "ad",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 36,
+   "band": "MEDIUM",
+   "level": "MEDIUM",
+   "confidence": 65,
+   "proposedDecision": "APPROVE_WITH_ALERT",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "R7",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_OWN:8",
+    "ORIGIN_AD:2",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "hard",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T13:40:07",
+   "amount": 3999.9,
+   "customer": {
+    "id": "CUST-005",
+    "firstName": "Beatriz",
+    "city": "São Paulo",
+    "since": "2023-02-11",
+    "avgTicket90d": 1410,
+    "purchases90d": 6
+   },
+   "device": {
+    "id": "DEV-BEA-S23",
+    "name": "Galaxy S23",
+    "detail": "Android · Samsung Internet",
+    "location": "São Paulo",
+    "firstSeen": "2023-03-01T10:00:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "guided",
+   "answers": null,
+   "coachScript": "Parabéns, a senhora foi sorteada. Para liberar o prêmio precisamos de uma compra de ativação.\nCompre o Console Vertex na NEXA, na loja Estação Games. O valor volta na próxima fatura.\nNão desligue. Fique na linha que eu acompanho a senhora até o fim.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 26,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 75,
+   "proposedDecision": "REQUEST_CONTEXT",
+   "decision": "REQUEST_CONTEXT",
+   "ruleId": "R6",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_GUIDED:7",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "hard",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T13:40:59",
+   "amount": 3999.9,
+   "customer": {
+    "id": "CUST-005",
+    "firstName": "Beatriz",
+    "city": "São Paulo",
+    "since": "2023-02-11",
+    "avgTicket90d": 1410,
+    "purchases90d": 6
+   },
+   "device": {
+    "id": "DEV-BEA-S23",
+    "name": "Galaxy S23",
+    "detail": "Android · Samsung Internet",
+    "location": "São Paulo",
+    "firstSeen": "2023-03-01T10:00:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "guided",
+   "answers": {
+    "origin": "asked",
+    "contact": "phone",
+    "address": "mine"
+   },
+   "coachScript": "Parabéns, a senhora foi sorteada. Para liberar o prêmio precisamos de uma compra de ativação.\nCompre o Console Vertex na NEXA, na loja Estação Games. O valor volta na próxima fatura.\nNão desligue. Fique na linha que eu acompanho a senhora até o fim.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 35,
+   "band": "MEDIUM",
+   "level": "MEDIUM",
+   "confidence": 75,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R2",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_GUIDED:7",
+    "SESSION_CONSISTENT:-2",
+    "VER_ASKED:6",
+    "VER_CONTACT:3"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "induction",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T14:31:04",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": null,
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 59,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 75,
+   "proposedDecision": "REQUEST_CONTEXT",
+   "decision": "REQUEST_CONTEXT",
+   "ruleId": "R5",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SESSION_ANOMALY:2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "induction",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T14:31:56",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "asked",
+    "contact": "message",
+    "address": "given"
+   },
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 78,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 85,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R2",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SESSION_ANOMALY:2",
+    "VER_ADDRESS_GIVEN:4",
+    "VER_ASKED:12",
+    "VER_CONTACT:3"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "related",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T17:06:17",
+   "amount": 3299,
+   "customer": {
+    "id": "CUST-003",
+    "firstName": "Mariana",
+    "city": "São Paulo",
+    "since": "2022-06-20",
+    "avgTicket90d": 1170,
+    "purchases90d": 7
+   },
+   "device": {
+    "id": "DEV-MAR-IPH",
+    "name": "iPhone 13",
+    "detail": "iOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2022-07-03T12:40:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-MAR-HOME",
+    "customerIds": [
+     "CUST-003"
+    ],
+    "label": "Casa",
+    "line1": "Rua Vale do Sol, 45",
+    "line2": "casa 2",
+    "district": "Jardim Primavera",
+    "city": "São Paulo",
+    "zip": "02241-045",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-007",
+     "name": "Conecta Outlet",
+     "since": "2026-09-02",
+     "claimsRate": 1.9,
+     "rating": 4.1,
+     "tier": "novo",
+     "sales": 38
+    }
+   ],
+   "declaredOrigin": "guided",
+   "answers": null,
+   "coachScript": "Senhora Mariana, detectamos uma clonagem no seu cartão final 7731.\nPara bloquear, faça uma compra de segurança do Smartphone Nova Pro na NEXA.\nEntregue na Rua Pedra Lisa, 880 — loja 3, nosso setor de perícia.",
+   "relations": [
+    {
+     "kind": "seller",
+     "entityId": "ENT-SEL-007",
+     "reason": "Vendedor presente em CS-2026-001270 (Pedro Alves)",
+     "association": "forte",
+     "crossCustomer": true,
+     "incidentIds": [
+      "CS-2026-001270"
+     ]
+    }
+   ],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 58,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 74,
+   "proposedDecision": "REQUEST_CONTEXT",
+   "decision": "REQUEST_CONTEXT",
+   "ruleId": "R5",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "ORIGIN_GUIDED:7",
+    "PICKUP_POINT:3",
+    "RECENT_SELLER:6",
+    "SELLER_IN_INCIDENT:10",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "related",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T17:07:09",
+   "amount": 3299,
+   "customer": {
+    "id": "CUST-003",
+    "firstName": "Mariana",
+    "city": "São Paulo",
+    "since": "2022-06-20",
+    "avgTicket90d": 1170,
+    "purchases90d": 7
+   },
+   "device": {
+    "id": "DEV-MAR-IPH",
+    "name": "iPhone 13",
+    "detail": "iOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2022-07-03T12:40:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-MAR-HOME",
+    "customerIds": [
+     "CUST-003"
+    ],
+    "label": "Casa",
+    "line1": "Rua Vale do Sol, 45",
+    "line2": "casa 2",
+    "district": "Jardim Primavera",
+    "city": "São Paulo",
+    "zip": "02241-045",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-007",
+     "name": "Conecta Outlet",
+     "since": "2026-09-02",
+     "claimsRate": 1.9,
+     "rating": 4.1,
+     "tier": "novo",
+     "sales": 38
+    }
+   ],
+   "declaredOrigin": "guided",
+   "answers": {
+    "origin": "asked",
+    "contact": "phone",
+    "address": "given"
+   },
+   "coachScript": "Senhora Mariana, detectamos uma clonagem no seu cartão final 7731.\nPara bloquear, faça uma compra de segurança do Smartphone Nova Pro na NEXA.\nEntregue na Rua Pedra Lisa, 880 — loja 3, nosso setor de perícia.",
+   "relations": [
+    {
+     "kind": "seller",
+     "entityId": "ENT-SEL-007",
+     "reason": "Vendedor presente em CS-2026-001270 (Pedro Alves)",
+     "association": "forte",
+     "crossCustomer": true,
+     "incidentIds": [
+      "CS-2026-001270"
+     ]
+    }
+   ],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 71,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 84,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R2",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "ORIGIN_GUIDED:7",
+    "PICKUP_POINT:3",
+    "RECENT_SELLER:6",
+    "SELLER_IN_INCIDENT:10",
+    "SESSION_CONSISTENT:-2",
+    "VER_ADDRESS_GIVEN:4",
+    "VER_ASKED:6",
+    "VER_CONTACT:3"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "fragile",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T16:20:42",
+   "amount": 3999.9,
+   "customer": {
+    "id": "CUST-002",
+    "firstName": "Carlos",
+    "city": "Campinas",
+    "since": "2019-08-02",
+    "avgTicket90d": 920,
+    "purchases90d": 9
+   },
+   "device": {
+    "id": "DEV-CAR-PIX",
+    "name": "Pixel 8",
+    "detail": "Android · Chrome",
+    "location": "Campinas",
+    "firstSeen": "2024-01-18T19:02:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 22,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 65,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R8",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "induction-denial",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T14:31:56",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine"
+   },
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 69,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 85,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R10",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "EVIDENCE_DIVERGENCE:6",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SCRIPT_ECHO:12",
+    "SESSION_ANOMALY:2",
+    "VER_CLEAR:-8"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "induction-coached",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T14:31:56",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine",
+    "coached": "yes"
+   },
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 73,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 85,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R9",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "EVIDENCE_DIVERGENCE:6",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SCRIPT_ECHO:12",
+    "SESSION_ANOMALY:2",
+    "VER_CLEAR:-8",
+    "VER_COACHED:4"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "induction-anchor",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T14:31:56",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "anchor": "script"
+   },
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 60,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 85,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R11",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ANCHOR_FROM_SCRIPT:1",
+    "ESTABLISHED_SELLER:-2",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SESSION_ANOMALY:2"
+   ],
+   "fragility": "ROBUST"
+  }
+ },
+ {
+  "label": "hard-denial",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T13:40:59",
+   "amount": 3999.9,
+   "customer": {
+    "id": "CUST-005",
+    "firstName": "Beatriz",
+    "city": "São Paulo",
+    "since": "2023-02-11",
+    "avgTicket90d": 1410,
+    "purchases90d": 6
+   },
+   "device": {
+    "id": "DEV-BEA-S23",
+    "name": "Galaxy S23",
+    "detail": "Android · Samsung Internet",
+    "location": "São Paulo",
+    "firstSeen": "2023-03-01T10:00:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-BEA-HOME",
+    "customerIds": [
+     "CUST-005"
+    ],
+    "label": "Casa",
+    "line1": "Rua Lago Azul, 940",
+    "line2": "apto 131",
+    "district": "Jardim Esmeralda",
+    "city": "São Paulo",
+    "zip": "05588-940",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "guided",
+   "answers": {
+    "origin": "self",
+    "contact": "no",
+    "address": "mine"
+   },
+   "coachScript": "Parabéns, a senhora foi sorteada. Para liberar o prêmio precisamos de uma compra de ativação.\nCompre o Console Vertex na NEXA, na loja Estação Games. O valor volta na próxima fatura.\nNão desligue. Fique na linha que eu acompanho a senhora até o fim.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 18,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 85,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R8",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_GUIDED:7",
+    "SESSION_CONSISTENT:-2",
+    "VER_CLEAR:-8"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "story",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T17:06:17",
+   "amount": 3299,
+   "customer": {
+    "id": "CUST-003",
+    "firstName": "Mariana",
+    "city": "São Paulo",
+    "since": "2022-06-20",
+    "avgTicket90d": 1170,
+    "purchases90d": 7
+   },
+   "device": {
+    "id": "DEV-MAR-IPH",
+    "name": "iPhone 13",
+    "detail": "iOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2022-07-03T12:40:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-MAR-HOME",
+    "customerIds": [
+     "CUST-003"
+    ],
+    "label": "Casa",
+    "line1": "Rua Vale do Sol, 45",
+    "line2": "casa 2",
+    "district": "Jardim Primavera",
+    "city": "São Paulo",
+    "zip": "02241-045",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-007",
+     "name": "Conecta Outlet",
+     "since": "2026-09-02",
+     "claimsRate": 1.9,
+     "rating": 4.1,
+     "tier": "novo",
+     "sales": 38
+    }
+   ],
+   "declaredOrigin": "guided",
+   "answers": null,
+   "coachScript": "Senhora Mariana, detectamos uma clonagem no seu cartão final 7731.\nPara bloquear, faça uma compra de segurança do Smartphone Nova Pro na NEXA.\nEntregue na Rua Pedra Lisa, 880 — loja 3, nosso setor de perícia.",
+   "relations": [
+    {
+     "kind": "destination",
+     "entityId": "ENT-DEST-PICKUP-880",
+     "reason": "Destino citado em CS-2026-001284 por Ana Martins",
+     "association": "forte",
+     "crossCustomer": true,
+     "incidentIds": [
+      "CS-2026-001284"
+     ]
+    },
+    {
+     "kind": "seller",
+     "entityId": "ENT-SEL-007",
+     "reason": "Vendedor presente em CS-2026-001270 (Pedro Alves)",
+     "association": "forte",
+     "crossCustomer": true,
+     "incidentIds": [
+      "CS-2026-001270"
+     ]
+    }
+   ],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 86,
+   "band": "CRITICAL",
+   "level": "CRITICAL",
+   "confidence": 74,
+   "proposedDecision": "BLOCK",
+   "decision": "BLOCK",
+   "ruleId": "R1",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:10",
+    "DESTINATION_IN_INCIDENT:28",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "ORIGIN_GUIDED:7",
+    "PICKUP_POINT:3",
+    "RECENT_SELLER:6",
+    "SELLER_IN_INCIDENT:10",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "down-device",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T12:10:32",
+   "amount": 274.8,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-MBA",
+    "name": "MacBook Air",
+    "detail": "macOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2024-02-10T20:14:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-005",
+     "name": "Escritório Norte",
+     "since": "2021-05-17",
+     "claimsRate": 0.9,
+     "rating": 4.6,
+     "tier": "estabelecido",
+     "sales": 9410
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "down",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 13,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 54,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "down-device",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T16:20:42",
+   "amount": 3999.9,
+   "customer": {
+    "id": "CUST-002",
+    "firstName": "Carlos",
+    "city": "Campinas",
+    "since": "2019-08-02",
+    "avgTicket90d": 920,
+    "purchases90d": 9
+   },
+   "device": {
+    "id": "DEV-CAR-PIX",
+    "name": "Pixel 8",
+    "detail": "Android · Chrome",
+    "location": "Campinas",
+    "firstSeen": "2024-01-18T19:02:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "down",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 29,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 54,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R8",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "down-device",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T14:31:04",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": null,
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "down",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 49,
+   "band": "MEDIUM",
+   "level": "MEDIUM",
+   "confidence": 54,
+   "proposedDecision": "REQUEST_CONTEXT",
+   "decision": "REQUEST_CONTEXT",
+   "ruleId": "R6",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "down-device",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T14:31:56",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "asked",
+    "contact": "message",
+    "address": "given"
+   },
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "down",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 68,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 64,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R2",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "VER_ADDRESS_GIVEN:4",
+    "VER_ASKED:12",
+    "VER_CONTACT:3"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "down-history",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T12:10:32",
+   "amount": 274.8,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-MBA",
+    "name": "MacBook Air",
+    "detail": "macOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2024-02-10T20:14:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-005",
+     "name": "Escritório Norte",
+     "since": "2021-05-17",
+     "claimsRate": 0.9,
+     "rating": 4.6,
+     "tier": "estabelecido",
+     "sales": 9410
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "down",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 9,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 54,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "down-history",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T16:20:42",
+   "amount": 3999.9,
+   "customer": {
+    "id": "CUST-002",
+    "firstName": "Carlos",
+    "city": "Campinas",
+    "since": "2019-08-02",
+    "avgTicket90d": 920,
+    "purchases90d": 9
+   },
+   "device": {
+    "id": "DEV-CAR-PIX",
+    "name": "Pixel 8",
+    "detail": "Android · Chrome",
+    "location": "Campinas",
+    "firstSeen": "2024-01-18T19:02:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "down",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 9,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 54,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "down-history",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T14:31:04",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": null,
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "down",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 46,
+   "band": "MEDIUM",
+   "level": "MEDIUM",
+   "confidence": 54,
+   "proposedDecision": "REQUEST_CONTEXT",
+   "decision": "REQUEST_CONTEXT",
+   "ruleId": "R6",
+   "signals": [
+    "ESTABLISHED_SELLER:-2",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SESSION_ANOMALY:2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "down-history",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T14:31:56",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "asked",
+    "contact": "message",
+    "address": "given"
+   },
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "down",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "up"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 65,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 64,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R2",
+   "signals": [
+    "ESTABLISHED_SELLER:-2",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SESSION_ANOMALY:2",
+    "VER_ADDRESS_GIVEN:4",
+    "VER_ASKED:12",
+    "VER_CONTACT:3"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "down-intelligence",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T12:10:32",
+   "amount": 274.8,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-MBA",
+    "name": "MacBook Air",
+    "detail": "macOS · Safari",
+    "location": "São Paulo",
+    "firstSeen": "2024-02-10T20:14:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-005",
+     "name": "Escritório Norte",
+     "since": "2021-05-17",
+     "claimsRate": 0.9,
+     "rating": 4.6,
+     "tier": "estabelecido",
+     "sales": 9410
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "down"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 6,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 63,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE",
+   "ruleId": "R8",
+   "signals": [
+    "AMOUNT_WITHIN_HABIT:-2",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "DEGRADED"
+  }
+ },
+ {
+  "label": "down-intelligence",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T16:20:42",
+   "amount": 3999.9,
+   "customer": {
+    "id": "CUST-002",
+    "firstName": "Carlos",
+    "city": "Campinas",
+    "since": "2019-08-02",
+    "avgTicket90d": 920,
+    "purchases90d": 9
+   },
+   "device": {
+    "id": "DEV-CAR-PIX",
+    "name": "Pixel 8",
+    "detail": "Android · Chrome",
+    "location": "Campinas",
+    "firstSeen": "2024-01-18T19:02:00",
+    "trusted": true
+   },
+   "address": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "homeAddress": {
+    "id": "ADDR-CAR-HOME",
+    "customerIds": [
+     "CUST-002"
+    ],
+    "label": "Casa",
+    "line1": "Rua Monte Verde Alto, 318",
+    "district": "Jardim das Oliveiras",
+    "city": "Campinas",
+    "zip": "13044-318",
+    "kind": "home"
+   },
+   "addressUsedBefore": true,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-006",
+     "name": "Estação Games",
+     "since": "2017-03-28",
+     "claimsRate": 0.4,
+     "rating": 4.8,
+     "tier": "platinum",
+     "sales": 71260
+    }
+   ],
+   "declaredOrigin": "self",
+   "answers": null,
+   "coachScript": null,
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "down"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 22,
+   "band": "LOW",
+   "level": "LOW",
+   "confidence": 53,
+   "proposedDecision": "APPROVE",
+   "decision": "APPROVE_WITH_ALERT",
+   "ruleId": "S-R8",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "HABITUAL_DESTINATION:-3",
+    "KNOWN_DEVICE:-4",
+    "LOCATION_CONSISTENT:-1",
+    "LONG_TENURE:-1",
+    "ORIGIN_SELF:-1",
+    "SESSION_CONSISTENT:-2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "down-intelligence",
+  "input": {
+   "stage": "initial",
+   "at": "2026-09-28T14:31:04",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": null,
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "down"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 59,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 63,
+   "proposedDecision": "REQUEST_CONTEXT",
+   "decision": "REQUEST_CONTEXT",
+   "ruleId": "R5",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SESSION_ANOMALY:2"
+   ],
+   "fragility": "FRAGILE"
+  }
+ },
+ {
+  "label": "down-intelligence",
+  "input": {
+   "stage": "recalculated",
+   "at": "2026-09-28T14:31:56",
+   "amount": 4799.9,
+   "customer": {
+    "id": "CUST-001",
+    "firstName": "Ana",
+    "city": "São Paulo",
+    "since": "2021-03-14",
+    "avgTicket90d": 490,
+    "purchases90d": 11
+   },
+   "device": {
+    "id": "DEV-ANA-W11",
+    "name": "Computador Windows",
+    "detail": "Windows 11 · Chrome",
+    "location": "São Paulo (rede diferente da habitual)",
+    "firstSeen": "2026-09-28T14:29:48",
+    "trusted": false
+   },
+   "address": {
+    "id": "ADDR-PICKUP-880",
+    "customerIds": [],
+    "label": "Ponto de retirada",
+    "line1": "Rua Pedra Lisa, 880",
+    "line2": "loja 3",
+    "district": "Vila Serena",
+    "city": "São Paulo",
+    "zip": "03318-880",
+    "kind": "pickup"
+   },
+   "homeAddress": {
+    "id": "ADDR-ANA-HOME",
+    "customerIds": [
+     "CUST-001"
+    ],
+    "label": "Casa",
+    "line1": "Rua das Acácias Brancas, 212",
+    "line2": "apto 52",
+    "district": "Jardim Aurora",
+    "city": "São Paulo",
+    "zip": "04012-212",
+    "kind": "home"
+   },
+   "addressUsedBefore": false,
+   "merchant": {
+    "id": "MER-001",
+    "name": "NEXA",
+    "marketplace": true,
+    "verified": true,
+    "since": "2016-05-02"
+   },
+   "sellers": [
+    {
+     "id": "SEL-001",
+     "name": "NEXA Oficial",
+     "since": "2016-05-02",
+     "claimsRate": 0.3,
+     "rating": 4.8,
+     "tier": "oficial",
+     "sales": 184320
+    }
+   ],
+   "declaredOrigin": "link",
+   "answers": {
+    "origin": "asked",
+    "contact": "message",
+    "address": "given"
+   },
+   "coachScript": "Olá, Ana. Identificamos uma operação suspeita no seu cartão final 4417.\nPara cancelar, faça o procedimento de segurança em aureon-protecao.example\nAbra a NEXA e compre o notebook indicado. O valor é estornado em seguida.\nUse o endereço Rua Pedra Lisa, 880 — loja 3. É o nosso ponto de retirada.\nSe aparecer alguma pergunta de segurança, responda que ninguém está ajudando você.",
+   "relations": [],
+   "config": {
+    "flags": {
+     "intelligence-matching": true,
+     "dependency-discount": true,
+     "context-on-declared-guidance": true,
+     "guidance-floor": true,
+     "script-mirror": true
+    },
+    "providers": {
+     "history": "up",
+     "device": "up",
+     "merchant": "up",
+     "intelligence": "down"
+    }
+   },
+   "unavailable": []
+  },
+  "expected": {
+   "score": 78,
+   "band": "HIGH",
+   "level": "HIGH",
+   "confidence": 73,
+   "proposedDecision": "INTERVENE",
+   "decision": "INTERVENE",
+   "ruleId": "R2",
+   "signals": [
+    "AMOUNT_ABOVE_HABIT:14",
+    "ESTABLISHED_SELLER:-2",
+    "LONG_TENURE:-1",
+    "NEW_DESTINATION_THIRD:8",
+    "NEW_DEVICE:8",
+    "ORIGIN_LINK:5",
+    "PICKUP_POINT:3",
+    "SESSION_ANOMALY:2",
+    "VER_ADDRESS_GIVEN:4",
+    "VER_ASKED:12",
+    "VER_CONTACT:3"
+   ],
+   "fragility": "DEGRADED"
+  }
+ }
+]

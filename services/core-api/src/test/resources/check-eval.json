@@ -1,0 +1,29 @@
+{
+  "note": "Holdout. Não usar para ajustar regras. Rótulos humanos: o que o verificador deveria devolver.",
+  "cases": [
+    {"id": "entrega-cutt", "expect": "RED", "text": "Seu pacote está parado na alfândega. Pague a taxa de liberação em cutt.ly/pacote-hoje para não voltar ao remetente."},
+    {"id": "sedex-retido", "expect": "YELLOW", "text": "SEDEX retido. Há uma taxa alfandegária pendente."},
+    {"id": "parente-numero", "expect": "RED", "text": "Filho, troquei de número, preciso que você transfira 800 reais agora, não conte pra mãe."},
+    {"id": "premio-resgate", "expect": "YELLOW", "text": "Você foi sorteada. Resgate o prêmio neste link loja-premios.site/resgatar"},
+    {"id": "suporte-remoto", "expect": "RED", "text": "Aqui é o suporte técnico da Microsoft. Seu Windows está infectado. Instale o TeamViewer e compartilhe a tela."},
+    {"id": "adiantamento", "expect": "YELLOW", "text": "Para liberar o valor da renda extra, faça um depósito prévio de 90 reais."},
+    {"id": "vaga-tarefas", "expect": "YELLOW", "text": "Vaga home office: tarefas pagas, ganhe por dia. Pague a taxa de ativação."},
+    {"id": "central-fraude", "expect": "RED", "text": "Setor de fraude do banco: compra não reconhecida. Clique no link para validar e cancelar a operação. Não fale com ninguém."},
+    {"id": "encurtador-sozinho", "expect": "YELLOW", "text": "Confira o comprovante em tinyurl.com/nota-fiscal-92"},
+    {"id": "lookalike-login", "expect": "YELLOW", "text": "Acesse login-aureon.com para desbloquear o app."},
+    {"id": "oficial-nexa", "expect": "GREEN", "text": "Detalhes do pedido em https://nexa.example/conta/pedidos/88"},
+    {"id": "oficial-aureon", "expect": "GREEN", "text": "Fale conosco em aureon.example/ajuda ou 0800 000 0000"},
+    {"id": "entrega-legitima", "expect": "GRAY", "text": "Atualização NEXA: o motoboy já saiu com o seu pedido e deve chegar amanhã no período da tarde."},
+    {"id": "loja-legitima", "expect": "GRAY", "text": "Olá, a Casa Prática confirma que o liquidificador será enviado na segunda. Qualquer dúvida responda este e-mail."},
+    {"id": "insuficiente", "expect": "GRAY", "text": "Bom dia, tudo bem? Só confirmando se você vem no almoço."},
+    {"id": "typo-encomenda", "expect": "YELLOW", "text": "Sua encomendd esta retida no correio, pague a taxa hoje."},
+    {"id": "burla-espacos", "expect": "RED", "text": "S u a  e n c o m e n d a  e s t a  r e t i d a. P a g u e  a  t a x a  no bit.ly/x"},
+    {"id": "pix-sozinho", "expect": "YELLOW", "text": "Me manda um pix de 50 reais quando puder."},
+    {"id": "procedimento-compra", "expect": "RED", "text": "Central de atendimento: faça o procedimento de segurança, compre o item e o valor será estornado. Use este endereço."},
+    {"id": "funcionario", "expect": "YELLOW", "text": "Sou funcionário do banco. Sua compra não foi reconhecida. Me confirme os dados."},
+    {"id": "autoridade", "expect": "YELLOW", "text": "Delegacia: há um mandado no seu CPF. Regularize hoje."},
+    {"id": "ip-login", "expect": "YELLOW", "text": "Atualize o app em http://203.0.113.10/login"},
+    {"id": "arroba", "expect": "YELLOW", "text": "Entre em http://aureon.example@pagamentos.evil/conta"},
+    {"id": "ambigua", "expect": "GRAY", "text": "Oi, consegue me ajudar a escolher um presente de aniversário neste sábado?"}
+  ]
+}
