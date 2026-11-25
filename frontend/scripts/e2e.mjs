@@ -37,15 +37,17 @@ await page.getByRole("button", { name: "Cancelar esta compra" }).click();
 await page.getByRole("heading", { name: "Compra cancelada" }).waitFor();
 step("cliente cancela e nada é cobrado");
 
-// 2. relato
-await page.goto(BASE + "/banco/relatar/novo");
+// 2. relato (sessão customer da loja; confirma na lista em vez do toast de 4s)
+await page.goto(BASE + "/banco/relatar/novo", { waitUntil: "networkidle" });
+await page.getByRole("heading", { name: /Novo relato/i }).waitFor({ timeout: 15000 });
 await page.getByLabel("O que aconteceu?").selectOption("impersonation");
 await page.getByLabel("Por onde falaram com você?").selectOption("whatsapp");
 await page.getByLabel("Conte com suas palavras").fill("Uma falsa central pediu para eu comprar um notebook e entregar em um ponto de retirada.");
 await page.getByLabel(/Endereço de entrega que passaram/).fill("Rua Pedra Lisa, 880 — loja 3");
-await page.getByText("Autorizo o uso").click();
+await page.getByRole("checkbox", { name: /Autorizo o uso/ }).check();
 await page.getByRole("button", { name: "Enviar relato" }).click();
-await page.getByText(/Relato CS-\d{4}-\d+ registrado/).waitFor();
+await page.waitForURL(/\/banco\/relatar$/);
+await page.getByText(/CS-2026-\d{6}/).first().waitFor({ timeout: 15000 });
 step("relato registrado no app do banco");
 
 // 3. outra cliente, mesmo destino
