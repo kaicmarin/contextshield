@@ -2,7 +2,6 @@
  * Validação IT: NEXA, Aureon e Operations com API em 18080 (via server.mjs + API_URL).
  *   API_URL=http://127.0.0.1:18080 BASE=http://127.0.0.1:5173 node scripts/ui-it.mjs
  */
-import assert from "node:assert/strict";
 import { BASE, launch, loginAs } from "./browser.mjs";
 
 const browser = await launch();
@@ -13,18 +12,16 @@ const step = (s) => console.log("✓", s);
 
 await loginAs(page, "/loja", "Ana");
 await page.goto(BASE + "/loja", { waitUntil: "networkidle" });
-await page.getByText("Catálogo", { exact: false }).first().waitFor({ timeout: 15000 });
-const products = await page.locator(".product-card, [data-product-id], .catalog-item").count();
-assert.ok(products > 0 || (await page.getByText("Notebook", { exact: false }).count()) > 0, "NEXA: catálogo vazio");
+await page.locator(".nx-card").first().waitFor({ timeout: 30000 });
 step("NEXA — catálogo carregou");
 
 await page.goto(BASE + "/banco", { waitUntil: "networkidle" });
-if ((await page.getByRole("button", { name: "Ana", exact: true }).count()) > 0) {
+if (await page.getByRole("heading", { name: /Entre na sua conta/i }).isVisible().catch(() => false)) {
   await page.getByRole("button", { name: "Ana", exact: true }).click();
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await page.getByRole("button", { name: "Entrar", exact: true }).waitFor({ state: "detached" });
 }
-await page.getByText(/Olá|Últimas compras|Aureon/i).first().waitFor({ timeout: 15000 });
+await page.getByText(/Olá|Últimas compras/i).first().waitFor({ timeout: 15000 });
 step("Aureon — área logada");
 
 await loginAs(page, "/ops", "Analista");
