@@ -197,7 +197,9 @@ export function labPage(isAdmin) {
         data.models.map((m) => {
           const metric = m.metrics || {};
           const usage = m.status === "APPROVED" ? "sombra" : m.validation === "PASS" ? "validado" : "treinado";
-          return [m.algorithm, pill(STATUS_TONE[m.validation] || "muted", m.validation || "—"), m.status, usage, m.examples == null ? "—" : String(m.examples), num(metric.f1), num(metric.recall), num(metric.precision), String(metric.falsePositives ?? "—"), String(metric.falseNegatives ?? "—")];
+          const tipo = m.featureSet === "context" ? "Contextual" : "Operacional";
+          const origem = m.validation === "RECORDED" ? "Pré-carregado" : "Treinado";
+          return [`${m.algorithm} · ${tipo} (${origem})`, pill(STATUS_TONE[m.validation] || "muted", m.validation || "—"), m.status, usage, m.examples == null ? "—" : String(m.examples), num(metric.f1), num(metric.recall), num(metric.precision), String(metric.falsePositives ?? "—"), String(metric.falseNegatives ?? "—")];
         }),
       ) : el("p", {}, "Nenhum modelo treinado ainda.")),
       el("section", { class: "panel" }, el("h2", {}, "Modo sombra"), el("p", {}, `${data.shadow.predictions ?? 0} previsões sem erro, ${data.shadow.failures ?? 0} falhas, ${data.shadow.sameDirection ?? (data.shadow.disagreementsWithEngine == null ? "—" : Number(data.shadow.predictions || 0) - Number(data.shadow.disagreementsWithEngine))} na mesma direção do motor.`)),
