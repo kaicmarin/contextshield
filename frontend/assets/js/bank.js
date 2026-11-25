@@ -48,9 +48,15 @@ let toastText = "";
 let router;
 const stage = el("div", { class: "az-stage" });
 const screen = el("div", { class: "az-screen" });
-const overlays = el("div", { class: "az-overlays" });
+const overlays = el("div", { class: "az-overlays", "aria-hidden": "true" });
 const toasts = el("div", { class: "az-toasts", role: "status", "aria-live": "polite" });
 const pageHost = el("div");
+
+/** Overlays vazios ficam fora da árvore de acessibilidade; com dialog ativo, voltam a ser expostos. */
+function syncOverlayA11y() {
+  if (overlays.childElementCount > 0) overlays.removeAttribute("aria-hidden");
+  else overlays.setAttribute("aria-hidden", "true");
+}
 
 function session() {
   return getSession("customer");
@@ -198,6 +204,7 @@ function paintShell() {
   const keep = screen.querySelector(".az-status");
   screen.replaceChildren(keep ?? el("div", { class: "az-status", "aria-hidden": "true" }), app, overlays, el("span", { class: "az-island", "aria-hidden": "true" }), el("span", { class: "az-homebar", "aria-hidden": "true" }));
   overlays.replaceChildren(sheet ? alertSheet() : null);
+  syncOverlayA11y();
   if (!toasts.parentElement) screen.querySelector(".az-app")?.append(toasts);
   paintChrome(path);
 }
@@ -566,7 +573,13 @@ function confirmDelete(incident, list) {
   const layer = el(
     "div",
     { class: "az-sheet-layer" },
-    el("div", { class: "az-backdrop", onClick: () => layer.remove() }),
+    el("div", {
+      class: "az-backdrop",
+      onClick: () => {
+        layer.remove();
+        syncOverlayA11y();
+      },
+    }),
     el(
       "div",
       { class: "az-sheet tone-stop", role: "dialog", "aria-modal": "true" },
@@ -587,18 +600,27 @@ function confirmDelete(incident, list) {
                 await api(`/api/incidents/${incident.id}`, { method: "DELETE", area: "customer" });
                 toast("Relato apagado");
                 layer.remove();
+                syncOverlayA11y();
                 paintReports(document.querySelector("#az-reports")?.closest(".az-page")?.firstElementChild ?? document.body, list.filter((x) => x.id !== incident.id));
                 router.start();
               },
             },
             "Apagar relato",
           ),
-          button({ size: "lg", block: true, onClick: () => layer.remove() }, "Manter"),
+          button({
+            size: "lg",
+            block: true,
+            onClick: () => {
+              layer.remove();
+              syncOverlayA11y();
+            },
+          }, "Manter"),
         ),
       ),
     ),
   );
   overlays.append(layer);
+  syncOverlayA11y();
 }
 
 function reportForm(id, search) {

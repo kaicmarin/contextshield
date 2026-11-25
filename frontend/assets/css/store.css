@@ -777,7 +777,8 @@
   color: var(--orange);
 }
 .nx-hero-w2 {
-  color: #55555c;
+  /* #76767f ≈ 4.26:1 sobre --onyx (#0f0f10); antes #55555c ≈ 2.59:1 */
+  color: #76767f;
   animation-delay: 90ms;
 }
 @keyframes nx-word {
