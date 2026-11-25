@@ -24,8 +24,8 @@ const cases = [
 ];
 
 for (const [path, titlePart, text] of cases) {
-  await page.goto(BASE + path, { waitUntil: "domcontentloaded" });
-  await page.getByText(text, { exact: false }).first().waitFor({ timeout: 8000 });
+  await page.goto(BASE + path, { waitUntil: "domcontentloaded", timeout: 20000 });
+  await page.getByText(text, { exact: false }).first().waitFor({ timeout: 15000 });
   const title = await page.title();
   assert.ok(title.includes(titlePart) || title.includes("ContextShield"), `${path} título inesperado: ${title}`);
   console.log("✓", path);

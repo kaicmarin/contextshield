@@ -10,7 +10,9 @@
     "test:unit": "node scripts/unit.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "test:a11y": "node scripts/a11y.mjs",
-    "test:smoke": "node scripts/smoke.mjs"
+    "test:smoke": "node scripts/smoke.mjs",
+    "test:prod-readonly": "node scripts/prod-readonly.mjs",
+    "test:spa-routes": "node scripts/validate-spa-routes.mjs"
   },
   "devDependencies": {
     "axe-core": "^4.10.2",

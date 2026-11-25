@@ -8,28 +8,62 @@
 		Referrer-Policy no-referrer
 		-Server
 	}
+
+	# API (igual ao nginx: mesmo host, sem CORS extra).
 	handle /api/* {
 		reverse_proxy core-api:8080
 	}
+
+	# Health dos microsserviços não exposto na internet.
 	handle /actuator/* {
 		respond "fechado" 404
 	}
 
-    handle /previews/* {
-        root * /srv/frontend/public
-        file_server
-    }
-    handle /products/* {
-        root * /srv/frontend/public
-        file_server
-    }
-    handle /mark.svg {
-        root * /srv/frontend/public
-        file_server
-    }
+	# Imagens em frontend/public/ expostas na raiz do site (/products, /previews, /mark.svg).
+	handle /previews/* {
+		root * /srv/frontend/public
+		file_server
+	}
+	handle /products/* {
+		root * /srv/frontend/public
+		file_server
+	}
+	handle /mark.svg {
+		root * /srv/frontend/public
+		file_server
+	}
+
+	root * /srv/frontend
+
+	handle /assets/* {
+		file_server
+	}
+
+	# SPAs (mesma ordem e intenção do frontend/nginx.conf).
+	@loja path /loja /loja/*
+	handle @loja {
+		try_files {path} {path}/ /loja/index.html
+		file_server
+	}
+	@banco path /banco /banco/*
+	handle @banco {
+		try_files {path} {path}/ /banco/index.html
+		file_server
+	}
+	@ops path /ops /ops/*
+	handle @ops {
+		try_files {path} {path}/ /ops/index.html
+		file_server
+	}
+	@sistema path /sistema
+	handle @sistema {
+		try_files /sistema.html
+		file_server
+	}
+
+	# Landing e demais HTML estático (preserva {path}.html do Caddy anterior).
 	handle {
-		root * /srv/frontend
-		try_files {path} {path}.html {path}/index.html /index.html
+		try_files {path} {path}/ {path}.html /index.html
 		file_server
 	}
 }

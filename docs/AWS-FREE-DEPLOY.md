@@ -44,6 +44,10 @@ Disco gp3 e IP público podem continuar consumindo crédito com a instância par
 
 O navegador usa o mesmo host do proxy. O frontend chama `/api` no mesmo endereço. O Operations continua exigindo login de analista. Esconder a URL não substitui essa regra.
 
+**Rotas da loja, banco e painel:** links como `/loja/ajuda` ou `/banco/relatar` precisam do fallback SPA no Caddy (`/loja/index.html`, etc.), como no `frontend/nginx.conf`. Sem isso, o proxy devolve a home e o Playwright `test:smoke` falha. Ver `deploy/caddy/Caddyfile`.
+
+**Estáticos:** `/assets/*`, `/products/*`, `/previews/*` e `/mark.svg` (com fallback para `public/mark.svg`) devem ser servidos **antes** dos blocos SPA. Teste local: `cd frontend && npm run test:spa-routes`.
+
 HTTPS automático do Caddy só existe depois de um domínio em `PUBLIC_HOST` e das portas 80 e 443 alcançáveis. Sem esse teste, o HTTPS não está comprovado. Sem domínio, use `PUBLIC_HOST=localhost` só dentro da máquina, ou acesse por HTTP sabendo que a demonstração não está cifrada.
 
 ## Operar e desligar
