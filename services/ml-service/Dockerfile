@@ -9,6 +9,7 @@ COPY services/ml-service/pom.xml services/ml-service/
 COPY services/threat-service/pom.xml services/threat-service/
 COPY services/investigation-service/pom.xml services/investigation-service/
 COPY machine-learning machine-learning
+COPY services/risk-engine services/risk-engine
 COPY services/ml-service services/ml-service
 RUN mvn -B -q -pl services/ml-service -am package -Dmaven.test.skip=true
 
