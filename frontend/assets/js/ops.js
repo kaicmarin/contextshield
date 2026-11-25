@@ -2016,7 +2016,16 @@ function users(search) {
       const table = el(
         "table",
         { class: "table o-table" },
-        el("thead", {}, el("tr", {}, ["Pessoa", "Papel", "Cliente", "Situação", ""].map((h) => el("th", {}, h)))),
+        el(
+          "thead",
+          {},
+          el(
+            "tr",
+            {},
+            ["Pessoa", "Papel", "Cliente", "Situação"].map((h) => el("th", { scope: "col" }, h)),
+            el("th", { scope: "col" }, el("span", { class: "sr-only" }, "Ações")),
+          ),
+        ),
         el(
           "tbody",
           {},

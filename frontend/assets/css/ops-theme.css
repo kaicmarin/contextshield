@@ -109,10 +109,18 @@ html[data-ops] {
 }
 
 .ops .btn-primary {
-  --b-bg: #ff4d6d;
-  --b-ink: #f4f8ff;
-  --b-line: #ff4d6d;
-  --b-hover: #e63c5b;
+  /* #d43553 + #fff ≈ 4.74:1 (AA); antes #ff4d6d + #f4f8ff ≈ 3.02:1 */
+  --b-bg: #d43553;
+  --b-ink: #ffffff;
+  --b-line: #d43553;
+  --b-hover: #c92847;
+}
+.ops .btn-danger {
+  /* #cf364f + #fff ≈ 4.89:1; --stop (#ff6b6b) permanece para KPIs e destaques */
+  --b-bg: #cf364f;
+  --b-line: #cf364f;
+  --b-ink: #ffffff;
+  --b-hover: #c42e45;
 }
 
 .o-dash {
