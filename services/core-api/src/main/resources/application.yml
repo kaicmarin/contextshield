@@ -45,24 +45,36 @@ contextshield:
   jwt:
     secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
     ttl-minutes: ${JWT_TTL_MINUTES:120}
+    allow-dev-secret: ${JWT_ALLOW_DEV_SECRET:true}
   risk-engine:
     url: ${RISK_ENGINE_URL:http://${RISK_ENGINE_HOSTPORT:localhost:8081}}
     timeout-ms: ${RISK_ENGINE_TIMEOUT_MS:2500}
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   seed:
-    enabled: ${SEED_ENABLED:true}
+    enabled: ${SEED_ENABLED:false}
     demo-password: ${DEMO_PASSWORD:contexto}
     anchor-today: ${SEED_ANCHOR_TODAY:true}
+    allow-demo-reset: ${SEED_ALLOW_DEMO_RESET:false}
   check:
     per-minute: ${CHECK_PER_MINUTE:40}
+    trusted-proxies: []
+  login:
+    per-minute-ip: ${LOGIN_PER_MINUTE_IP:25}
+    per-minute-email: ${LOGIN_PER_MINUTE_EMAIL:8}
+  http:
+    trusted-proxies:
+      - 127.0.0.1
+      - ::1
+      - 172.16.0.0/12
+      - 10.0.0.0/8
   ml:
-    url: ${ML_SERVICE_URL:}
+    url: ${ML_SERVICE_URL:http://localhost:8082}
     timeout-ms: ${ML_TIMEOUT_MS:800}
   threat:
-    url: ${THREAT_SERVICE_URL:}
+    url: ${THREAT_SERVICE_URL:http://localhost:8083}
     timeout-ms: ${THREAT_TIMEOUT_MS:800}
   investigation:
-    url: ${INVESTIGATION_SERVICE_URL:}
+    url: ${INVESTIGATION_SERVICE_URL:http://localhost:8084}
     timeout-ms: ${INVESTIGATION_TIMEOUT_MS:800}
 
 logging:

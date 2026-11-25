@@ -42,6 +42,7 @@ public class MlLabService implements ApplicationRunner {
     private final EngineInputBuilder inputs;
     private final com.contextshield.core.repo.TransactionRepository transactions;
     private final OrganizationService organizations;
+    private final MlClient remote;
     private final AtomicBoolean busy = new AtomicBoolean(false);
     private final ExecutorService pool = Executors.newSingleThreadExecutor(task -> {
         Thread thread = new Thread(task, "ml-experiment");
@@ -51,7 +52,7 @@ public class MlLabService implements ApplicationRunner {
 
     public MlLabService(JdbcTemplate jdbc, ObjectMapper mapper, AuditService audit, RiskPolicyService policies,
                         EngineInputBuilder inputs, com.contextshield.core.repo.TransactionRepository transactions,
-                        OrganizationService organizations) {
+                        OrganizationService organizations, MlClient remote) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.audit = audit;
@@ -59,6 +60,7 @@ public class MlLabService implements ApplicationRunner {
         this.inputs = inputs;
         this.transactions = transactions;
         this.organizations = organizations;
+        this.remote = remote;
     }
 
     @Override
@@ -70,6 +72,7 @@ public class MlLabService implements ApplicationRunner {
     }
 
     public Map<String, Object> overview(long organizationId) {
+        if (remote.enabled()) return remote.overview(organizationId);
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("models", models(organizationId));
         out.put("experiments", experiments(organizationId));
@@ -81,6 +84,15 @@ public class MlLabService implements ApplicationRunner {
     }
 
     public Map<String, Object> queue(int count, long seed, String actor) {
+        if (remote.enabled()) {
+            try {
+                return enqueueRemote(count, seed, actor);
+            } catch (org.springframework.web.client.RestClientResponseException e) {
+                if (e.getStatusCode().value() == 400) throw ApiException.badRequest(downstream(e));
+                if (e.getStatusCode().value() == 409) throw ApiException.conflict(downstream(e));
+                throw e;
+            }
+        }
         if (count < MIN_EXAMPLES || count > MAX_EXAMPLES)
             throw ApiException.badRequest("A quantidade fica entre " + MIN_EXAMPLES + " e " + MAX_EXAMPLES + ".");
         if (!busy.compareAndSet(false, true)) throw ApiException.conflict("Já existe um experimento em execução.");
@@ -88,6 +100,29 @@ public class MlLabService implements ApplicationRunner {
         audit.log(actor, "ML_EXPERIMENT", String.valueOf(id), count + " exemplos, semente " + seed);
         pool.submit(() -> execute(id, count, seed));
         return experiment(id);
+    }
+
+    private Map<String, Object> enqueueRemote(int count, long seed, String actor) {
+        Confirmed confirmed = confirmed();
+        java.util.List<Map<String, Object>> rows = new java.util.ArrayList<>();
+        for (int i = 0; i < confirmed.y().length; i++) {
+            java.util.List<Double> features = new java.util.ArrayList<>();
+            for (double value : confirmed.x()[i]) features.add(value);
+            rows.add(Map.of("features", features, "label", confirmed.y()[i] == 1 ? "FRAUD" : "LEGIT"));
+        }
+        return remote.enqueue(organizations.idOfEmail(actor), actor, count, seed, rows);
+    }
+
+    private static String downstream(org.springframework.web.client.RestClientResponseException e) {
+        String body = e.getResponseBodyAsString();
+        String field = body != null && body.contains("\"message\"") ? "\"message\"" : "\"error\"";
+        if (body != null && body.contains(field)) {
+            int start = body.indexOf(field);
+            int quote = body.indexOf('"', start + field.length());
+            int end = quote < 0 ? -1 : body.indexOf('"', quote + 1);
+            if (quote >= 0 && end > quote) return body.substring(quote + 1, end);
+        }
+        return "O serviço de modelos recusou o experimento.";
     }
 
     public Map<String, Object> experiment(long id) {
@@ -115,12 +150,14 @@ public class MlLabService implements ApplicationRunner {
     }
 
     public Map<String, Object> experiment(long id, long organizationId) {
+        if (remote.enabled()) return remote.experiment(organizationId, id);
         Map<String, Object> row = experiment(id);
         if (((Number) row.get("organizationId")).longValue() != organizationId) throw ApiException.notFound("Experimento");
         return row;
     }
 
     public Map<String, Object> approveModel(long id, String actor) {
+        if (remote.enabled()) return remote.approve(organizations.idOfEmail(actor), actor, id);
         Map<String, Object> row = jdbc.query("""
                 select validation, coalesce(feature_set, 'operation') feature_set, coalesce(organization_id, 1) organization_id
                 from ml_model where id = ?
@@ -162,6 +199,8 @@ public class MlLabService implements ApplicationRunner {
     }
 
     public Map<String, Object> refuseDecisionUse(long id, String actor) {
+        if (remote.enabled()) return Map.of("id", id, "decisionAuthorized", false,
+                "message", "A aprovação experimental não autoriza o modelo a decidir. A compra continua com o motor de regras.");
         requireModel(id, actor);
         jdbc.update("update ml_model set decision_authorized = false where id = ?", id);
         audit.log(actor, "ML_DECISION_REFUSED", String.valueOf(id), "O modelo continua sem poder aprovar ou bloquear.");
@@ -170,6 +209,7 @@ public class MlLabService implements ApplicationRunner {
     }
 
     public Map<String, Object> rejectModel(long id, String actor) {
+        if (remote.enabled()) return remote.reject(organizations.idOfEmail(actor), actor, id);
         requireModel(id, actor);
         int n = jdbc.update("update ml_model set status = 'REJECTED' where id = ? and status <> 'APPROVED'", id);
         if (n == 0) throw ApiException.conflict("Desaprove o modelo em uso antes, ou ele não existe.");
@@ -205,6 +245,7 @@ public class MlLabService implements ApplicationRunner {
     }
 
     public Map<String, Object> monitor(long organizationId) {
+        if (remote.enabled()) return remote.monitor(organizationId);
         Integer predictions = jdbc.queryForObject("select count(*) from ml_shadow where error is null and organization_id = ?", Integer.class, organizationId);
         Integer failures = jdbc.queryForObject("select count(*) from ml_shadow where error is not null and organization_id = ?", Integer.class, organizationId);
         Double latency = jdbc.queryForObject("select avg(latency_ms) from ml_shadow where error is null and organization_id = ?", Double.class, organizationId);

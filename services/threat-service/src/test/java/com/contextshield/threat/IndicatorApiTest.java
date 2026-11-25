@@ -23,6 +23,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class IndicatorApiTest {
@@ -44,17 +45,28 @@ class IndicatorApiTest {
                 new HttpEntity<>(Map.of("status", "CONFIRMED", "note", "visto"), token(2)), String.class);
         assertEquals(HttpStatus.NOT_FOUND, otherOrg.getStatusCode());
 
+        ResponseEntity<String> jump = http.exchange("/internal/v1/indicators/" + id + "/review", HttpMethod.POST,
+                new HttpEntity<>(Map.of("status", "CONFIRMED", "note", "cedo demais"), token(1)), String.class);
+        assertEquals(HttpStatus.CONFLICT, jump.getStatusCode());
+        http.exchange("/internal/v1/indicators/" + id + "/review", HttpMethod.POST,
+                new HttpEntity<>(Map.of("status", "IN_REVIEW", "note", "em análise"), token(1)), Map.class);
         ResponseEntity<Map> confirmed = http.exchange("/internal/v1/indicators/" + id + "/review", HttpMethod.POST,
                 new HttpEntity<>(Map.of("status", "CONFIRMED", "note", "analista conferiu o relato", "visibility", "SHARED"), token(1)),
                 Map.class);
         assertEquals("CONFIRMED", confirmed.getBody().get("status"));
         assertEquals(false, confirmed.getBody().get("trainingLabel"));
+        assertEquals("analista@contextshield.example", confirmed.getBody().get("reviewedBy"));
 
         ResponseEntity<List<Map<String, Object>>> shared = http.exchange("/internal/v1/indicators/shared", HttpMethod.GET,
                 new HttpEntity<>(token(2)), new ParameterizedTypeReference<>() {});
         assertEquals(1, shared.getBody().size());
         assertFalse(shared.getBody().get(0).containsKey("display"));
-        assertFalse(String.valueOf(shared.getBody().get(0).get("valueHash")).contains("169.254"));
+        assertFalse(shared.getBody().get(0).containsKey("valueHash"));
+        ResponseEntity<Map> guessed = http.exchange("/internal/v1/indicators/match", HttpMethod.POST,
+                new HttpEntity<>(Map.of("kind", "url", "value", "http://169.254.169.254/latest", "sharedOnly", true), token(2)), Map.class);
+        assertEquals(true, guessed.getBody().get("matched"));
+        assertFalse(guessed.getBody().containsKey("valueHash"));
+        assertTrue(((Number) guessed.getBody().get("reputation")).intValue() >= 1);
     }
 
     @Test
@@ -72,7 +84,8 @@ class IndicatorApiTest {
 
     private static HttpHeaders token(long org) {
         Instant now = Instant.now();
-        String token = Jwts.builder().subject("core-api").claim("role", "SERVICE").claim("org", org)
+        String token = Jwts.builder().subject("analista@contextshield.example").claim("role", "SERVICE").claim("org", org)
+                .claim("scope", "review,read,lookup")
                 .issuedAt(Date.from(now)).expiration(Date.from(now.plus(5, ChronoUnit.MINUTES)))
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();
         HttpHeaders headers = new HttpHeaders();

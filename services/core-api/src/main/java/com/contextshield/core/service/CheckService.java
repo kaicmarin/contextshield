@@ -1,8 +1,11 @@
 package com.contextshield.core.service;
 
+import com.contextshield.core.config.CurrentUser;
 import com.contextshield.core.domain.Seller;
 import com.contextshield.core.repo.MerchantRepository;
 import com.contextshield.core.repo.SellerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,11 +35,19 @@ public class CheckService {
     private final MerchantRepository merchants;
     private final SellerRepository sellers;
     private final AtomicReference<Catalog> catalog = new AtomicReference<>();
+    private InternalPlatformClient platform;
+    private OrganizationService organizations;
 
     public CheckService(IntelligenceService intel, MerchantRepository merchants, SellerRepository sellers) {
         this.intel = intel;
         this.merchants = merchants;
         this.sellers = sellers;
+    }
+
+    @Autowired
+    void bindThreat(InternalPlatformClient platform, OrganizationService organizations) {
+        this.platform = platform;
+        this.organizations = organizations;
     }
 
     public record Finding(String label, String explain) {}
@@ -68,7 +80,7 @@ public class CheckService {
         boolean officialHost = false;
 
         for (String d : IntelText.phones(t)) {
-            IntelligenceService.IntelHint hint = safeHint(IntelText.phoneEntityId(d), acc);
+            IntelligenceService.IntelHint hint = threatOrLocal("phone", d, IntelText.phoneEntityId(d), acc);
             int reported = hint == null ? 0 : hint.reports();
             String status = hint == null ? null : hint.status();
             takeIntel(hint, acc, unverified);
@@ -120,7 +132,8 @@ public class CheckService {
 
         try {
             intel.matchAddressText(t).ifPresent(a -> {
-                IntelligenceService.IntelHint hint = intel.hintFor(IntelText.destinationEntityId(a.getId()));
+                IntelligenceService.IntelHint hint = threatOrLocal("domain", a.getLine1(), IntelText.destinationEntityId(a.getId()), acc);
+                if (hint == null) hint = new IntelligenceService.IntelHint(0, null, null, null);
                 takeIntel(hint, acc, unverified);
                 entities.add(new Entity("destination",
                         a.getLine1() + (a.getLine2() != null ? " — " + a.getLine2() : ""),
@@ -135,7 +148,7 @@ public class CheckService {
         for (Seller s : cat.sellerList()) {
             if (!norm.contains(IntelText.strip(s.getName()))) continue;
             long days = ChronoUnit.DAYS.between(s.getSince(), LocalDate.now());
-            IntelligenceService.IntelHint hint = safeHint(IntelText.sellerEntityId(s.getId()), acc);
+            IntelligenceService.IntelHint hint = threatOrLocal("seller", s.getId(), IntelText.sellerEntityId(s.getId()), acc);
             int reported = hint == null ? 0 : hint.reports();
             String status = hint == null ? null : hint.status();
             entities.add(new Entity("seller",
@@ -241,11 +254,31 @@ public class CheckService {
     }
 
     private void addDomain(String host, List<Entity> entities, IntelAcc acc, List<Finding> unverified) {
-        IntelligenceService.IntelHint hint = safeHint(IntelText.domainEntityId(host), acc);
+        IntelligenceService.IntelHint hint = threatOrLocal("domain", host, IntelText.domainEntityId(host), acc);
         int reported = hint == null ? 0 : hint.reports();
         String status = hint == null ? null : hint.status();
         takeIntel(hint, acc, unverified);
         entities.add(new Entity("domain", host, reported, status));
+    }
+
+    private IntelligenceService.IntelHint threatOrLocal(String kind, String value, String entityId, IntelAcc acc) {
+        if (platform != null && platform.threatEnabled()) {
+            try {
+                var authentication = SecurityContextHolder.getContext().getAuthentication();
+                boolean sharedOnly = !(authentication != null && authentication.getPrincipal() instanceof CurrentUser);
+                long orgId = 0L;
+                if (!sharedOnly) orgId = organizations.idOf((CurrentUser) authentication.getPrincipal());
+                Map<String, Object> match = platform.matchIndicator(orgId, kind, value, sharedOnly);
+                if (!Boolean.TRUE.equals(match.get("matched"))) return new IntelligenceService.IntelHint(0, null, null, null);
+                int reports = match.get("reputation") instanceof Number n ? n.intValue() : 0;
+                return new IntelligenceService.IntelHint(Math.max(1, reports), String.valueOf(match.get("status")), null, null);
+            } catch (RuntimeException e) {
+                acc.failed = true;
+                log.warn("inteligência indisponível");
+                return null;
+            }
+        }
+        return safeHint(entityId, acc);
     }
 
     private IntelligenceService.IntelHint safeHint(String entityId, IntelAcc acc) {

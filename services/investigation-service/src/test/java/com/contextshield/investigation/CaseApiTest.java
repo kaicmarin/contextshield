@@ -40,16 +40,21 @@ class CaseApiTest {
                 new HttpEntity<>(Map.of("state", "UNDER_REVIEW", "actor", "outro"), token(2)), String.class);
         assertEquals(HttpStatus.NOT_FOUND, foreign.getStatusCode());
 
-        http.exchange("/internal/v1/cases/" + id + "/transition", HttpMethod.POST,
-                new HttpEntity<>(Map.of("state", "UNDER_REVIEW", "actor", "analista@contextshield.example"), token(1)), Map.class);
+        ResponseEntity<Map> assigned = http.exchange("/internal/v1/cases/" + id + "/assign", HttpMethod.POST,
+                new HttpEntity<>(Map.of("actor", "outra-pessoa"), token(1)), Map.class);
+        assertEquals("UNDER_REVIEW", assigned.getBody().get("state"));
+        assertEquals("analista@contextshield.example", assigned.getBody().get("assignee"));
+        http.exchange("/internal/v1/cases/" + id + "/evidence", HttpMethod.POST,
+                new HttpEntity<>(Map.of("kind", "NOTE", "body", "o roteiro coincide com o destino"), token(1)), Map.class);
         ResponseEntity<Map> confirmed = http.exchange("/internal/v1/cases/" + id + "/transition", HttpMethod.POST,
                 new HttpEntity<>(Map.of("state", "CONFIRMED_FRAUD", "note", "há script e destino coincidentes",
-                        "actor", "analista@contextshield.example"), token(1)), Map.class);
+                        "actor", "outra-pessoa"), token(1)), Map.class);
         assertEquals(HttpStatus.OK, confirmed.getStatusCode());
         assertEquals("CONFIRMED_FRAUD", confirmed.getBody().get("state"));
         assertEquals(false, confirmed.getBody().get("trainingLabel"));
         assertEquals(false, confirmed.getBody().get("publishesModel"));
         assertEquals("analista@contextshield.example", confirmed.getBody().get("actor"));
+        assertEquals(1, ((java.util.List<?>) confirmed.getBody().get("evidence")).size());
     }
 
     @Test
@@ -65,7 +70,8 @@ class CaseApiTest {
 
     private static HttpHeaders token(long org) {
         Instant now = Instant.now();
-        String token = Jwts.builder().subject("core-api").claim("role", "SERVICE").claim("org", org)
+        String token = Jwts.builder().subject("analista@contextshield.example").claim("role", "SERVICE").claim("org", org)
+                .claim("scope", "investigate,read,report")
                 .issuedAt(Date.from(now)).expiration(Date.from(now.plus(5, ChronoUnit.MINUTES)))
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();
         HttpHeaders headers = new HttpHeaders();

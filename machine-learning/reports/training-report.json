@@ -32,7 +32,7 @@
       "maxIterations" : 200,
       "tolerance" : 1.0E-5
     },
-    "path" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\logistic-regression.ser",
+    "path" : "machine-learning/models/logistic-regression.ser",
     "trainMs" : 351.9,
     "metrics" : {
       "examples" : 772,
@@ -70,7 +70,7 @@
       "split" : "GINI",
       "minNode" : 5
     },
-    "path" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\random-forest.ser",
+    "path" : "machine-learning/models/random-forest.ser",
     "trainMs" : 430.59,
     "metrics" : {
       "examples" : 772,

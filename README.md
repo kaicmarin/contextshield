@@ -10,13 +10,22 @@ Projeto A3 de Sistemas Distribuídos e Mobile · Eric, Bruno e Thiago · 2026
 
 ## O que tem aqui
 
-| Peça | O que faz | Tecnologia |
+| Processo | Porta | Responsabilidade |
 |---|---|---|
-| `services/risk-engine` | Microsserviço **sem estado** que recebe o contexto de uma compra e devolve a decisão: 31 sinais, 11 regras, envelope de segurança, certificado de robustez e perguntas de verificação | Java 21, Spring Boot 3.5 |
-| `services/core-api` | API principal: usuários, catálogo, checkout, máquina de estados da compra, relatos (“Fui vítima”), inteligência, avisos, auditoria. Chama o motor por HTTP | Java 21, Spring Boot 3.5, JPA, Flyway, PostgreSQL, JWT |
-| `frontend` | Três telas: **Loja NEXA** (onde a compra acontece), **App Aureon** (o banco da cliente) e **Painel de operações** (o analista) | HTML5, CSS3 e JavaScript puro |
-| `perf` | Teste de carga sem dependências (carga normal e pico) | Node 22 |
-| `docs` | Arquitetura, API, testes, deploy, roteiro da apresentação, avaliação e posts | Markdown |
+| `services/core-api` | 8080 | API, checkout, relatos, políticas, auditoria; orquestra os outros serviços |
+| `services/risk-engine` | 8081 | **Decisão da compra** (regras R1–R12, sombra não decide) |
+| `services/ml-service` | 8082 | Inferência e treino **em sombra** (`.ser` Smile 3.1.1) |
+| `services/threat-service` | 8083 | Indicadores confirmados compartilhados |
+| `services/investigation-service` | 8084 | Casos de investigação |
+| `frontend` | 5173 / 8088 | NEXA, Aureon e Operations (HTML/CSS/JS) |
+
+PostgreSQL: schemas `public`, `ml`, `threat`, `investigation`. Detalhes de segurança: [docs/SEGURANCA-E-ISOLAMENTO.md](docs/SEGURANCA-E-ISOLAMENTO.md).
+
+| Auxiliar | Função |
+|---|---|
+| `perf` | Carga (Node) |
+| `docs` | Arquitetura, deploy, apresentação |
+| `scripts/aws` | Backup/restore (`.sh` Linux e `.ps1` Windows) |
 
 ```mermaid
 flowchart LR
@@ -27,20 +36,24 @@ flowchart LR
   end
   L & B & P -->|HTTPS + JWT| N[nginx]
   N -->|/api| C[core-api :8080]
-  C -->|REST + token de serviço| R[risk-engine :8081]
-  C -->|JPA / Flyway| D[(PostgreSQL)]
+  C -->|token| R[risk-engine :8081]
+  C -->|sombra| M[ml-service :8082]
+  C -->|lookup| T[threat :8083]
+  C -->|casos| I[investigation :8084]
+  C --> D[(PostgreSQL)]
 ```
 
 ## Rodar com Docker (um comando)
 
 ```bash
-cp .env.example .env       # troque o JWT_SECRET
+cp .env.example .env
+# Dev: JWT_ALLOW_DEV_SECRET=true SEED_ENABLED=true no .env
 docker compose up --build
 ```
 
-Abra http://localhost:8088. A API documentada (Swagger) fica em http://localhost:8088/swagger-ui.html.
+Abra http://localhost:8088. Para EC2/AWS (só proxy público): `docker compose -f docker-compose.aws-free.yml up --build`.
 
-Na primeira subida, a core-api cria as tabelas (Flyway) e carrega a história da demonstração: 9 clientes, 28 produtos e 16 compras dos últimos dias, todas avaliadas pelo motor de verdade.
+Com `SEED_ENABLED=true` e perfil `dev`, a core-api pode carregar o histórico demonstrativo. Em produção (`SPRING_PROFILES_ACTIVE=prod`) o seed fica desligado.
 
 ## Contas da demonstração
 
@@ -61,9 +74,14 @@ Pré-requisitos: Java 21, Maven 3.9, Node 22 e um PostgreSQL local (banco `conte
 
 ```bash
 mvn -q install -DskipTests
-java -jar services/risk-engine/target/risk-engine-exec.jar        # porta 8081
-java -jar services/core-api/target/core-api.jar                    # porta 8080
-cd frontend && npm install && npm run dev                          # http://localhost:5173 (arquivos estáticos + proxy /api)
+# Um terminal por processo (JWT_SECRET, URLs e senhas por schema — ver .env.example)
+java -jar services/risk-engine/target/risk-engine-exec.jar
+java -jar services/ml-service/target/ml-service-exec.jar
+java -jar services/threat-service/target/threat-service-exec.jar
+java -jar services/investigation-service/target/investigation-service-exec.jar
+# Core: SEED_ENABLED=true -Dspring.profiles.active=dev
+java -jar services/core-api/target/core-api.jar
+cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
 
 Sem PostgreSQL, suba a core-api com `--spring.profiles.active=local` (H2 em memória, em modo PostgreSQL).

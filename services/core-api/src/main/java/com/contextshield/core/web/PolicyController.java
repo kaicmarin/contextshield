@@ -29,6 +29,11 @@ public class PolicyController {
         return policies.list(organizations.idOf(Auth.user()));
     }
 
+    @GetMapping("/patterns")
+    public Object patterns() {
+        return policies.patterns();
+    }
+
     @GetMapping("/catalog")
     public Object catalog() {
         return Map.of("profile", policies.activeProfile(), "signals", policies.catalog(organizations.idOf(Auth.user())),

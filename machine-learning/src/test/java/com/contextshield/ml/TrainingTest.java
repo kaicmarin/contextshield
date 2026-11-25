@@ -4,8 +4,13 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,6 +34,27 @@ class TrainingTest {
         double[] row = Features.vector(SyntheticCases.generate(60, 7L).get(0).checkout());
         assertTrue(loaded.predict(row).fraudProbability() >= 0);
         assertTrue(loaded.predict(row).fraudProbability() <= 1);
+    }
+
+    @Test
+    void readsTheTimestampShapeSentBetweenServices() {
+        Map<String, Object> customer = new LinkedHashMap<>();
+        customer.put("id", "C1");
+        customer.put("avgTicket90d", 100);
+        customer.put("purchases90d", 4);
+        customer.put("since", LocalDate.of(2020, 1, 15));
+        customer.put("city", "Sao Paulo");
+        Map<String, Object> checkout = new LinkedHashMap<>();
+        checkout.put("amount", 80);
+        checkout.put("customer", customer);
+        checkout.put("at", LocalDateTime.of(2026, 11, 24, 10, 0));
+        checkout.put("declaredOrigin", "self");
+        Map<String, Object> sentCustomer = new LinkedHashMap<>(customer);
+        sentCustomer.put("since", List.of(2020, 1, 15));
+        Map<String, Object> sent = new LinkedHashMap<>(checkout);
+        sent.put("customer", sentCustomer);
+        sent.put("at", List.of(2026, 11, 24, 10, 0, 0));
+        assertArrayEquals(Features.vector(checkout), Features.vector(sent));
     }
 
     @Test

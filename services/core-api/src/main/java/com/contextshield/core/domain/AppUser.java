@@ -27,7 +27,12 @@ public class AppUser {
     private String customerId;
     private Long organizationId;
     private boolean active = true;
+    private long tokenVersion;
     private LocalDateTime createdAt;
+
+    public void bumpTokenVersion() {
+        tokenVersion++;
+    }
 
     @PrePersist
     void organizationDefault() {

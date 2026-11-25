@@ -20,13 +20,22 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
 public class ServiceTokenFilter extends OncePerRequestFilter {
+    private static final String DEV_SECRET = "dev-only-secret-change-me-0123456789abcdef";
     private final SecretKey key;
 
-    public ServiceTokenFilter(@Value("${contextshield.jwt.secret}") String secret) {
+    public ServiceTokenFilter(@Value("${contextshield.jwt.secret}") String secret,
+                              @Value("${contextshield.jwt.allow-dev-secret:false}") boolean allowDevSecret) {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("JWT_SECRET precisa ter pelo menos 32 caracteres.");
+        }
+        if (!allowDevSecret && DEV_SECRET.equals(secret)) {
+            throw new IllegalStateException("O segredo de desenvolvimento não pode ser usado fora dos testes.");
+        }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -46,6 +55,9 @@ public class ServiceTokenFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                         claims.getSubject(), null, List.of(new SimpleGrantedAuthority("ROLE_" + role))));
                 if (claims.get("org") instanceof Number org) req.setAttribute("orgId", org.longValue());
+                req.setAttribute("actor", claims.getSubject());
+                String scope = claims.get("scope", String.class);
+                req.setAttribute("scopes", scope == null || scope.isBlank() ? Set.of() : Set.of(scope.split(",")));
             } catch (JwtException | IllegalArgumentException e) {
                 SecurityContextHolder.clearContext();
             }

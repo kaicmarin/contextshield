@@ -93,15 +93,16 @@ class OpsQueryTest extends TestSupport {
 
     @Test
     void configuracaoDoMotorRejeitaChaveDesconhecidaEAuditaAValida() throws Exception {
-        var token = analyst();
-        call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/ops/engine/config"), token,
-                Map.of("key", "peso-inventado", "enabled", false)).andExpect(status().isBadRequest());
+        call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/ops/engine/config"), analyst(),
+                Map.of("key", "peso-inventado", "enabled", false)).andExpect(status().isForbidden());
         call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/ops/engine/config"), ana(),
                 Map.of("key", "script-mirror", "enabled", false)).andExpect(status().isForbidden());
-        call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/ops/engine/config"), token,
+        call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/ops/engine/config"), admin(),
+                Map.of("key", "peso-inventado", "enabled", false)).andExpect(status().isBadRequest());
+        call(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/ops/engine/config"), admin(),
                 Map.of("key", "script-mirror", "enabled", false)).andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.flags['script-mirror']").value(false));
-        var audit = read(call(get("/api/ops/audit?action=ENGINE_SETTING&q=script-mirror"), token, null).andExpect(status().isOk()));
+        var audit = read(call(get("/api/ops/audit?action=ENGINE_SETTING&q=script-mirror"), analyst(), null).andExpect(status().isOk()));
         assertThat(audit.path("items").get(0).path("detail").asText()).isEqualTo("false");
     }
 }

@@ -4,7 +4,7 @@ import { button, dialog, empty, errorNotice, field, loginForm, notice, pill, ske
 import { el } from "./utils/dom.js";
 import { BAND, BAND_TONE, brl, CHANNEL, dateTime, DECISION, ENTITY_KIND, INCIDENT_STATUS, INCIDENT_TYPE, ms, ORIGIN, relative, setTitle, SOURCE, STATUS, STATUS_ICON } from "./utils/format.js";
 import { icon, mark } from "./utils/icons.js";
-import { labPage, policiesPage } from "./ops-lab.js?v=3";
+import { labPage, policiesPage } from "./ops-lab.js?v=7";
 
 const ATTENTION = ["INTERVENTION", "CONTEXT_REQUIRED", "ANALYZING", "BLOCKED"];
 const STATUS_ORDER = ["INTERVENTION", "BLOCKED", "CONTEXT_REQUIRED", "ANALYZING", "RECEIVED", "INCIDENT_RECORDED", "APPROVED_WITH_ALERT", "APPROVED", "CANCELLED"];
@@ -20,8 +20,11 @@ const NEXT = {
   APPROVED_WITH_ALERT: ["INCIDENT_RECORDED"],
 };
 const GO = { v: "/ops", t: "/ops/transacoes", r: "/ops/relatos", i: "/ops/inteligencia", m: "/ops/motor", a: "/ops/auditoria", d: "/ops/demo" };
-const SECTIONS = { "": "Visão geral", transacoes: "Transações", relatos: "Relatos", inteligencia: "Inteligência", motor: "Motor de risco", politicas: "Políticas de risco", laboratorio: "Laboratório", modelos: "Modelos", auditoria: "Auditoria", usuarios: "Usuários", demo: "Demonstração" };
+const SECTIONS = { "": "Visão geral", transacoes: "Transações", relatos: "Relatos", casos: "Casos", inteligencia: "Inteligência", motor: "Motor de risco", politicas: "Políticas de risco", laboratorio: "Laboratório", modelos: "Modelos", auditoria: "Auditoria", usuarios: "Usuários", demo: "Demonstração" };
 const CERT = { ROBUST: ["Robusta", "ok"], FRAGILE: ["Frágil", "risk"], INCONCLUSIVE: ["Inconclusiva", "warn"], DEGRADED: ["Degradada", "warn"] };
+const VERIFY_STATE = { NOT_REQUIRED: "Não exigida", REQUESTED: "Aguardando a cliente", ANSWERED: "Respondida", INCONCLUSIVE: "Inconclusiva", EXPIRED: "Expirada", COMPLETED: "Respondida" };
+const ANSWER_KEY = { origin: "Quem pediu a compra", contact: "Contato antes da compra", address: "Endereço", coached: "Alguém ditou a resposta", anchor: "Referência citada", device: "Aparelho", amount: "Quem escolheu o valor" };
+const ANSWER_VALUE = { asked: "Alguém pediu", self: "A própria pessoa", phone: "Por telefone", message: "Por mensagem", no: "Não", yes: "Sim", mine: "É da cliente", given: "Passaram o endereço", chose: "A cliente escolheu", unsure: "Não sabe dizer", home: "A casa dela", script: "O texto do roteiro", other: "Outra pessoa" };
 const DECISION_TONE = { APPROVE: "ok", APPROVE_WITH_ALERT: "warn", REQUEST_CONTEXT: "info", INTERVENE: "risk", BLOCK: "stop" };
 const DECISION_ICON = { APPROVE: "check", APPROVE_WITH_ALERT: "alert", REQUEST_CONTEXT: "question", INTERVENE: "pause", BLOCK: "stop" };
 const DECISION_ORDER = ["APPROVE", "APPROVE_WITH_ALERT", "REQUEST_CONTEXT", "INTERVENE", "BLOCK"];
@@ -114,13 +117,18 @@ async function poll(quiet) {
   if (path === "/ops" || (path.startsWith("/ops/transacoes") && !/\/TX-/.test(path)) || path === "/ops/relatos") router.start();
 }
 
+function serviceDown(cfg) {
+  if (!cfg?.providers) return 0;
+  return Object.values(cfg.providers).filter((provider) => provider === "down").length;
+}
+
 function paintChrome() {
   const s = session();
   if (!s) return;
   const path = location.pathname.replace(/\/$/, "") || "/ops";
   const attention = attentionTotal;
   const pending = (incidents ?? []).filter((i) => i.status !== "CLOSED").length;
-  const degraded = config ? Object.values(config.providers).filter((p) => p === "down").length + Object.values(config.flags).filter((f) => !f).length : 0;
+  const degraded = serviceDown(config);
   shell.querySelectorAll("[data-count]").forEach((n) => {
     const key = n.dataset.count;
     const value = key === "tx" ? attention : key === "inc" ? pending : 0;
@@ -145,7 +153,7 @@ function opsShell(loc) {
   const isAdmin = s.user.role === "ADMIN";
   const attention = attentionTotal;
   const pending = (incidents ?? []).filter((i) => i.status !== "CLOSED").length;
-  const degraded = config ? Object.values(config.providers).filter((p) => p === "down").length + Object.values(config.flags).filter((f) => !f).length : 0;
+  const degraded = serviceDown(config);
   const parts = loc.path.replace(/^\/ops\/?/, "").split("/").filter(Boolean);
   const section = parts[0] ?? "";
   const back = section === "transacoes" ? lastSearch.tx : section === "relatos" ? lastSearch.incidents : "";
@@ -175,6 +183,7 @@ function opsShell(loc) {
         nav("/ops", "overview", "Visão geral"),
         nav("/ops/transacoes", "list", "Transações", { countKey: "tx", count: attention, urgent: true, mark: attention ? " is-urgent" : "" }),
         nav("/ops/relatos", "inbox", "Relatos", { countKey: "inc", count: pending, mark: pending ? "" : "" }),
+        nav("/ops/casos", "list", "Casos"),
         nav("/ops/inteligencia", "network", "Inteligência"),
         el("span", { class: "o-nav-group" }, "Sistema"),
         nav("/ops/motor", "gauge", "Motor de risco", { mark: degraded ? " is-warn" : "" }),
@@ -352,7 +361,7 @@ function overview() {
         const origins = hasNumbers(o.origins) ? o.origins : list.reduce((map, t) => { if (t.declaredOrigin) map[t.declaredOrigin] = (map[t.declaredOrigin] ?? 0) + 1; return map; }, {});
         const amounts = hasNumbers(o.decisionAmounts) ? o.decisionAmounts : list.reduce((map, t) => { const key = t.decision || t.status; if (!key) return map; map[key] = (map[key] ?? 0) + Number(t.amount || 0); return map; }, {});
         const recent = Array.isArray(o.recentHeld) && o.recentHeld.length ? o.recentHeld : list.filter((t) => ["BLOCKED", "CANCELLED", "INTERVENTION", "CONTEXT_REQUIRED"].includes(t.status)).slice(0, 5);
-        const down = config ? Object.values(config.providers).filter((p) => p === "down").length + Object.values(config.flags).filter((f) => !f).length : 0;
+        const down = serviceDown(config);
         const range = el(
           "div",
           { class: "fa-range", role: "group", "aria-label": "Período" },
@@ -399,6 +408,7 @@ function overview() {
                 { class: "panel" },
                 el("div", { class: "p-head" }, el("h2", {}, "Origem da compra"), el("a", { href: "/ops/transacoes", class: "p-link" }, "Ver fila")),
                 originBars(origins),
+                (() => { const declared = Object.values(origins).reduce((sum, n) => sum + Number(n), 0); const missing = Number(o.transactions || 0) - declared; return missing > 0 ? el("p", { class: "o-note" }, `${missing} compras do histórico não têm origem declarada. A soma acima é só das que têm.`) : null; })(),
               ),
             ),
             el(
@@ -835,6 +845,18 @@ function txDetail(id) {
     .catch((e) => box.replaceChildren(pageError(e, () => router.start())));
   return box;
 }
+function pct(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return `${(Math.round(n * 1000) / 10).toLocaleString("pt-BR")}%`;
+}
+function shadowLine(row) {
+  if (row.error) return `Falha no estágio ${row.stage || "inicial"}. A decisão do motor permanece. ${row.error}`;
+  const when = row.stage === "recalculated" ? "Depois das respostas" : "No checkout";
+  const version = row.libraryVersion ? ` · versão ${row.libraryVersion}` : "";
+  const decision = DECISION[row.engineDecision] ?? row.engineDecision ?? "—";
+  return `${when} · modelo ${row.modelId ?? "—"} · ${row.algorithm || "modelo"}${version} · ${row.prediction || "—"} · probabilidade ${pct(row.probability)} · motor ${decision}. ${row.explanation || ""}`;
+}
 function paintTx(box, data, back) {
   const s = data.summary;
   const assessments = data.assessments ?? [];
@@ -851,7 +873,7 @@ function paintTx(box, data, back) {
       assessments.length > 1 ? tabs({ value: String(idx), label: "Avaliações desta compra", onChange: (v) => { idx = Number(v); draw(); }, items: assessments.map((x, i) => ({ value: String(i), label: `${x.stage === "initial" ? "No checkout" : x.stage === "recalculated" ? "Após a verificação" : x.stage} · ${DECISION[x.decision] ?? x.decision}` })) }) : null,
       a ? verdict(a) : notice("muted", "Sem avaliação", "O motor ainda não respondeu para esta compra."),
       a ? signals(a) : null,
-      data.shadow?.length ? el("section", { class: "panel" }, el("h2", {}, "Modelo em modo sombra"), el("p", { class: "o-note" }, "A previsão fica registrada ao lado da decisão do motor. Quem decide a compra é o motor de regras."), el("ul", { class: "o-links" }, data.shadow.map((s) => el("li", {}, el("span", {}, s.error ? `Falha no estágio ${s.stage || "inicial"}. A decisão do motor permanece. ${s.error}` : `${s.stage === "recalculated" ? "Depois das respostas" : "No checkout"} · modelo ${s.modelId ?? "—"} · ${s.algorithm || "modelo"} · versão ${s.libraryVersion || "—"} · ${s.prediction || "—"} · probabilidade ${s.probability ?? "—"} · motor ${s.engineDecision || "—"}. ${s.explanation || ""}`))))) : null,
+      data.shadow?.length ? el("section", { class: "panel" }, el("h2", {}, "Modelo em modo sombra"), el("p", { class: "o-note" }, "A previsão fica registrada ao lado da decisão do motor. Quem decide a compra é o motor de regras."), el("ul", { class: "o-links" }, data.shadow.map((row) => el("li", {}, el("span", {}, shadowLine(row)))))) : null,
       a?.certificate ? certificate(a) : null,
       el(
         "form",
@@ -919,10 +941,10 @@ function context(data) {
       el("dt", {}, "Aparelho"), el("dd", {}, `${data.device?.name ?? "—"} · ${data.device?.detail ?? ""} `, data.device?.trusted ? pill("ok", "conhecido") : pill("warn", "novo")),
       el("dt", {}, "Entrega"), el("dd", {}, `${data.address?.line1 ?? ""}${data.address?.line2 ? `, ${data.address.line2}` : ""}`),
       el("dt", {}, "Cliente desde"), el("dd", {}, `${data.customer?.since ?? "—"} · ticket médio `, el("span", { class: "num" }, brl(data.customer?.avgTicket90d))),
-      el("dt", {}, "Verificação"), el("dd", {}, data.verificationState || "—"),
+      el("dt", {}, "Verificação"), el("dd", {}, VERIFY_STATE[data.verificationState] || data.verificationState || "—"),
     ),
     data.verificationReason ? el("p", { class: "o-note" }, data.verificationReason) : null,
-    data.answers && Object.keys(data.answers).length ? el("div", {}, el("h3", {}, "Respostas declaradas"), el("dl", { class: "kv" }, Object.entries(data.answers).flatMap(([k, v]) => [el("dt", { class: "mono" }, k), el("dd", { class: "mono" }, v)]))) : null,
+    data.answers && Object.keys(data.answers).length ? el("div", {}, el("h3", {}, "Respostas declaradas"), el("dl", { class: "kv" }, Object.entries(data.answers).flatMap(([k, v]) => [el("dt", {}, ANSWER_KEY[k] || k), el("dd", {}, ANSWER_VALUE[v] || v)]))) : null,
     data.coachScript ? el("div", {}, el("h3", {}, "Roteiro recebido pelo cliente"), el("p", { class: "quote small", style: { whiteSpace: "pre-line" } }, data.coachScript)) : null,
   );
 }
@@ -1091,9 +1113,9 @@ function incidentDetail(id) {
                 "div",
                 { class: "o-stack-sm" },
                 el("div", { class: "choices", role: "radiogroup", "aria-label": "Conclusão" }, [["scam", "Confirmado como golpe"], ["not-scam", "Não era golpe"]].map(([k, label]) => el("label", { class: "choice" }, el("input", { type: "radio", name: "as", checked: as === k, onChange: () => { as = k; draw(); } }), el("span", { class: "dot", "aria-hidden": "true" }), el("span", {}, label)))),
-                field({ label: "Nota de encerramento", error: error?.fields?.note, control: (p) => el("textarea", { ...p, class: "textarea", rows: "3", value: note, onInput: (e) => { note = e.target.value; } }) }),
+                field({ label: "Nota de encerramento", error: error?.fields?.note, control: (p) => el("textarea", { ...p, class: "textarea", rows: "3", value: note, onInput: (e) => { note = e.target.value; const send = box.querySelector("[data-incident-close]"); if (send) send.disabled = !as || !note.trim(); } }) }),
                 error ? errorNotice(error) : null,
-                button({ variant: "primary", busy, disabled: !as || !note.trim(), onClick: async () => { busy = true; error = null; draw(); try { await api(`/api/ops/incidents/${id}/close`, { method: "POST", body: { as, note }, area: "ops" }); toast("Relato encerrado"); router.start(); } catch (e) { error = e; busy = false; draw(); } } }, "Encerrar relato"),
+                button({ variant: "primary", busy, disabled: !as || !note.trim(), dataset: { incidentClose: "" }, onClick: async () => { busy = true; error = null; draw(); try { await api(`/api/ops/incidents/${id}/close`, { method: "POST", body: { as, note }, area: "ops" }); toast("Relato encerrado"); router.start(); } catch (e) { error = e; busy = false; draw(); } } }, "Encerrar relato"),
               )
             : null,
           i.status === "CLOSED" ? el("dl", { class: "kv" }, el("dt", {}, "Conclusão"), el("dd", {}, i.closedAs === "scam" ? "Golpe confirmado" : "Não era golpe"), el("dt", {}, "Nota"), el("dd", {}, i.closeNote ?? ""), el("dt", {}, "Encerrado"), el("dd", {}, dateTime(i.closedAt))) : null,
@@ -1335,7 +1357,18 @@ function intelligence(search) {
   const listPanel = el("aside", { class: "panel ix-side", "aria-label": "Entidades" }, listHead, listUl, listMore);
   const detail = el("div", { class: "ix-detail" });
   const grid = el("div", { class: "ix" }, listPanel, detail);
-  const box = el("div", { class: "o-stack ix-page" }, head("Inteligência", { sub: IX_SUB, actions: el("div", { class: "ix-actions" }, stampNote, refreshBtn) }), kpiBox, toolbar, main);
+  const confirmed = el("section", { class: "panel" }, el("h2", {}, "Indicadores confirmados"), el("p", { class: "o-note" }, "Carregando os indicadores que o motor pode usar."));
+  const box = el("div", { class: "o-stack ix-page" }, head("Inteligência", { sub: IX_SUB, actions: el("div", { class: "ix-actions" }, stampNote, refreshBtn) }), confirmed, kpiBox, toolbar, main);
+  api("/api/ops/indicators", { area: "ops" }).then((rows) => {
+    const list = (Array.isArray(rows) ? rows : []).filter((row) => row.status === "CONFIRMED");
+    confirmed.replaceChildren(
+      el("div", { class: "p-head" }, el("h2", {}, "Indicadores confirmados"), pill("ok", String(list.length))),
+      list.length
+        ? el("ul", { class: "o-links" }, list.map((row) => el("li", {}, el("span", { class: "mono" }, row.id), ` ${row.display || row.kind} · ${row.visibility === "SHARED" ? "compartilhado" : "privado"}`)))
+        : el("p", {}, "Nenhum indicador confirmado."),
+      el("p", { class: "o-note" }, "Estes são os que podem entrar na próxima compra. O mapa abaixo continua sendo o que os relatos citaram e ainda não foi confirmado."),
+    );
+  }).catch(() => confirmed.replaceChildren(el("p", {}, "Os indicadores confirmados não responderam.")));
 
   /* ---- pintura ---- */
   const chip = (key, label, on, onClick, ic, n) => el(
@@ -1855,7 +1888,7 @@ function engine(search) {
     let current = cfg;
     let pending = null;
     const draw = () => {
-      const down = Object.values(current.providers).filter((p) => p === "down").length + Object.values(current.flags).filter((f) => !f).length;
+      const down = serviceDown(current);
       box.replaceChildren(
         head("Motor de risco", { sub: `${model.engine} · score base ${model.baseScore} · confiança mínima ${model.minConfidence}%`, badge: down ? pill("warn", "Modo degradado") : pill("ok", "Operando completo") }),
         tabs({ value: tab, label: "Seções do motor", onChange: (v) => go(v === "config" ? "/ops/motor" : `/ops/motor?aba=${v}`, { replace: true }), items: [{ value: "config", label: "Configuração" }, { value: "regras", label: `Regras (${model.rules.length})` }, { value: "sinais", label: `Sinais (${model.signals.length})` }] }),
@@ -2198,6 +2231,7 @@ async function render(loc) {
   else if (loc.name === "tx") node = txDetail(loc.params.id);
   else if (loc.name === "incs") node = incidentList(loc.search);
   else if (loc.name === "inc") node = incidentDetail(loc.params.id);
+  else if (loc.name === "cases") node = casesPage(loc.params.id);
   else if (loc.name === "intel") node = intelligence(loc.search);
   else if (loc.name === "engine") node = engine(loc.search);
   else if (loc.name === "policies") node = policiesPage(session().user.role === "ADMIN");
@@ -2211,28 +2245,257 @@ async function render(loc) {
   if (!shell.parentElement) document.body.append(shell);
 }
 
+const SHADOW_STAGE = { initial: "No checkout", recalculated: "Depois das respostas" };
+const SHADOW_PREDICTION = { LEGIT: "Legítima", FRAUD: "Fraude" };
+
+function modelKpi(tone, ic, label, value, note) {
+  return el(
+    "div",
+    { class: `fa-kpi tone-${tone}` },
+    el("span", { class: "fa-kpi-top" }, el("span", { class: "fa-kpi-label" }, label), el("span", { class: "fa-kpi-ic", "aria-hidden": "true" }, icon(ic, { size: 15 }))),
+    el("strong", { class: "num" }, value),
+    el("span", { class: "fa-kpi-note" }, note),
+  );
+}
+
+function modelRate(value) {
+  if (value == null || Number.isNaN(Number(value))) return "—";
+  return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(Number(value) * 100)}%`;
+}
+
 function modelMonitor() {
-  const box = el("section", { class: "stack" });
-  box.append(head("Monitoramento dos modelos", { sub: "Contagens da sombra. Precisão e recall ficam de fora enquanto não houver rótulos revisados nos mesmos casos." }));
+  const box = el("div", { class: "o-stack" }, head("Modelos", { sub: "A sombra registra a previsão. Quem decide a compra é o motor de regras." }), skeleton(180));
   api("/api/ops/ml/monitor", { area: "ops" })
     .then((data) => {
-      const rows = (data.byPrediction || []).map((row) => `${row.stage} · ${row.prediction}: ${row.total}`).join(" · ") || "Nenhuma previsão ainda.";
-      box.append(
-        el("p", {}, `Previsões sem erro: ${data.predictions}. Falhas: ${data.failures}. Divergências com o motor: ${data.disagreementsWithEngine}.`),
-        el("p", {}, data.meanLatencyMs == null ? "Ainda não há tempo de inferência." : `Latência média: ${data.meanLatencyMs} ms.`),
-        el("p", {}, rows),
-        el("p", {}, data.qualityNote),
-        el("p", { class: "muted" }, data.drift),
+      const predictions = Number(data.predictions || 0);
+      const failures = Number(data.failures || 0);
+      const covered = data.coveredPurchases == null ? predictions : Number(data.coveredPurchases);
+      const uncovered = data.uncoveredPurchases == null ? null : Number(data.uncoveredPurchases);
+      const purchases = uncovered == null ? null : covered + uncovered;
+      const disagreements = Number(data.disagreementsWithEngine || 0);
+      const latency = data.meanLatencyMs == null ? "—" : `${Math.round(Number(data.meanLatencyMs))} ms`;
+      const rows = Array.isArray(data.byPrediction) ? data.byPrediction : [];
+      box.replaceChildren(
+        head("Modelos", { badge: pill("info", "Sombra"), sub: "A previsão fica ao lado da decisão. Ela não aprova nem bloqueia a compra." }),
+        el(
+          "div",
+          { class: "fa-kpis" },
+          modelKpi("ok", "check", "Previsões", String(covered), purchases == null ? "sem erro, só registradas" : `de ${purchases} compras`),
+          modelKpi("warn", "alert", "Sem previsão", uncovered == null ? String(failures) : String(uncovered), uncovered == null || failures === uncovered ? "a compra não mudou" : `${failures} registros de falha. A compra não mudou`),
+          modelKpi("risk", "pause", "Divergências", String(disagreements), "sombra e motor discordam"),
+          modelKpi("info", "gauge", "Latência", latency, "média das previsões válidas"),
+          modelKpi("ok", "shield", "Quem decide", "Motor", "a sombra não autoriza"),
+        ),
+        el(
+          "section",
+          { class: "panel" },
+          el("div", { class: "p-head" }, el("h2", {}, "Por previsão"), pill("ok", "Não decide")),
+          rows.length
+            ? el(
+                "div",
+                { class: "table-wrap" },
+                el(
+                  "table",
+                  { class: "table o-table" },
+                  el("thead", {}, el("tr", {}, ["Momento", "Previsão", "Total"].map((title) => el("th", {}, title)))),
+                  el("tbody", {}, rows.map((row) => el("tr", {}, el("td", {}, SHADOW_STAGE[row.stage] || "No checkout"), el("td", {}, SHADOW_PREDICTION[row.prediction] || row.prediction || "—"), el("td", { class: "num" }, String(row.total))))),
+                ),
+              )
+            : el("p", { class: "o-note" }, predictions ? "O serviço ainda não devolveu a divisão por previsão." : "Nenhuma previsão sem erro ainda."),
+          el("p", { class: "o-note" }, data.qualityNote || "Precisão e recall ficam de fora enquanto cada previsão não tiver um caso confirmado."),
+        ),
       );
       return api("/api/ops/verifications", { area: "ops" });
     })
     .then((checks) => {
       if (!checks) return;
-      const rate = checks.verificationRate == null ? "ainda sem compras para calcular a taxa" : `${checks.verificationRate}`;
-      const left = checks.abandonmentRate == null ? "ainda sem verificação para calcular o abandono" : `${checks.abandonmentRate}`;
-      box.append(el("p", {}, `Verificações: ${checks.total}. Expiradas: ${checks.expired}. Taxa de verificação: ${rate}. Abandono: ${left}.`));
+      box.append(
+        el(
+          "section",
+          { class: "panel" },
+          el("div", { class: "p-head" }, el("h2", {}, "Verificação pedida ao cliente")),
+          el(
+            "dl",
+            { class: "kv" },
+            el("dt", {}, "Pedidas"),
+            el("dd", { class: "num" }, String(checks.total ?? 0)),
+            el("dt", {}, "Expiradas"),
+            el("dd", { class: "num" }, String(checks.expired ?? 0)),
+            el("dt", {}, "Taxa"),
+            el("dd", { class: "num" }, modelRate(checks.verificationRate)),
+            el("dt", {}, "Abandono"),
+            el("dd", { class: "num" }, modelRate(checks.abandonmentRate)),
+          ),
+          el("p", { class: "o-note" }, "A taxa divide as verificações pelas compras. O abandono divide as expiradas pelas verificações. Expirar não aprova a compra."),
+        ),
+      );
     })
-    .catch((error) => box.append(el("p", {}, error?.message || "Não foi possível carregar o monitoramento.")));
+    .catch((error) => box.replaceChildren(head("Modelos"), pageError(error, () => router.start())));
+  return box;
+}
+
+const CASE_LABEL = {
+  OPEN: "Aberto",
+  UNDER_REVIEW: "Em análise",
+  WAITING_EVIDENCE: "Aguardando evidência",
+  CONFIRMED_FRAUD: "Fraude confirmada",
+  CONFIRMED_LEGIT: "Compra legítima",
+  INCONCLUSIVE: "Inconclusivo",
+  CLOSED: "Encerrado",
+};
+const CASE_NEXT = {
+  OPEN: ["WAITING_EVIDENCE", "CLOSED"],
+  UNDER_REVIEW: ["WAITING_EVIDENCE", "CONFIRMED_FRAUD", "CONFIRMED_LEGIT", "INCONCLUSIVE", "CLOSED"],
+  WAITING_EVIDENCE: ["INCONCLUSIVE", "CLOSED"],
+  CONFIRMED_FRAUD: ["CLOSED"],
+  CONFIRMED_LEGIT: ["CLOSED"],
+  INCONCLUSIVE: ["CLOSED"],
+  CLOSED: ["OPEN"],
+};
+const CASE_NOTE = new Set(["OPEN", "CLOSED", "CONFIRMED_FRAUD", "CONFIRMED_LEGIT"]);
+const CASE_ASSIGN = new Set(["OPEN", "WAITING_EVIDENCE", "INCONCLUSIVE"]);
+const CASE_KIND = { NOTE: "Nota", TRANSACTION: "Transação", DOCUMENT: "Documento" };
+const CASE_TONE = { OPEN: "info", UNDER_REVIEW: "warn", WAITING_EVIDENCE: "info", CONFIRMED_FRAUD: "stop", CONFIRMED_LEGIT: "ok", INCONCLUSIVE: "warn", CLOSED: "muted" };
+const CASE_PRIORITY = { LOW: "Baixa", NORMAL: "Normal", HIGH: "Alta", CRITICAL: "Crítica" };
+
+function caseMoment(item) {
+  if (item.from === "NONE") return "Caso aberto";
+  if (item.from === "CLOSED" && item.to === "OPEN") return "Reaberto";
+  if (item.to === "UNDER_REVIEW") return "Assumido";
+  return CASE_LABEL[item.to] || item.to;
+}
+
+function casesPage(id) {
+  const box = el("div", { class: "o-stack" });
+  const back = { to: "/ops/casos", label: "Casos" };
+  if (!id) {
+    box.append(head("Casos", { sub: "Relato de golpe abre um caso aqui. O analista autenticado é quem assume." }));
+    api("/api/ops/investigations", { area: "ops" }).then((rows) => {
+      const list = Array.isArray(rows) ? rows : [];
+      box.append(el("section", { class: "panel" }, list.length
+        ? el("ul", { class: "o-links" }, list.map((row) => el("li", {}, el("a", { href: `/ops/casos/${row.id}` }, el("span", { class: "mono" }, row.id), " ", CASE_LABEL[row.state] || row.state, row.txId ? ` · ${row.txId}` : "", " · prioridade ", (CASE_PRIORITY[row.priority] || "normal").toLowerCase()))))
+        : el("p", {}, "Nenhum caso nesta organização.")));
+    }).catch((error) => box.append(errorNotice(error, () => router.start())));
+    return box;
+  }
+  api(`/api/ops/investigations/${id}`, { area: "ops" }).then(async (row) => {
+    const [purchase, report] = await Promise.all([
+      row.txId ? api(`/api/ops/transactions/${row.txId}`, { area: "ops" }).catch(() => null) : null,
+      row.sourceType === "incident" && row.sourceId ? api(`/api/ops/incidents/${row.sourceId}`, { area: "ops" }).catch(() => null) : null,
+    ]);
+    let note = "";
+    let evidence = "";
+    let kind = "NOTE";
+    let next = "";
+    let busy = false;
+    let error = null;
+    const run = async (path, body, done) => {
+      busy = true;
+      error = null;
+      draw();
+      try {
+        await api(path, { method: "POST", body, area: "ops" });
+        toast(done);
+        router.start();
+      } catch (err) {
+        error = err;
+        busy = false;
+        draw();
+      }
+    };
+    const draw = () => {
+      const state = row.state;
+      const options = CASE_NEXT[state] || [];
+      const needsNote = CASE_NOTE.has(next);
+      const moves = (row.events || []).filter((item) => item.from !== "EVIDENCE" && item.to !== "EVIDENCE");
+      const incident = report?.incident;
+      const story = [];
+      for (const change of purchase?.statusLog || []) {
+        const automatic = change.actor === "Motor de risco" || change.actor === "Sistema";
+        story.push({
+          tone: STATUS[change.toStatus]?.tone || "muted",
+          title: STATUS[change.toStatus]?.label || change.toStatus,
+          at: change.at,
+          detail: `${change.reason || "Sem justificativa registrada"} · ${automatic ? "Automático" : "Registrado por " + change.actor}`,
+        });
+      }
+      if (incident?.description) {
+        story.push({ tone: "stop", title: "Relato do cliente", at: incident.createdAt, detail: incident.description });
+      }
+      for (const reply of report?.replies || []) {
+        story.push({ tone: "info", title: "Resposta ao cliente", at: reply.createdAt, detail: [reply.body, reply.authorName || reply.authorEmail].filter(Boolean).join(" · ") });
+      }
+      if (!incident?.description) {
+        for (const item of row.evidence || []) {
+          story.push({ tone: "info", title: CASE_KIND[item.kind] || "Evidência", at: item.at, detail: [item.body, item.actor].filter(Boolean).join(" · ") });
+        }
+      }
+      for (const item of moves) {
+        story.push({
+          tone: CASE_TONE[item.to] || "muted",
+          title: caseMoment(item),
+          at: item.at,
+          detail: [item.note && item.note !== "assumido" ? item.note : null, item.actor].filter(Boolean).join(" · "),
+        });
+      }
+      box.replaceChildren(...[
+        head(row.id, {
+          heading: el("span", { class: "mono" }, row.id),
+          back,
+          badge: pill(CASE_TONE[state] || "muted", CASE_LABEL[state] || state),
+          sub: `${CASE_PRIORITY[row.priority] || "Normal"} · ${row.assignee || "sem responsável"}`,
+        }),
+        row.txId ? el("a", { href: `/ops/transacoes/${row.txId}`, class: "panel o-linked" }, el("span", { class: "mono" }, row.txId), " Compra ligada a este caso") : null,
+        incident?.id ? el("a", { href: `/ops/relatos/${incident.id}`, class: "panel o-linked" }, el("span", { class: "mono" }, incident.id), " Relato ligado a este caso") : null,
+        el("section", { class: "panel" },
+          el("h2", {}, "O que aconteceu"),
+          story.length
+            ? el("ol", { class: "timeline o-timeline" }, story.map((item) => el("li", { class: `tone-${item.tone}` }, el("div", {}, el("strong", {}, item.title), " ", el("span", { class: "muted num" }, dateTime(item.at))), item.detail ? el("div", { class: "small muted" }, item.detail) : null)))
+            : el("p", {}, "Este caso ainda não tem movimento."),
+        ),
+        el("section", { class: "panel" },
+          el("h2", {}, "Evidências"),
+          (row.evidence || []).length
+            ? el("ul", { class: "o-links" }, row.evidence.map((item) => el("li", {}, el("strong", {}, CASE_KIND[item.kind] || item.kind), el("p", {}, item.body), el("span", { class: "small muted" }, `${item.actor} · ${dateTime(item.at)}`))))
+            : el("p", {}, "Nenhuma evidência registrada."),
+        ),
+        el("section", { class: "panel o-action case-evidence" },
+          el("h2", {}, "Tratamento"),
+          state === "CLOSED" ? el("p", {}, "Este caso está encerrado. Reabra com uma nota para poder assumir de novo.") : null,
+          CASE_ASSIGN.has(state) ? button({ variant: "primary", busy, onClick: () => run(`/api/ops/investigations/${id}/assign`, {}, "Caso assumido") }, "Assumir") : null,
+          options.length
+            ? el("div", { class: "choices", role: "radiogroup", "aria-label": "Próximo estado" }, options.map((item) => el("label", { class: "choice" },
+                el("input", { type: "radio", name: "case-next", checked: next === item, onChange: () => { next = item; draw(); } }),
+                el("span", { class: "dot", "aria-hidden": "true" }),
+                el("span", {}, item === "OPEN" ? "Reabrir" : (CASE_LABEL[item] || item)))))
+            : null,
+          options.length && needsNote
+            ? field({
+                label: next === "OPEN" ? "Nota de reabertura" : next === "CLOSED" ? "Nota de encerramento" : "Nota da confirmação",
+                control: (p) => el("textarea", { ...p, class: "textarea", rows: "3", value: note, onInput: (e) => { note = e.target.value; const send = box.querySelector("[data-case-move]"); if (send) send.disabled = !note.trim(); } }),
+              })
+            : null,
+          options.length
+            ? button({ busy, disabled: !next || (needsNote && !note.trim()), dataset: { caseMove: "" }, onClick: () => run(`/api/ops/investigations/${id}/transition`, { state: next, note }, next === "OPEN" ? "Caso reaberto" : "Estado atualizado") }, next === "OPEN" ? "Reabrir" : "Registrar estado")
+            : null,
+        ),
+        el("section", { class: "panel case-evidence" },
+          el("h2", {}, "Evidência"),
+          el("div", { class: "choices", role: "radiogroup", "aria-label": "Tipo de evidência" }, Object.entries(CASE_KIND).map(([value, label]) => el("label", { class: "choice" },
+            el("input", { type: "radio", name: "case-kind", checked: kind === value, onChange: () => { kind = value; draw(); } }),
+            el("span", { class: "dot", "aria-hidden": "true" }),
+            el("span", {}, label)))),
+          field({
+            label: "Texto",
+            control: (p) => el("textarea", { ...p, class: "textarea", rows: "3", value: evidence, onInput: (e) => { evidence = e.target.value; const send = box.querySelector("[data-evidence-send]"); if (send) send.disabled = !evidence.trim(); } }),
+          }),
+          button({ variant: "primary", busy, disabled: !evidence.trim(), dataset: { evidenceSend: "" }, onClick: () => run(`/api/ops/investigations/${id}/evidence`, { kind, body: evidence }, "Evidência registrada") }, "Registrar evidência"),
+        ),
+        error ? errorNotice(error) : null,
+      ].filter(Boolean));
+    };
+    draw();
+  }).catch((error) => box.replaceChildren(pageError(error, () => router.start())));
   return box;
 }
 
@@ -2245,6 +2508,7 @@ function mount() {
       { name: "tx", pattern: /^transacoes\/(?<id>[^/]+)$/ },
       { name: "incs", pattern: /^relatos$/ },
       { name: "inc", pattern: /^relatos\/(?<id>[^/]+)$/ },
+      { name: "cases", pattern: /^casos(?:\/(?<id>[^/]+))?$/ },
       { name: "intel", pattern: /^inteligencia$/ },
       { name: "engine", pattern: /^motor$/ },
       { name: "policies", pattern: /^politicas$/ },

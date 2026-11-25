@@ -3,7 +3,7 @@
   "modelsReplaced" : false,
   "thresholdAdopted" : false,
   "reservedUsedForTuning" : false,
-  "publishedModel" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\logistic-context.ser",
+  "publishedModel" : "machine-learning/models/logistic-context.ser",
   "publishedEvaluation" : {
     "name" : "reservado-9901",
     "examples" : 400,

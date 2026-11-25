@@ -383,8 +383,8 @@
   },
   "reloadMatched" : true,
   "paths" : {
-    "logistic" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\logistic-context.ser",
-    "forest" : "C:\\Users\\kaicm\\Downloads\\contextshield-v2\\contextshield-v2\\machine-learning\\models\\random-forest-context.ser"
+    "logistic" : "machine-learning/models/logistic-context.ser",
+    "forest" : "machine-learning/models/random-forest-context.ser"
   },
   "limitation" : "As respostas são sintéticas. Fraude que nega ajuda continua com o mesmo vetor de uma compra lícita. Isso não é evidência bancária."
 }

@@ -1,0 +1,18 @@
+# Produção / publicação: sem seed automático e sem segredo embutido.
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+contextshield:
+  seed:
+    enabled: false
+    allow-demo-reset: false
+  jwt:
+    allow-dev-secret: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

@@ -41,12 +41,15 @@ public class TransactionService {
     private final MachineLearningService learning;
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
+    private final CaseIntake cases;
+    private final OrganizationService organizations;
 
     public TransactionService(TransactionRepository txs, TransactionItemRepository items, AssessmentRecordRepository assessments,
                               VerificationRepository verifications, StatusChangeRepository statusLog, ProductRepository products,
                               DeviceRepository devices, AddressRepository addresses, CardRepository cards,
                               EngineInputBuilder inputs, RiskEngineClient engine, AlertService alerts, AuditService audit,
-                              IntelligenceService intel, MachineLearningService learning, JdbcTemplate jdbc, ObjectMapper mapper) {
+                              IntelligenceService intel, MachineLearningService learning, JdbcTemplate jdbc, ObjectMapper mapper,
+                              CaseIntake cases, OrganizationService organizations) {
         this.txs = txs;
         this.items = items;
         this.assessments = assessments;
@@ -64,6 +67,8 @@ public class TransactionService {
         this.learning = learning;
         this.jdbc = jdbc;
         this.mapper = mapper;
+        this.cases = cases;
+        this.organizations = organizations;
     }
 
     public record Line(String productId, int quantity) {}
@@ -103,6 +108,7 @@ public class TransactionService {
         tx.setCoachScript(d.coachScript() == null || d.coachScript().isBlank() ? null : d.coachScript().trim());
         tx.setScenario(d.scenario());
         tx.setUnavailable(d.unavailable());
+        tx.setOrganizationId(organizations.organizationForCustomer(d.customerId(), actor));
         tx.setStatus(TransactionStatus.RECEIVED);
         tx.setCreatedAt(at);
         tx.setUpdatedAt(at);
@@ -171,8 +177,7 @@ public class TransactionService {
         transition(tx, to, r.getRuleText(), "Motor de risco", at);
         audit.log("risk-engine", "DECISION", tx.getId(), r.getDecision() + " · score " + r.getScore() + " · " + r.getRuleId(), at);
         intel.recordAttempt(tx);
-        long organizationId = tx.getOrganizationId() == null ? 1L : tx.getOrganizationId();
-        learning.shadow(tx.getId(), input, r.getDecision(), stage, organizationId);
+        learning.shadow(tx.getId(), input, r.getDecision(), stage, tx.getOrganizationId());
         if ("REQUEST_CONTEXT".equals(r.getDecision())) openVerification(tx.getId(), r.getRuleText(), at);
         return tx;
     }
@@ -219,7 +224,7 @@ public class TransactionService {
                 throw ApiException.badRequest("Resposta inválida para " + k);
             clean.put(k, v);
         });
-        boolean complete = clean.keySet().containsAll(Set.of("origin", "contact", "address", "coached"));
+        boolean complete = questionnaireComplete(tx.getId(), clean.keySet());
         Verification v = existing == null ? new Verification() : existing;
         v.setTxId(tx.getId());
         try {
@@ -250,6 +255,29 @@ public class TransactionService {
         }
         verifications.save(v);
         return done;
+    }
+
+    /** Completo quando o cliente respondeu cada pergunta que o banco mostrou. O conjunto fixo antigo só vale se o plano não foi gravado. */
+    private boolean questionnaireComplete(String txId, Set<String> answered) {
+        Set<String> asked = plannedQuestions(txId);
+        if (asked.isEmpty()) return answered.containsAll(Set.of("origin", "contact", "address", "coached"));
+        return answered.containsAll(asked);
+    }
+
+    private Set<String> plannedQuestions(String txId) {
+        return assessments.findFirstByTxIdOrderByIdDesc(txId).map(record -> {
+            try {
+                JsonNode questions = mapper.readTree(record.getPayload()).path("verification").path("questions");
+                Set<String> keys = new LinkedHashSet<>();
+                if (questions.isArray()) questions.forEach(q -> {
+                    String key = q.path("key").asText("");
+                    if (!key.isBlank()) keys.add(key);
+                });
+                return keys;
+            } catch (Exception e) {
+                return Set.<String>of();
+            }
+        }).orElse(Set.of());
     }
 
     @Transactional
@@ -328,6 +356,10 @@ public class TransactionService {
         LocalDateTime at = LocalDateTime.now().withNano(0);
         transition(tx, target, reason, user.name(), at);
         audit.log(user.email(), "STATUS_CHANGED", txId, tx.getStatus() + " · " + reason, at);
+        if (target == TransactionStatus.INCIDENT_RECORDED) {
+            long organizationId = tx.getOrganizationId();
+            cases.fromTransaction(organizationId, tx.getId(), user.email(), reason);
+        }
         return tx;
     }
 

@@ -51,7 +51,8 @@ public final class Weights {
             b("ANCHOR_FROM_SCRIPT", "Resposta usa o endereço do roteiro", "A casa do cadastro não foi escolhida.", 1, 1, 2, false),
             b("EVIDENCE_DIVERGENCE", "Resposta diverge da compra", "Reconhece um endereço que não é dele.", 6, 3, 12, false),
             b("DESTINATION_IN_INCIDENT", "Destino em relato de outro cliente", "Piso 20: um destino denunciado não pode virar detalhe.", 28, 20, 40, true),
-            b("SELLER_IN_INCIDENT", "Vendedor em relato de outro cliente", "Relação moderada.", 10, 5, 20, false));
+            b("SELLER_IN_INCIDENT", "Vendedor em relato de outro cliente", "Relação moderada.", 10, 5, 20, false),
+            b("CONFIRMED_INDICATOR", "Indicador confirmado", "Só entra quando a inteligência confirma. Denúncia pendente não chega aqui.", 16, 8, 28, false));
 
     private static final Map<String, Bound> INDEX = index();
 

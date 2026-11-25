@@ -81,7 +81,8 @@ public final class RiskModel {
             s("ANCHOR_FROM_SCRIPT", "customer", "Resposta usa o endereço do roteiro", "A resposta escolheu o endereço da entrega como se fosse a sua casa", "+1", 80, "A casa do cadastro não aparece na mensagem; escolher o destino no lugar dela indica roteiro."),
             s("EVIDENCE_DIVERGENCE", "customer", "Resposta diverge dos dados da compra", null, "+6", 80, "Cliente reconhece um endereço que não é dele e é ponto de retirada."),
             s("DESTINATION_IN_INCIDENT", "intelligence", "Destino citado em relato de outro cliente", "Este endereço de entrega aparece em relatos recentes de outras pessoas", "+28", 85, "Endereço específico, confirmado em incidente de outro cliente."),
-            s("SELLER_IN_INCIDENT", "intelligence", "Vendedor presente em relato de outro cliente", null, "+10", 70, "Relação moderada: o vendedor pode ter sido usado sem saber."));
+            s("SELLER_IN_INCIDENT", "intelligence", "Vendedor presente em relato de outro cliente", null, "+10", 70, "Relação moderada: o vendedor pode ter sido usado sem saber."),
+            s("CONFIRMED_INDICATOR", "intelligence", "Indicador confirmado", "A inteligência confirmou um dado desta compra", "+16", 85, "Só um indicador já confirmado por analista. Denúncia pendente não gera este sinal."));
 
     private static final Map<String, SignalSpec> SIGNAL_INDEX =
             SIGNALS.stream().collect(java.util.stream.Collectors.toMap(SignalSpec::id, x -> x));

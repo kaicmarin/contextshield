@@ -1,6 +1,7 @@
 package com.contextshield.mlservice.security;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,7 +13,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http, ServiceTokenFilter tokens) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, ServiceTokenFilter tokens,
+                                     @Value("${contextshield.rate-limit-per-minute:120}") int limit) throws Exception {
         return http
                 .csrf(c -> c.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -28,6 +30,7 @@ public class SecurityConfig {
                     res.getWriter().write("{\"status\":401,\"error\":\"Token ausente ou inválido\"}");
                 }))
                 .addFilterBefore(tokens, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new RateLimitFilter(limit), ServiceTokenFilter.class)
                 .build();
     }
 }

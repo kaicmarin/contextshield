@@ -8,7 +8,9 @@ export function launch() {
 }
 
 export async function loginAs(page, area, quick) {
-  await page.goto(BASE + area);
+  let path = area;
+  if (area === "/loja") path = `${area}/entrar`;
+  await page.goto(BASE + path);
   await page.getByRole("button", { name: quick, exact: true }).click();
   const enter = page.getByRole("button", { name: "Entrar", exact: true });
   await enter.click();

@@ -1,6 +1,7 @@
 package com.contextshield.core.service;
 
 import com.contextshield.core.web.ApiException;
+import com.contextshield.risk.engine.PolicyPatterns;
 import com.contextshield.risk.engine.Weights;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,9 +14,11 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Políticas versionadas. O motor não lê o banco: quem envia os pesos é a core-api. */
 @Service
@@ -75,6 +78,32 @@ public class RiskPolicyService {
         return present(row);
     }
 
+    public List<Map<String, Object>> patterns() {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (PolicyPatterns.Pattern pattern : PolicyPatterns.ALL) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("profile", pattern.profile());
+            row.put("name", pattern.name());
+            row.put("summary", pattern.summary());
+            row.put("weights", pattern.weights());
+            List<Map<String, Object>> changes = new ArrayList<>();
+            pattern.weights().forEach((key, value) -> {
+                Weights.Bound bound = Weights.bound(key);
+                Map<String, Object> change = new LinkedHashMap<>();
+                change.put("key", key);
+                change.put("label", bound.label());
+                change.put("from", bound.fallback());
+                change.put("to", value);
+                changes.add(change);
+            });
+            row.put("changes", changes);
+            out.add(row);
+        }
+        return out;
+    }
+
+    private static final Set<String> PROFILES = Set.of("fintech", "marketplace", "ecommerce", "giftcard");
+
     public List<Map<String, Object>> catalog(long organizationId) {
         Map<String, Integer> current = Weights.merge(activeWeights(activeProfile, organizationId));
         return Weights.CATALOG.stream().map(bound -> {
@@ -93,8 +122,8 @@ public class RiskPolicyService {
 
     public Map<String, Object> create(String name, String profile, Map<String, Integer> weights, String note, String actor) {
         String useProfile = profile == null || profile.isBlank() ? activeProfile : profile.trim();
-        if (!List.of("fintech", "marketplace", "ecommerce").contains(useProfile))
-            throw ApiException.badRequest("Perfil desconhecido. Use fintech, marketplace ou ecommerce.");
+        if (!PROFILES.contains(useProfile))
+            throw ApiException.badRequest("Perfil desconhecido. Use fintech, marketplace, ecommerce ou giftcard.");
         Map<String, Integer> stored = checked(weights);
         long organizationId = organizations.idOfEmail(actor);
         int version = jdbc.queryForObject("select coalesce(max(version), 0) + 1 from risk_policy where profile = ? and organization_id = ?",

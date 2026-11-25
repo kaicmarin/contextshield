@@ -37,7 +37,7 @@ public class CheckRateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
         int limit = props.check().perMinute();
-        if (!limiter.tryAcquire(clientKey(req), limit, System.currentTimeMillis())) {
+        if (!limiter.tryAcquire(ClientIp.resolve(req, props.check().trustedProxies()), limit, System.currentTimeMillis())) {
             res.setStatus(429);
             res.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
             Map<String, Object> body = new LinkedHashMap<>();
@@ -51,9 +51,4 @@ public class CheckRateLimitFilter extends OncePerRequestFilter {
         chain.doFilter(req, res);
     }
 
-    static String clientKey(HttpServletRequest req) {
-        String fwd = req.getHeader("X-Forwarded-For");
-        if (fwd != null && !fwd.isBlank()) return fwd.split(",")[0].trim();
-        return req.getRemoteAddr() == null ? "unknown" : req.getRemoteAddr();
-    }
 }

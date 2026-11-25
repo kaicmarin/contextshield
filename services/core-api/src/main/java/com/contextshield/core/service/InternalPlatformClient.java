@@ -9,6 +9,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.Map;
 
@@ -33,22 +34,36 @@ public class InternalPlatformClient {
         return investigation != null;
     }
 
-    public Object threat(String method, String path, long organizationId, Object body) {
-        return call(threat, "inteligência", method, path, organizationId, body);
+    public Object threat(String method, String path, long organizationId, String actor, String scope, Object body) {
+        return call(threat, "inteligência", method, path, organizationId, actor, scope, body);
     }
 
-    public Object investigation(String method, String path, long organizationId, Object body) {
-        return call(investigation, "investigação", method, path, organizationId, body);
+    public Object investigation(String method, String path, long organizationId, String actor, String scope, Object body) {
+        return call(investigation, "investigação", method, path, organizationId, actor, scope, body);
     }
 
-    private Object call(RestClient http, String name, String method, String path, long organizationId, Object body) {
+    /** Só indicador confirmado entra como evidência. Pendente não confirma o valor. */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> matchIndicator(long organizationId, String kind, String value, boolean sharedOnly) {
+        if (!threatEnabled()) return Map.of("matched", false);
+        Object body = call(threat, "inteligência", "POST", "/internal/v1/indicators/match", organizationId, "core-api", "lookup",
+                Map.of("kind", kind, "value", value, "sharedOnly", sharedOnly));
+        return body instanceof Map<?, ?> map ? (Map<String, Object>) map : Map.of("matched", false);
+    }
+
+    private Object call(RestClient http, String name, String method, String path, long organizationId, String actor, String scope, Object body) {
         if (http == null) {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "O serviço de " + name + " não está configurado.");
         }
         try {
             var spec = "POST".equals(method) ? http.post().uri(path).contentType(MediaType.APPLICATION_JSON).body(body == null ? Map.of() : body)
                     : http.get().uri(path);
-            return spec.header("Authorization", "Bearer " + jwt.serviceToken(organizationId)).retrieve().body(Object.class);
+            return spec.header("Authorization", "Bearer " + jwt.serviceToken(organizationId, actor, scope)).retrieve().body(Object.class);
+        } catch (RestClientResponseException e) {
+            String detail = e.getResponseBodyAsString();
+            if (detail != null && detail.length() > 180) detail = detail.substring(0, 180);
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "O serviço de " + name + " respondeu " + e.getStatusCode().value()
+                    + (detail == null || detail.isBlank() ? "." : ": " + detail));
         } catch (RestClientException e) {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "O serviço de " + name + " não respondeu. A compra não muda por causa disso.");
         }

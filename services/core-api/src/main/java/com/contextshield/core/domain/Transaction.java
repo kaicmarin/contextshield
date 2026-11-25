@@ -37,8 +37,4 @@ public class Transaction {
     @Version
     private Integer version;
 
-    @PrePersist
-    void organizationDefault() {
-        if (organizationId == null) organizationId = 1L;
-    }
 }

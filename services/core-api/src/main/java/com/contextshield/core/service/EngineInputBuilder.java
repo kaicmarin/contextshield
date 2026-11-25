@@ -5,6 +5,7 @@ import com.contextshield.core.repo.*;
 import com.contextshield.core.web.ApiException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,12 @@ public class EngineInputBuilder {
     private final RiskPolicyService policies;
     private final ObjectMapper mapper;
     private final JdbcTemplate jdbc;
+    private InternalPlatformClient platform;
+
+    @Autowired
+    void bindThreat(InternalPlatformClient platform) {
+        this.platform = platform;
+    }
 
     public EngineInputBuilder(CustomerRepository customers, DeviceRepository devices, AddressRepository addresses,
                               MerchantRepository merchants, SellerRepository sellers, TransactionItemRepository items,
@@ -79,8 +86,14 @@ public class EngineInputBuilder {
         in.put("stage", stage);
         in.put("at", at);
         in.put("amount", tx.getAmount());
-        in.put("customer", Map.of("id", c.getId(), "firstName", c.getFirstName(), "city", c.getCity(), "since", c.getSince(),
-                "avgTicket90d", c.getAvgTicket90d(), "purchases90d", c.getPurchases90d()));
+        Map<String, Object> customer = new LinkedHashMap<>();
+        customer.put("id", c.getId());
+        customer.put("firstName", c.getFirstName() == null ? "" : c.getFirstName());
+        customer.put("city", c.getCity() == null ? "" : c.getCity());
+        customer.put("since", c.getSince());
+        customer.put("avgTicket90d", c.getAvgTicket90d());
+        customer.put("purchases90d", c.getPurchases90d());
+        in.put("customer", customer);
         Map<String, Object> dev = new LinkedHashMap<>();
         dev.put("id", d.getId());
         dev.put("name", d.getName());
@@ -100,8 +113,28 @@ public class EngineInputBuilder {
         in.put("declaredOrigin", tx.getDeclaredOrigin());
         in.put("answers", answers);
         in.put("coachScript", tx.getCoachScript());
-        in.put("relations", intel.relationsFor(tx, at));
         long organizationId = tx.getOrganizationId() == null ? 1L : tx.getOrganizationId();
+        List<Map<String, Object>> relations = new ArrayList<>(intel.relationsFor(tx, at));
+        if (platform != null && platform.threatEnabled()) {
+            for (String sid : sellerIds) {
+                try {
+                    Map<String, Object> match = platform.matchIndicator(organizationId, "seller", sid, false);
+                    if (Boolean.TRUE.equals(match.get("matched")) && "CONFIRMED".equals(match.get("status"))) {
+                        Map<String, Object> relation = new LinkedHashMap<>();
+                        relation.put("kind", "confirmed-indicator");
+                        relation.put("entityId", sid);
+                        relation.put("reason", "Indicador de vendedor confirmado pela inteligência de ameaças.");
+                        relation.put("association", "forte");
+                        relation.put("crossCustomer", false);
+                        relation.put("incidentIds", List.of());
+                        relations.add(relation);
+                    }
+                } catch (RuntimeException ignored) {
+                    // Serviço fora do ar não vira prova de segurança.
+                }
+            }
+        }
+        in.put("relations", relations);
         Map<String, Object> config = new LinkedHashMap<>(settings.config());
         config.put("weights", policies.activeWeights(policies.activeProfile(), organizationId));
         String probes = settings.text("context-probes");

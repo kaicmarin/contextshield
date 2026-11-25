@@ -21,12 +21,16 @@ public class JwtService {
     private final SecretKey key;
     private final long ttlMinutes;
 
+    private static final String DEV_SECRET = "dev-only-secret-change-me-0123456789abcdef";
+
     public JwtService(AppProperties props) {
         if (props.jwt().secret() == null || props.jwt().secret().length() < 32)
             throw new IllegalStateException("JWT_SECRET precisa ter pelo menos 32 caracteres");
-        if ("dev-only-secret-change-me-0123456789abcdef".equals(props.jwt().secret()))
+        if (!props.jwt().allowDevSecret() && DEV_SECRET.equals(props.jwt().secret()))
+            throw new IllegalStateException("O segredo de desenvolvimento não pode ser usado fora dos testes.");
+        if (props.jwt().allowDevSecret() && DEV_SECRET.equals(props.jwt().secret()))
             org.slf4j.LoggerFactory.getLogger(JwtService.class)
-                    .warn("JWT_SECRET está no valor de desenvolvimento. Defina outro segredo, com 32 caracteres ou mais, antes de publicar.");
+                    .warn("JWT_SECRET está no valor de desenvolvimento. Defina outro segredo antes de publicar.");
         this.key = Keys.hmacShaKeyFor(props.jwt().secret().getBytes(StandardCharsets.UTF_8));
         this.ttlMinutes = props.jwt().ttlMinutes();
     }
@@ -39,6 +43,7 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole().name());
         claims.put("name", user.getName());
+        claims.put("tv", user.getTokenVersion());
         if (user.getCustomerId() != null) claims.put("customerId", user.getCustomerId());
         String token = Jwts.builder().subject(user.getEmail()).claims(claims)
                 .issuedAt(Date.from(now)).expiration(Date.from(exp)).issuer("contextshield-core").signWith(key).compact();
@@ -52,8 +57,13 @@ public class JwtService {
 
     /** O id da organização sai da sessão já autenticada na core-api. O serviço interno não aceita o corpo. */
     public String serviceToken(Long organizationId) {
+        return serviceToken(organizationId, "core-api", "assess");
+    }
+
+    /** O sujeito é quem já autenticou na core-api. O escopo limita a operação interna. */
+    public String serviceToken(Long organizationId, String actor, String scope) {
         Instant now = Instant.now();
-        var builder = Jwts.builder().subject("core-api").claim("role", "SERVICE")
+        var builder = Jwts.builder().subject(actor).claim("role", "SERVICE").claim("scope", scope)
                 .issuedAt(Date.from(now)).expiration(Date.from(now.plus(5, ChronoUnit.MINUTES)))
                 .issuer("contextshield-core");
         if (organizationId != null) builder.claim("org", organizationId);

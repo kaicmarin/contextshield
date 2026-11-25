@@ -1,4 +1,5 @@
 FROM nginx:1.27-alpine
+COPY nginx-cache-map.conf /etc/nginx/conf.d/00-cache-map.conf
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY index.html sistema.html /usr/share/nginx/html/
 COPY loja /usr/share/nginx/html/loja
