@@ -4,7 +4,7 @@ import { button, dialog, empty, errorNotice, field, loginForm, notice, pill, ske
 import { el } from "./utils/dom.js";
 import { BAND, BAND_TONE, brl, CHANNEL, dateTime, DECISION, ENTITY_KIND, INCIDENT_STATUS, INCIDENT_TYPE, ms, ORIGIN, relative, setTitle, SOURCE, STATUS, STATUS_ICON } from "./utils/format.js";
 import { icon, mark } from "./utils/icons.js";
-import { labPage, policiesPage } from "./ops-lab.js?v=7";
+import { labPage, policiesPage } from "./ops-lab.js?v=8";
 
 const ATTENTION = ["INTERVENTION", "CONTEXT_REQUIRED", "ANALYZING", "BLOCKED"];
 const STATUS_ORDER = ["INTERVENTION", "BLOCKED", "CONTEXT_REQUIRED", "ANALYZING", "RECEIVED", "INCIDENT_RECORDED", "APPROVED_WITH_ALERT", "APPROVED", "CANCELLED"];
