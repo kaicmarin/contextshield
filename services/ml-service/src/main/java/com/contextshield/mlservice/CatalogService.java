@@ -413,7 +413,7 @@ public class CatalogService implements ApplicationRunner {
 
     private List<Map<String, Object>> listModels(long organizationId) {
         return jdbc.query("""
-                select id, file_name, algorithm, feature_set, status, validation, decision_authorized, created_at
+                select id, file_name, algorithm, feature_set, status, validation, decision_authorized, metrics_json, created_at
                 from ml_model where organization_id = ? or (organization_id = 1 and approved_by = 'publicado')
                 order by id desc
                 """, (rs, n) -> {
@@ -424,6 +424,9 @@ public class CatalogService implements ApplicationRunner {
             row.put("featureSet", rs.getString("feature_set"));
             row.put("status", rs.getString("status"));
             row.put("validation", rs.getString("validation"));
+            Object metrics = read(rs.getString("metrics_json"));
+            row.put("metrics", metrics);
+            if (metrics instanceof Map<?, ?> values) row.put("examples", values.get("examples"));
             row.put("decisionAuthorized", false);
             row.put("usage", "APPROVED".equals(rs.getString("status")) ? "shadow" : "stored");
             return row;

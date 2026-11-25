@@ -220,7 +220,7 @@ document.body.append(
         el(
           "div",
           { class: "accounts", "aria-labelledby": "acc-title" },
-          el("div", { class: "accounts-head" }, el("h3", { id: "acc-title" }, "Contas da demonstração"), el("p", {}, "Todas usam a senha ", el("span", { class: "mono pw" }, "contexto"), ". Os dados são fictícios.")),
+          el("div", { class: "accounts-head" }, el("h3", { id: "acc-title" }, "Contas da demonstração"), el("p", {}, "As credenciais são fornecidas pelo responsável pela demonstração. Os dados são fictícios.")),
           el("ul", {}, ACCOUNTS.map((a) => el("li", {}, el("span", { class: "acc-who" }, el("strong", {}, a[0]), el("span", {}, a[1])), el("span", { class: "acc-mail mono" }, a[2]), el("span", { class: "acc-where" }, a[3]), copyEmail(a[2])))),
         ),
       ),
