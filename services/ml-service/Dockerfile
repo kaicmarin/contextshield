@@ -14,7 +14,7 @@ COPY services/ml-service services/ml-service
 RUN mvn -B -q -pl services/ml-service -am package -Dmaven.test.skip=true
 
 FROM eclipse-temurin:21-jre-alpine
-RUN addgroup -S app && adduser -S app -G app
+RUN addgroup -S app && adduser -S app -G app && mkdir -p /var/lib/contextshield/ml-work && chown -R app:app /var/lib/contextshield/ml-work
 WORKDIR /app
 COPY --from=build /src/services/ml-service/target/ml-service-exec.jar app.jar
 COPY machine-learning/models /opt/models
