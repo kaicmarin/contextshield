@@ -2,6 +2,7 @@ package com.contextshield.core.web;
 
 import com.contextshield.core.config.CurrentUser;
 import com.contextshield.core.config.JwtService;
+import com.contextshield.core.config.LoginAttemptLimiter;
 import com.contextshield.core.domain.*;
 import com.contextshield.core.repo.*;
 import com.contextshield.core.service.AuditService;
@@ -32,9 +33,11 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final AuditService audit;
+    private final LoginAttemptLimiter loginLimiter;
 
     public AuthController(AppUserRepository users, CustomerRepository customers, DeviceRepository devices, AddressRepository addresses,
-                          CardRepository cards, PasswordEncoder encoder, JwtService jwt, AuditService audit) {
+                          CardRepository cards, PasswordEncoder encoder, JwtService jwt, AuditService audit,
+                          LoginAttemptLimiter loginLimiter) {
         this.users = users;
         this.customers = customers;
         this.devices = devices;
@@ -43,6 +46,7 @@ public class AuthController {
         this.encoder = encoder;
         this.jwt = jwt;
         this.audit = audit;
+        this.loginLimiter = loginLimiter;
     }
 
     public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {}
@@ -57,6 +61,9 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest req) {
+        if (!loginLimiter.allow(req.email())) {
+            throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "Muitas tentativas de login. Aguarde um minuto e tente novamente.");
+        }
         AppUser u = users.findByEmailIgnoreCase(req.email().trim())
                 .filter(x -> x.isActive() && encoder.matches(req.password(), x.getPasswordHash()))
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos"));

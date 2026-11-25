@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=build /src/services/ml-service/target/ml-service-exec.jar app.jar
 COPY machine-learning/models /opt/models
 USER app
-ENV PORT=8082 TZ=America/Sao_Paulo MODELS_DIR=/opt/models JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC"
+ENV PORT=8082 TZ=America/Sao_Paulo MODELS_DIR=/opt/models ML_WORK_DIR=/var/lib/contextshield/ml-work JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC"
 EXPOSE 8082
 HEALTHCHECK --interval=15s --timeout=3s --start-period=40s --retries=5 CMD wget -qO- http://127.0.0.1:8082/actuator/health >/dev/null || exit 1
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

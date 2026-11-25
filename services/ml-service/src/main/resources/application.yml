@@ -1,9 +1,18 @@
 server:
   port: ${PORT:8082}
+  error:
+    include-message: always
 
 spring:
   application:
     name: ml-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:ml;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${DATABASE_USER:sa}
+    password: ${DATABASE_PASSWORD:}
+  flyway:
+    enabled: true
+    table: ${FLYWAY_TABLE:flyway_ml_history}
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -20,8 +29,12 @@ management:
 
 contextshield:
   models-dir: ${MODELS_DIR:../../machine-learning/models}
+  work-dir: ${ML_WORK_DIR:target/ml-work}
+  max-examples: ${ML_MAX_EXAMPLES:400}
+  rate-limit-per-minute: ${RATE_LIMIT_PER_MINUTE:120}
   jwt:
-    secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+    secret: ${JWT_SECRET:}
+    allow-dev-secret: ${JWT_ALLOW_DEV_SECRET:false}
 
 logging:
   pattern:

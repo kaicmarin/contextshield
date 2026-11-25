@@ -1,4 +1,9 @@
-# Sobe o sistema inteiro: docker compose up --build   →  http://localhost:8088
+# Desenvolvimento local com os cinco microsserviços.
+# Uso: cp .env.example .env  →  docker compose up --build
+# Loja/painel: http://localhost:8088  (proxy nginx → core-api)
+# Para publicação na AWS (só proxy 80/443): docker compose -f docker-compose.aws-free.yml up --build
+name: contextshield
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -7,39 +12,133 @@ services:
       POSTGRES_USER: contextshield
       POSTGRES_PASSWORD: ${DB_PASSWORD:-contextshield}
       TZ: America/Sao_Paulo
+      CORE_DB_PASSWORD: ${CORE_DB_PASSWORD:-core-dev-pass}
+      THREAT_DB_PASSWORD: ${THREAT_DB_PASSWORD:-threat-dev-pass}
+      INVESTIGATION_DB_PASSWORD: ${INVESTIGATION_DB_PASSWORD:-investigation-dev-pass}
+      ML_DB_PASSWORD: ${ML_DB_PASSWORD:-ml-dev-pass}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U contextshield"]
       interval: 5s
-      retries: 10
+      retries: 12
+    networks: [internal]
 
   risk-engine:
     build: { context: ., dockerfile: services/risk-engine/Dockerfile }
     environment:
-      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-com-32-caracteres-ou-mais}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET com 32+ caracteres}
+      JWT_ALLOW_DEV_SECRET: ${JWT_ALLOW_DEV_SECRET:-true}
+    ports: ["8081:8081"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
+    networks: [internal]
+
+  ml-service:
+    build: { context: ., dockerfile: services/ml-service/Dockerfile }
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: ${JWT_ALLOW_DEV_SECRET:-true}
+      MODELS_DIR: /opt/models
+      ML_WORK_DIR: /var/lib/contextshield/ml-work
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=ml
+      DATABASE_USER: ml_app
+      DATABASE_PASSWORD: ${ML_DB_PASSWORD:-ml-dev-pass}
+      FLYWAY_TABLE: flyway_ml_history
+    volumes:
+      - mlwork:/var/lib/contextshield/ml-work
+    ports: ["8082:8082"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8082/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
+    networks: [internal]
+
+  threat-service:
+    build: { context: ., dockerfile: services/threat-service/Dockerfile }
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: ${JWT_ALLOW_DEV_SECRET:-true}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=threat
+      DATABASE_USER: threat_app
+      DATABASE_PASSWORD: ${THREAT_DB_PASSWORD:-threat-dev-pass}
+      FLYWAY_TABLE: flyway_threat_history
+    ports: ["8083:8083"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8083/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
+    networks: [internal]
+
+  investigation-service:
+    build: { context: ., dockerfile: services/investigation-service/Dockerfile }
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: ${JWT_ALLOW_DEV_SECRET:-true}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=investigation
+      DATABASE_USER: investigation_app
+      DATABASE_PASSWORD: ${INVESTIGATION_DB_PASSWORD:-investigation-dev-pass}
+      FLYWAY_TABLE: flyway_investigation_history
+    ports: ["8084:8084"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8084/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
+    networks: [internal]
 
   core-api:
     build: { context: ., dockerfile: services/core-api/Dockerfile }
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield
+      DATABASE_USER: core_app
+      DATABASE_PASSWORD: ${CORE_DB_PASSWORD:-core-dev-pass}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: ${JWT_ALLOW_DEV_SECRET:-true}
+      SEED_ENABLED: ${SEED_ENABLED:-true}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-contexto}
+      RISK_ENGINE_URL: http://risk-engine:8081
+      ML_SERVICE_URL: http://ml-service:8082
+      THREAT_SERVICE_URL: http://threat-service:8083
+      INVESTIGATION_SERVICE_URL: http://investigation-service:8084
+      CORS_ORIGINS: http://localhost:8088,http://127.0.0.1:8088
+    ports: ["8080:8080"]
     depends_on:
       postgres: { condition: service_healthy }
       risk-engine: { condition: service_healthy }
-    environment:
-      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield
-      DATABASE_USER: contextshield
-      DATABASE_PASSWORD: ${DB_PASSWORD:-contextshield}
-      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-com-32-caracteres-ou-mais}
-      RISK_ENGINE_URL: http://risk-engine:8081
-      CORS_ORIGINS: http://localhost:8088
-    ports:
-      - "8080:8080"
+      ml-service: { condition: service_healthy }
+      threat-service: { condition: service_healthy }
+      investigation-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 60s
+    networks: [internal]
 
   frontend:
     build: ./frontend
     depends_on:
       core-api: { condition: service_healthy }
-    ports:
-      - "8088:80"
+    ports: ["8088:80"]
+    networks: [internal]
+
+networks:
+  internal:
 
 volumes:
   pgdata:
+  mlwork:

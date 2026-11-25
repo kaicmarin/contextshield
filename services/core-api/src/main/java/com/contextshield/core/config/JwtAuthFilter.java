@@ -1,5 +1,7 @@
 package com.contextshield.core.config;
 
+import com.contextshield.core.domain.AppUser;
+import com.contextshield.core.repo.AppUserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -20,9 +22,11 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwt;
+    private final AppUserRepository users;
 
-    public JwtAuthFilter(JwtService jwt) {
+    public JwtAuthFilter(JwtService jwt, AppUserRepository users) {
         this.jwt = jwt;
+        this.users = users;
     }
 
     @Override
@@ -33,9 +37,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 Claims c = jwt.parse(header.substring(7));
                 String role = c.get("role", String.class);
-                CurrentUser user = new CurrentUser(c.getSubject(), c.get("name", String.class), role, c.get("customerId", String.class));
-                var auth = new UsernamePasswordAuthenticationToken(user, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                if ("SERVICE".equals(role)) {
+                    CurrentUser user = new CurrentUser(c.getSubject(), c.getSubject(), role, null);
+                    var auth = new UsernamePasswordAuthenticationToken(user, null, List.of(new SimpleGrantedAuthority("ROLE_SERVICE")));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                } else {
+                    AppUser db = users.findByEmailIgnoreCase(c.getSubject()).orElse(null);
+                    if (db == null || !db.isActive()) {
+                        SecurityContextHolder.clearContext();
+                    } else if (!db.getRole().name().equals(role)) {
+                        SecurityContextHolder.clearContext();
+                    } else {
+                        long tv = 0L;
+                        Object tvClaim = c.get("tv");
+                        if (tvClaim instanceof Number n) tv = n.longValue();
+                        if (tv != db.getTokenVersion()) {
+                            SecurityContextHolder.clearContext();
+                        } else {
+                            CurrentUser user = new CurrentUser(db.getEmail(), db.getName(), db.getRole().name(), db.getCustomerId());
+                            var auth = new UsernamePasswordAuthenticationToken(user, null,
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + db.getRole().name())));
+                            SecurityContextHolder.getContext().setAuthentication(auth);
+                        }
+                    }
+                }
             } catch (JwtException | IllegalArgumentException e) {
                 SecurityContextHolder.clearContext();
             }

@@ -92,8 +92,17 @@ public class AdminController {
             if ("CUSTOMER".equals(req.role()) && u.getCustomerId() == null) throw ApiException.badRequest("Usuário sem cliente vinculado");
             u.setRole(AppUser.Role.valueOf(req.role()));
         }
-        if (req.active() != null) u.setActive(req.active());
-        if (req.password() != null) u.setPasswordHash(encoder.encode(req.password()));
+        boolean revoke = false;
+        if (req.active() != null) {
+            if (!req.active().equals(u.isActive())) revoke = true;
+            u.setActive(req.active());
+        }
+        if (req.role() != null && !req.role().equals(u.getRole().name())) revoke = true;
+        if (req.password() != null) {
+            u.setPasswordHash(encoder.encode(req.password()));
+            revoke = true;
+        }
+        if (revoke) u.bumpTokenVersion();
         users.save(u);
         audit.log(me.email(), "USER_UPDATED", u.getEmail(), null);
         return AuthController.UserView.of(u);

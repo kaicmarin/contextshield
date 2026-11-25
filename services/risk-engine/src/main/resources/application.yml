@@ -22,3 +22,4 @@ contextshield:
   jwt:
     # Em produção vem da variável de ambiente JWT_SECRET (mínimo 32 caracteres).
     secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+    allow-dev-secret: ${JWT_ALLOW_DEV_SECRET:true}

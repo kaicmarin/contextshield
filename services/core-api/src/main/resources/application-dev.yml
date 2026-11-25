@@ -1,0 +1,12 @@
+# Desenvolvimento local: habilita o histórico demonstrativo quando pedido explicitamente.
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+contextshield:
+  seed:
+    enabled: ${SEED_ENABLED:true}
+    demo-password: ${DEMO_PASSWORD:contexto}
+  jwt:
+    allow-dev-secret: true

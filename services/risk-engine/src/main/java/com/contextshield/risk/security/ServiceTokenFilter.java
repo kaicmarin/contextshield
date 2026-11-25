@@ -29,7 +29,16 @@ public class ServiceTokenFilter extends OncePerRequestFilter {
 
     private final SecretKey key;
 
-    public ServiceTokenFilter(@Value("${contextshield.jwt.secret}") String secret) {
+    private static final String DEV_SECRET = "dev-only-secret-change-me-0123456789abcdef";
+
+    public ServiceTokenFilter(@Value("${contextshield.jwt.secret}") String secret,
+                              @Value("${contextshield.jwt.allow-dev-secret:false}") boolean allowDevSecret) {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("JWT_SECRET precisa ter pelo menos 32 caracteres.");
+        }
+        if (!allowDevSecret && DEV_SECRET.equals(secret)) {
+            throw new IllegalStateException("O segredo de desenvolvimento não pode ser usado fora dos testes.");
+        }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -51,6 +52,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     ResponseEntity<Map<String, Object>> unreadable(Exception e, HttpServletRequest req) {
         return body(HttpStatus.BAD_REQUEST, "Requisição em formato inválido", req, null);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    ResponseEntity<Map<String, Object>> mediaType(HttpMediaTypeNotSupportedException e, HttpServletRequest req) {
+        return body(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content-Type não suportado", req, null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

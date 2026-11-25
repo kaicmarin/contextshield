@@ -1,5 +1,7 @@
 server:
   port: ${PORT:8084}
+  error:
+    include-message: always
 
 spring:
   application:
@@ -19,8 +21,10 @@ management:
         include: health,info
 
 contextshield:
+  rate-limit-per-minute: ${RATE_LIMIT_PER_MINUTE:120}
   jwt:
-    secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+    secret: ${JWT_SECRET:}
+    allow-dev-secret: ${JWT_ALLOW_DEV_SECRET:false}
 
 logging:
   pattern:

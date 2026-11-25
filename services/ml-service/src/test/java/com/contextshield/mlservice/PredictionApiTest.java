@@ -56,7 +56,10 @@ class PredictionApiTest {
         assertEquals(HttpStatus.UNAUTHORIZED, denied.getStatusCode());
         ResponseEntity<String> training = http.exchange("/internal/v1/training", HttpMethod.POST,
                 new HttpEntity<>(Map.of(), service()), String.class);
-        assertEquals(HttpStatus.CONFLICT, training.getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, training.getStatusCode());
+        ResponseEntity<String> reserved = http.exchange("/internal/v1/training", HttpMethod.POST,
+                new HttpEntity<>(Map.of("examples", 200, "seed", 9901), service()), String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, reserved.getStatusCode());
         ResponseEntity<String> escape = http.exchange("/internal/v1/predictions", HttpMethod.POST,
                 new HttpEntity<>(Map.of("modelFile", "../logistic-regression.ser", "checkout", checkout()), service()),
                 String.class);
@@ -67,6 +70,7 @@ class PredictionApiTest {
     private static HttpHeaders service() {
         Instant now = Instant.now();
         String token = Jwts.builder().subject("core-api").claim("role", "SERVICE").claim("org", 1)
+                .claim("scope", "predict,read,train")
                 .issuedAt(Date.from(now)).expiration(Date.from(now.plus(5, ChronoUnit.MINUTES)))
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();
         HttpHeaders headers = new HttpHeaders();

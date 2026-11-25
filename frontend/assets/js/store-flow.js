@@ -44,7 +44,7 @@ const HEAD = {
   },
   BLOCKED: {
     title: "Compra interrompida",
-    text: "Este pagamento foi interrompido porque está ligado a golpes já relatados por outros clientes. Nenhum valor foi cobrado.",
+    text: "O banco interrompeu este pagamento. Nenhum valor foi cobrado.",
   },
   CANCELLED: { title: "Compra cancelada", text: "Nenhum valor foi cobrado. Se alguém orientou você a fazer esta compra, conte para o seu banco." },
   INCIDENT_RECORDED: { title: "Golpe relatado", text: "Recebemos o seu relato. A equipe do banco está acompanhando." },
@@ -1276,7 +1276,7 @@ export function orderView({ id, session, state, reloadToken }) {
         "label",
         { class: "cs-check" },
         el("input", { type: "checkbox", checked: sure, onChange: (e) => { sure = e.target.checked; paint(); } }),
-        el("span", {}, "Ninguém está me orientando. Eu decidi fazer esta compra sozinho."),
+        el("span", {}, "Ninguém está me orientando. Eu decidi fazer esta compra por conta própria."),
       ),
       el("button", { type: "button", class: "cs-btn cs-btn-line", disabled: !sure || actBusy, onClick: () => resolve("proceed") }, "Continuar mesmo assim"),
     );

@@ -127,14 +127,46 @@ public final class Features {
 
     private static LocalDateTime time(Object value) {
         if (value instanceof LocalDateTime time) return time;
-        if (value instanceof String text && !text.isBlank()) return LocalDateTime.parse(text);
-        return null;
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return LocalDateTime.parse(text);
+            } catch (java.time.format.DateTimeParseException ignored) {
+                try {
+                    return java.time.OffsetDateTime.parse(text).toLocalDateTime();
+                } catch (java.time.format.DateTimeParseException again) {
+                    return null;
+                }
+            }
+        }
+        LocalDate date = date(value);
+        if (date == null || !(value instanceof List<?> parts)) return null;
+        int hour = parts.size() > 3 ? whole(parts.get(3)) : 0;
+        int minute = parts.size() > 4 ? whole(parts.get(4)) : 0;
+        int second = parts.size() > 5 ? whole(parts.get(5)) : 0;
+        return LocalDateTime.of(date, java.time.LocalTime.of(hour, minute, second));
     }
 
     private static LocalDate date(Object value) {
         if (value instanceof LocalDate date) return date;
         if (value instanceof LocalDateTime time) return time.toLocalDate();
-        if (value instanceof String text && text.length() >= 10) return LocalDate.parse(text.substring(0, 10));
+        if (value instanceof String text && text.length() >= 10) {
+            try {
+                return LocalDate.parse(text.substring(0, 10));
+            } catch (java.time.format.DateTimeParseException ignored) {
+                return null;
+            }
+        }
+        if (value instanceof List<?> parts && parts.size() >= 3) {
+            int year = whole(parts.get(0));
+            int month = whole(parts.get(1));
+            int day = whole(parts.get(2));
+            if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+            return LocalDate.of(year, month, day);
+        }
         return null;
+    }
+
+    private static int whole(Object value) {
+        return value instanceof Number number ? number.intValue() : 0;
     }
 }

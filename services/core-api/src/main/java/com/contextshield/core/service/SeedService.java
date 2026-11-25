@@ -338,7 +338,7 @@ public class SeedService {
     public void resetDynamicData() {
         tx.executeWithoutResult(s -> {
             for (String t : List.of("ml_shadow", "alert", "intel_mention", "intel_entity", "incident_reply", "incident", "verification", "assessment",
-                    "status_change", "transaction_item", "transactions", "audit_entry", "engine_setting"))
+                    "status_change", "transaction_item", "transactions", "engine_setting"))
                 jdbc.update("delete from " + t);
             jdbc.execute("alter sequence tx_seq restart with 184");
             jdbc.execute("alter sequence incident_seq restart with 1284");

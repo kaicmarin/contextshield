@@ -11,6 +11,7 @@ services:
       CORE_DB_PASSWORD: ${CORE_DB_PASSWORD:?defina CORE_DB_PASSWORD}
       THREAT_DB_PASSWORD: ${THREAT_DB_PASSWORD:?defina THREAT_DB_PASSWORD}
       INVESTIGATION_DB_PASSWORD: ${INVESTIGATION_DB_PASSWORD:?defina INVESTIGATION_DB_PASSWORD}
+      ML_DB_PASSWORD: ${ML_DB_PASSWORD:?defina ML_DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./deploy/postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
@@ -26,6 +27,7 @@ services:
     build: { context: ., dockerfile: services/risk-engine/Dockerfile }
     environment:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: "false"
       JAVA_OPTS: "-Xmx256m -XX:+UseSerialGC"
     mem_limit: 384m
     healthcheck:
@@ -40,9 +42,24 @@ services:
     build: { context: ., dockerfile: services/ml-service/Dockerfile }
     environment:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: "false"
       MODELS_DIR: /opt/models
+      ML_WORK_DIR: /var/lib/contextshield/ml-work
+      DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=ml
+      DATABASE_USER: ml_app
+      DATABASE_PASSWORD: ${ML_DB_PASSWORD:?defina ML_DB_PASSWORD}
+      FLYWAY_TABLE: flyway_ml_history
       JAVA_OPTS: "-Xmx512m -XX:+UseSerialGC"
+    volumes:
+      - mlwork:/var/lib/contextshield/ml-work
     mem_limit: 768m
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8082/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
     restart: unless-stopped
     networks: [internal]
 
@@ -50,6 +67,7 @@ services:
     build: { context: ., dockerfile: services/threat-service/Dockerfile }
     environment:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: "false"
       DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=threat
       DATABASE_USER: threat_app
       DATABASE_PASSWORD: ${THREAT_DB_PASSWORD:?defina THREAT_DB_PASSWORD}
@@ -57,6 +75,11 @@ services:
       JAVA_OPTS: "-Xmx256m -XX:+UseSerialGC"
     depends_on:
       postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8083/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
     mem_limit: 384m
     restart: unless-stopped
     networks: [internal]
@@ -65,6 +88,7 @@ services:
     build: { context: ., dockerfile: services/investigation-service/Dockerfile }
     environment:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: "false"
       DATABASE_URL: jdbc:postgresql://postgres:5432/contextshield?currentSchema=investigation
       DATABASE_USER: investigation_app
       DATABASE_PASSWORD: ${INVESTIGATION_DB_PASSWORD:?defina INVESTIGATION_DB_PASSWORD}
@@ -72,6 +96,11 @@ services:
       JAVA_OPTS: "-Xmx256m -XX:+UseSerialGC"
     depends_on:
       postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8084/actuator/health >/dev/null || exit 1"]
+      interval: 15s
+      retries: 8
+      start_period: 40s
     mem_limit: 384m
     restart: unless-stopped
     networks: [internal]
@@ -83,6 +112,9 @@ services:
       DATABASE_USER: core_app
       DATABASE_PASSWORD: ${CORE_DB_PASSWORD:?defina CORE_DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      JWT_ALLOW_DEV_SECRET: "false"
+      SPRING_PROFILES_ACTIVE: prod
+      SEED_ENABLED: "false"
       RISK_ENGINE_URL: http://risk-engine:8081
       ML_SERVICE_URL: http://ml-service:8082
       THREAT_SERVICE_URL: http://threat-service:8083
@@ -92,6 +124,9 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       risk-engine: { condition: service_healthy }
+      ml-service: { condition: service_healthy }
+      threat-service: { condition: service_healthy }
+      investigation-service: { condition: service_healthy }
     mem_limit: 768m
     restart: unless-stopped
     networks: [internal]
@@ -118,3 +153,4 @@ networks:
 volumes:
   pgdata:
   caddy-data:
+  mlwork:

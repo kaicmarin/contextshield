@@ -1,6 +1,8 @@
 package com.contextshield.core.web;
 
+import com.contextshield.core.config.AppProperties;
 import com.contextshield.core.config.CurrentUser;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.contextshield.core.domain.*;
 import com.contextshield.core.repo.*;
 import com.contextshield.core.service.*;
@@ -48,12 +50,14 @@ public class OpsController {
 
     private final QueueService queue;
     private final PolicySimulation simulation;
+    private final AppProperties props;
 
     public OpsController(TransactionRepository txs, TransactionService txService, IncidentRepository incidents,
                          IncidentService incidentService, IntelligenceService intel, AuditEntryRepository auditRepo,
                          AuditService audit, EngineSettings settings, MetricsService metrics, CustomerRepository customers,
                          AlertService alerts, SeedService seed, ReferenceData ref, DeviceRepository devices, Views views,
-                         OrganizationService organizations, QueueService queue, PolicySimulation simulation) {
+                         OrganizationService organizations, QueueService queue, PolicySimulation simulation,
+                         AppProperties props) {
         this.txs = txs;
         this.txService = txService;
         this.incidents = incidents;
@@ -72,6 +76,7 @@ public class OpsController {
         this.organizations = organizations;
         this.queue = queue;
         this.simulation = simulation;
+        this.props = props;
     }
 
     @GetMapping("/verifications")
@@ -122,7 +127,7 @@ public class OpsController {
         Map<String, Object> result = queue.page(status, q, days, band, page, size, sort, dir, organizationId);
         if (sqlMissesRows(result, q, days, band)) {
             var loaded = txs.findTop300ByOrderByCreatedAtDesc().stream()
-                    .filter(t -> organizationId == (t.getOrganizationId() == null ? 1L : t.getOrganizationId()))
+                    .filter(t -> organizationId == t.getOrganizationId())
                     .map(views::summary).toList();
             if (!loaded.isEmpty()) fillFromEntities(result, loaded, status, page, size);
         }
@@ -182,7 +187,7 @@ public class OpsController {
     public List<Incident> incidents(@RequestParam(required = false) String status) {
         long organizationId = organizations.idOf(Auth.user());
         var all = incidents.findAllByOrderByCreatedAtDesc().stream()
-                .filter(i -> organizationId == (i.getOrganizationId() == null ? 1L : i.getOrganizationId()))
+                .filter(i -> organizationId == i.getOrganizationId())
                 .toList();
         return status == null || status.isBlank() ? all : all.stream().filter(i -> i.getStatus().equals(status)).toList();
     }
@@ -329,6 +334,7 @@ public class OpsController {
     public record SettingRequest(@NotBlank String key, boolean enabled) {}
 
     @PutMapping("/engine/config")
+    @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> updateEngineConfig(@Valid @RequestBody SettingRequest req) {
         CurrentUser u = Auth.user();
         try {
@@ -401,7 +407,11 @@ public class OpsController {
     }
 
     @PostMapping("/demo/reset")
+    @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> reset() {
+        if (!props.seed().enabled() && !props.seed().allowDemoReset()) {
+            throw ApiException.forbidden("Reinício da demonstração desabilitado neste ambiente");
+        }
         CurrentUser u = Auth.user();
         seed.resetDynamicData();
         audit.log(u.email(), "DEMO_RESET", null, null);

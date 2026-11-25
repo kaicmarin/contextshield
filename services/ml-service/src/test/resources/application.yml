@@ -1,0 +1,20 @@
+server:
+  port: 0
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:ml;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  flyway:
+    enabled: true
+    table: flyway_ml_history
+
+contextshield:
+  models-dir: ../../machine-learning/models
+  work-dir: target/ml-work
+  max-examples: 200
+  rate-limit-per-minute: 120
+  jwt:
+    secret: dev-only-secret-change-me-0123456789abcdef
+    allow-dev-secret: true

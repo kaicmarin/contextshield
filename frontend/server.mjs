@@ -61,9 +61,22 @@ function fallback(urlPath) {
   return path.join(root, "index.html");
 }
 
-function sendFile(res, file) {
+function assetCacheControl(url) {
+  const p = url.pathname;
+  if (!p.startsWith("/assets/")) return null;
+  if (!/\.(css|js)$/i.test(p)) return null;
+  return url.searchParams.has("v") ? "public, immutable" : "no-cache, must-revalidate";
+}
+
+function sendFile(res, file, url) {
   const type = TYPES[path.extname(file).toLowerCase()] ?? "application/octet-stream";
-  res.writeHead(200, { "Content-Type": type, "X-Content-Type-Options": "nosniff" });
+  const headers = { "Content-Type": type, "X-Content-Type-Options": "nosniff" };
+  const cc = assetCacheControl(url);
+  if (cc) headers["Cache-Control"] = cc;
+  if (url.pathname.endsWith(".html") || url.pathname === "/" || /^\/(loja|banco|ops|sistema)/.test(url.pathname)) {
+    headers["Cache-Control"] = "no-cache, must-revalidate";
+  }
+  res.writeHead(200, headers);
   fs.createReadStream(file).pipe(res);
 }
 
@@ -109,11 +122,14 @@ const server = http.createServer((req, res) => {
     return;
   }
   if (req.method === "HEAD") {
-    res.writeHead(200, { "Content-Type": TYPES[path.extname(file).toLowerCase()] ?? "application/octet-stream" });
+    const headers = { "Content-Type": TYPES[path.extname(file).toLowerCase()] ?? "application/octet-stream" };
+    const cc = assetCacheControl(url);
+    if (cc) headers["Cache-Control"] = cc;
+    res.writeHead(200, headers);
     res.end();
     return;
   }
-  sendFile(res, file);
+  sendFile(res, file, url);
 });
 
 server.listen(port, () => {

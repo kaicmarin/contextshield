@@ -128,7 +128,7 @@ public final class SignalCollector {
 
         Answers ans = in.answers();
         if (in.recalculated() && ans != null) {
-            if ("asked".equals(ans.origin())) out.add(signal("VER_ASKED", w(cfg, "VER_ASKED"), "“Não, alguém me pediu”"));
+            if ("asked".equals(ans.origin())) out.add(signal("VER_ASKED", w(cfg, "VER_ASKED"), "“Sim, alguém me pediu para comprar”"));
             if ("phone".equals(ans.contact()) || "message".equals(ans.contact()))
                 out.add(signal("VER_CONTACT", w(cfg, "VER_CONTACT"), "phone".equals(ans.contact()) ? "“Sim, por telefone”" : "“Sim, por mensagem”"));
             if ("given".equals(ans.address())) out.add(signal("VER_ADDRESS_GIVEN", w(cfg, "VER_ADDRESS_GIVEN"), "“Me passaram este endereço”"));
@@ -162,6 +162,8 @@ public final class SignalCollector {
                     out.add(signal("DESTINATION_IN_INCIDENT", w(cfg, "DESTINATION_IN_INCIDENT"), r.reason(), r.entityId(), r.incidentIds()));
                 if ("seller".equals(r.kind()) && !"não indicativa".equals(r.association()) && r.crossCustomer())
                     out.add(signal("SELLER_IN_INCIDENT", w(cfg, "SELLER_IN_INCIDENT"), r.reason(), r.entityId(), r.incidentIds()));
+                if ("confirmed-indicator".equals(r.kind()))
+                    out.add(signal("CONFIRMED_INDICATOR", w(cfg, "CONFIRMED_INDICATOR"), r.reason(), r.entityId(), r.incidentIds()));
             }
         }
         return out;

@@ -39,12 +39,14 @@ public final class IntelText {
     }
 
     public static String phoneEntityId(String digits) {
-        return "ENT-PHONE-" + digits.substring(Math.max(0, digits.length() - 8));
+        if (digits == null || digits.length() < 10) throw new IllegalArgumentException("Telefone inválido");
+        return "ENT-PHONE-" + digits;
     }
 
     public static String domainEntityId(String host) {
-        String core = host.replaceFirst("\\.example$", "").replaceAll("[^a-z0-9]", "").toUpperCase();
-        return "ENT-DOMAIN-" + core.substring(0, Math.min(20, core.length()));
+        String norm = normalizeDomain(host).replace('.', '-');
+        if (norm.length() > 48) norm = norm.substring(0, 48);
+        return "ENT-DOMAIN-" + norm.toUpperCase(java.util.Locale.ROOT);
     }
 
     public static String destinationEntityId(String addressId) {

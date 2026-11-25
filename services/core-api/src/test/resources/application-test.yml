@@ -4,7 +4,19 @@ spring:
     username: sa
     password:
 contextshield:
+  jwt:
+    allow-dev-secret: true
   seed:
     enabled: false
+    allow-demo-reset: true
   check:
     per-minute: 200
+  login:
+    per-minute-ip: 500
+    per-minute-email: 500
+  ml:
+    url: ""
+  threat:
+    url: ""
+  investigation:
+    url: ""

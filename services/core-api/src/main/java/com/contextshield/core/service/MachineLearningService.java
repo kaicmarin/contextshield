@@ -104,51 +104,33 @@ public class MachineLearningService {
 
     private Map<String, Object> predictRemote(String txId, Map<String, Object> checkout, String engineDecision, String stage,
                                               String featureSet, boolean contextual, long organizationId) {
-        List<Long> ids = new ArrayList<>();
-        List<String> paths = new ArrayList<>();
-        jdbc.query("""
-                select id, path from ml_model
-                where status = 'APPROVED' and coalesce(feature_set, 'operation') = ? and coalesce(organization_id, 1) = ?
-                order by id desc
-                """, rs -> {
-            ids.add(rs.getLong("id"));
-            paths.add(rs.getString("path"));
-        }, featureSet, organizationId);
-        Map<String, Object> quiet = new java.util.LinkedHashMap<>();
-        quiet.put("mode", "shadow");
-        quiet.put("stage", stage);
-        quiet.put("featureSet", featureSet);
-        quiet.put("active", false);
-        quiet.put("affectsDecision", false);
-        if (ids.isEmpty()) return quiet;
-        String file = Path.of(paths.get(0)).getFileName().toString();
-        Map<String, Object> result = remote.predict(file, checkout, contextual, organizationId);
-        Object label = result.get("prediction");
-        if (!(result.get("probability") instanceof Number probability) || label == null) {
-            throw new IllegalStateException("Resposta do ML Service sem previsão.");
-        }
-        double ms = result.get("latencyMs") instanceof Number latency ? latency.doubleValue() : 0;
-        jdbc.update("""
-                insert into ml_shadow (tx_id, model_id, algorithm, prediction, probability, engine_decision, latency_ms, at, stage, organization_id)
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, txId, ids.get(0), result.get("algorithm"), label, probability.doubleValue(),
-                engineDecision, ms, Timestamp.valueOf(LocalDateTime.now().withNano(0)), stage, organizationId);
+        Map<String, Object> result = remote.predict(featureSet, checkout, contextual, organizationId, txId, stage, engineDecision);
         Map<String, Object> out = new java.util.LinkedHashMap<>();
         out.put("mode", "shadow");
         out.put("stage", stage);
         out.put("featureSet", featureSet);
-        out.put("active", true);
         out.put("affectsDecision", false);
-        out.put("modelId", ids.get(0));
+        boolean active = Boolean.TRUE.equals(result.get("active")) && result.get("prediction") != null;
+        out.put("active", active);
+        if (!active) {
+            out.put("error", Boolean.TRUE.equals(result.get("error")));
+            return out;
+        }
+        out.put("modelId", result.get("modelId"));
         out.put("algorithm", result.get("algorithm"));
-        out.put("prediction", label);
-        out.put("probability", probability.doubleValue());
-        out.put("latencyMs", ms);
-        out.put("explanation", explain(stage, String.valueOf(label), engineDecision));
+        out.put("prediction", result.get("prediction"));
+        out.put("probability", result.get("probability"));
+        out.put("latencyMs", result.get("latencyMs"));
+        out.put("explanation", explain(stage, String.valueOf(result.get("prediction")), engineDecision));
         return out;
     }
 
     public List<Map<String, Object>> rows(String txId) {
+        if (remote.enabled()) {
+            Long org = jdbc.query("select organization_id from transactions where id = ?",
+                    rs -> rs.next() ? (Long) rs.getObject(1) : null, txId);
+            return remote.shadow(org == null ? 1L : org, txId);
+        }
         return jdbc.query("""
                 select s.model_id, s.algorithm, s.prediction, s.probability, s.engine_decision, s.latency_ms, s.error, s.at, s.stage,
                        m.library_version, m.feature_set

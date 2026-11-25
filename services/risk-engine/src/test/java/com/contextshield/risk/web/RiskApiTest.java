@@ -71,6 +71,7 @@ class RiskApiTest {
         mvc.perform(get("/api/v1/model")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.rules.length()").value(12))
                 .andExpect(jsonPath("$.rules[?(@.id == 'R12')].outcome").value("REQUEST_CONTEXT"))
-                .andExpect(jsonPath("$.signals.length()").value(31));
+                .andExpect(jsonPath("$.signals.length()").value(32))
+                .andExpect(jsonPath("$.signals[?(@.id == 'CONFIRMED_INDICATOR')].weight").value("+16"));
     }
 }

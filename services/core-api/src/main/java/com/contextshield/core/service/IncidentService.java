@@ -39,11 +39,13 @@ public class IncidentService {
     private final IncidentReplyRepository replies;
     private final AppUserRepository users;
     private final JdbcTemplate jdbc;
+    private final CaseIntake cases;
+    private final OrganizationService organizations;
 
     public IncidentService(IncidentRepository repo, TransactionRepository txs, TransactionService txService,
                            IntelligenceService intel, IntelMentionRepository mentions, AlertService alerts,
                            AuditService audit, AuditEntryRepository auditEntries, IncidentReplyRepository replies,
-                           AppUserRepository users, JdbcTemplate jdbc) {
+                           AppUserRepository users, JdbcTemplate jdbc, CaseIntake cases, OrganizationService organizations) {
         this.repo = repo;
         this.txs = txs;
         this.txService = txService;
@@ -55,6 +57,8 @@ public class IncidentService {
         this.replies = replies;
         this.users = users;
         this.jdbc = jdbc;
+        this.cases = cases;
+        this.organizations = organizations;
     }
 
     public record ReplyView(long id, String incidentId, String txId, String body, String authorEmail, String authorName,
@@ -104,7 +108,10 @@ public class IncidentService {
         i.setOccurredAt(d.occurredAt() != null ? d.occurredAt() : at);
         i.setStatus("OPEN");
         i.setCreatedAt(at);
-        i.setOrganizationId(tx != null && tx.getOrganizationId() != null ? tx.getOrganizationId() : 1L);
+        long orgId = tx != null && tx.getOrganizationId() != null
+                ? tx.getOrganizationId()
+                : organizationForCustomer(d.customerId(), actor);
+        i.setOrganizationId(orgId);
         repo.save(i);
 
         if (tx != null && tx.getStatus().canGoTo(TransactionStatus.INCIDENT_RECORDED))
@@ -113,7 +120,12 @@ public class IncidentService {
         alerts.create(d.customerId(), i.getTxId(), "info", "Recebemos seu relato " + i.getId(),
                 "Um analista vai olhar o caso. O telefone, o link e o endereço que você informou já ajudam a proteger outros clientes.", at);
         audit.log(actor, "INCIDENT_CREATED", i.getId(), i.getType() + " · " + i.getChannel(), at);
+        cases.fromIncident(orgId, i.getId(), i.getTxId(), actor, i.getDescription());
         return i;
+    }
+
+    private long organizationForCustomer(String customerId, String actor) {
+        return organizations.organizationForCustomer(customerId, actor);
     }
 
     private static String blank(String s) {
