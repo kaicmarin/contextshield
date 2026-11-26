@@ -15,9 +15,10 @@ COPY services services
 RUN mvn -B -q -pl services/core-api -am package -Dmaven.test.skip=true
 
 FROM eclipse-temurin:21-jre-alpine
-RUN addgroup -S app && adduser -S app -G app
+# UID/GID estáveis para bind mounts de config (ex.: seed CI) sem rodar a API como root.
+RUN addgroup -S -g 10100 app && adduser -S -u 10100 -G app app
 WORKDIR /app
-COPY --from=build /src/services/core-api/target/core-api.jar app.jar
+COPY --from=build --chown=app:app /src/services/core-api/target/core-api.jar app.jar
 USER app
 ENV PORT=8080 TZ=America/Sao_Paulo JAVA_OPTS="-XX:MaxRAMPercentage=75"
 EXPOSE 8080

@@ -1,5 +1,6 @@
 # Overlay só para validação isolada (GitHub Actions / CI). Nunca use na EC2.
 # Monta credenciais geradas em .ci/seed-credentials.json (gitignored).
+# chown 10100:10100 no host antes do up; mount :ro (sem chown dentro do container).
 services:
   core-api:
     environment:
