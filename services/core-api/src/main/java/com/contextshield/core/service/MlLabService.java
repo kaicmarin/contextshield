@@ -91,19 +91,50 @@ public class MlLabService implements ApplicationRunner {
         pool.submit(this::drainQueue);
     }
 
+    private static final String LIMITATION = "Métricas de arquivo ou de experimento vêm de operações sintéticas, salvo quando a linha diz a origem. "
+            + "Elas não medem fraude bancária real. Rótulos revisados e estudos de política vêm do banco da Core API; nada disso altera a compra sem aprovação.";
+
     public Map<String, Object> overview(long organizationId) {
-        if (remote.enabled()) return remote.overview(organizationId);
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("models", models(organizationId));
-        out.put("experiments", experiments(organizationId));
-        out.put("suggestions", suggestions(organizationId));
-        out.put("shadow", shadowSummary(organizationId));
-        out.put("confirmed", jdbc.queryForObject("select count(*) from known_outcome where label in ('FRAUD', 'LEGIT')", Integer.class));
-        out.put("limitation", "Métricas de arquivo ou de experimento vêm de operações sintéticas, salvo quando a linha diz a origem. Elas não medem fraude bancária real.");
+        if (remote.enabled()) {
+            out.putAll(remote.overview(organizationId));
+            enrichShadowFromCore(out, organizationId);
+        } else {
+            out.put("models", models(organizationId));
+            out.put("experiments", experiments(organizationId));
+            out.put("suggestions", suggestions(organizationId));
+            out.put("shadow", shadowSummary(organizationId));
+        }
+        attachCoreCatalog(out, organizationId);
+        out.putIfAbsent("decidesPurchase", false);
+        out.putIfAbsent("limitation", LIMITATION);
+        return out;
+    }
+
+    private void attachCoreCatalog(Map<String, Object> out, long organizationId) {
         out.put("labels", studies.labelsOverview(organizationId));
         out.put("studies", studies.studies(organizationId));
         out.put("ruleSuggestions", studies.ruleSuggestions(organizationId));
-        return out;
+        out.put("confirmed", confirmedCount(organizationId));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichShadowFromCore(Map<String, Object> out, long organizationId) {
+        Object shadow = out.get("shadow");
+        if (!(shadow instanceof Map<?, ?> raw)) return;
+        Map<String, Object> sh = new LinkedHashMap<>((Map<String, Object>) raw);
+        Map<String, Object> local = shadowSummary(organizationId);
+        sh.putIfAbsent("sameDirection", local.get("sameDirection"));
+        out.put("shadow", sh);
+    }
+
+    private int confirmedCount(long organizationId) {
+        Integer n = jdbc.queryForObject("""
+                select count(*) from known_outcome k
+                join transactions t on t.id = k.tx_id
+                where k.label in ('FRAUD', 'LEGIT') and coalesce(t.organization_id, 1) = ?
+                """, Integer.class, organizationId);
+        return n == null ? 0 : n;
     }
 
     public Map<String, Object> queue(int count, long seed, String actor) {

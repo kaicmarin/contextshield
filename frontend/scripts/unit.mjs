@@ -7,6 +7,7 @@ import { searchProducts, installmentText, sortProducts, discountOf } from "../as
 import { ApiError, api, getSession, setSession } from "../assets/js/api/client.js";
 import { cardErrors, maskCard, maskCep, maskExp } from "../assets/js/utils/card.js";
 import { brl, STATUS } from "../assets/js/utils/format.js";
+import { filterPaintChildren } from "../assets/js/ops-lab.js";
 
 const store = new Map();
 globalThis.localStorage = {
@@ -54,5 +55,7 @@ await assert.rejects(() => api("/api/auth/login", { method: "POST", body: { emai
 
 globalThis.fetch = async () => { throw new TypeError("failed"); };
 await assert.rejects(() => api("/api/me"), (e) => e instanceof ApiError && e.status === 0);
+
+assert.deepEqual(filterPaintChildren(["ok", null, undefined, false, 0, "tail"]), ["ok", 0, "tail"]);
 
 console.log("unit: ok");
