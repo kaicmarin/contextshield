@@ -75,7 +75,6 @@ cred_path.write_text(
     json.dumps({"passwords": passwords}, indent=2, ensure_ascii=False) + "\n",
     encoding="utf-8",
 )
-os.chmod(cred_path, 0o600)
 
 keys = {
     "DB_PASSWORD": os.environ["CI_DB_PASSWORD"],
@@ -106,5 +105,18 @@ for k, v in keys.items():
         out.append(f"{k}={v}")
 env_path.write_text("\n".join(out) + "\n", encoding="utf-8")
 PY
+
+SEED_FILE="$ROOT/.ci/seed-credentials.json"
+APP_UID="${CONTEXTSHIELD_APP_UID:-10100}"
+APP_GID="${CONTEXTSHIELD_APP_GID:-10100}"
+chmod 600 "$SEED_FILE"
+if ! chown "${APP_UID}:${APP_GID}" "$SEED_FILE" 2>/dev/null; then
+  if command -v sudo >/dev/null; then
+    sudo chown "${APP_UID}:${APP_GID}" "$SEED_FILE"
+  else
+    echo "apply-ci-env: chown ${APP_UID}:${APP_GID} no host falhou"
+    exit 1
+  fi
+fi
 
 echo "OK apply-ci-env (.env descartável + .ci/seed-credentials.json gerado; nenhuma senha impressa)"

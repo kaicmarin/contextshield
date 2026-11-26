@@ -68,6 +68,7 @@ MODELS_HOST=$(find machine-learning/models -name '*.ser' 2>/dev/null | wc -l | t
 
 echo "== Primeiro deploy: build + Flyway (schema + dados seed no volume existente) =="
 $COMPOSE build core-api risk-engine ml-service threat-service investigation-service
+bash "$ROOT/scripts/aws/fix-ci-seed-mount-perms.sh"
 $COMPOSE up -d risk-engine ml-service threat-service investigation-service
 $COMPOSE up -d core-api
 
