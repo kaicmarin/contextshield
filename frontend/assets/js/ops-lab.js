@@ -1,6 +1,6 @@
 import { api } from "./api/client.js";
 import { button, notice, pill } from "./ui.js";
-import { el } from "./utils/dom.js";
+import { el, replace } from "./utils/dom.js";
 import { dateTime, setTitle } from "./utils/format.js";
 import { icon } from "./utils/icons.js";
 
@@ -294,65 +294,146 @@ async function saveRule(rule, reload) {
   reload();
 }
 
+/** Evita texto literal "null" ao montar o painel (replaceChildren nativo não filtra). */
+export function filterPaintChildren(parts) {
+  return parts.filter((p) => p != null && p !== false);
+}
+
+function count(n) {
+  return n == null || Number.isNaN(Number(n)) ? 0 : Number(n);
+}
+
+function shadowSameDirection(shadow = {}) {
+  if (shadow.sameDirection != null) return count(shadow.sameDirection);
+  const predictions = count(shadow.predictions);
+  const disagreements = count(shadow.disagreementsWithEngine);
+  return Math.max(0, predictions - disagreements);
+}
+
+function studyResultCell(s) {
+  if (s.error) return s.error;
+  if (s.status === "FAILED") return s.error || "Falhou";
+  if (s.status === "RUNNING" || s.status === "QUEUED") return "Em andamento…";
+  if (s.status !== "DONE") return "—";
+  const report = s.report || {};
+  if (report.syntheticBaseline?.warning) return "Concluído · métricas sintéticas (não comprovam fraude real)";
+  if (report.reviewedInsufficient) return report.reviewedMessage || "Concluído · poucos rótulos revisados";
+  if (s.note) return `Concluído · ${s.note}`;
+  return "Concluído (sombra; sem publicação automática)";
+}
+
 export function labPage(isAdmin) {
   const box = el("div", { class: "o-stack" }, head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo."), el("p", { class: "muted" }, "Carregando…"));
+  let studyPollTimer = null;
+  const stopStudyPoll = () => {
+    if (studyPollTimer) {
+      clearInterval(studyPollTimer);
+      studyPollTimer = null;
+    }
+  };
   const load = async () => {
     try {
-      paint(await api("/api/ops/ml", { area: "ops" }));
+      const data = await api("/api/ops/ml", { area: "ops" });
+      paint(data);
+      stopStudyPoll();
+      const active = (data.studies ?? []).some((s) => s.status === "QUEUED" || s.status === "RUNNING");
+      if (active) studyPollTimer = setInterval(load, 2000);
     } catch (error) {
-      box.replaceChildren(head("Laboratório de Machine Learning"), notice("stop", "Não foi possível carregar", error.message));
+      stopStudyPoll();
+      replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não foi possível carregar", error.message));
     }
   };
   const paint = (data) => {
-    box.replaceChildren(
+    const models = data.models ?? [];
+    const suggestions = data.suggestions ?? [];
+    const shadow = data.shadow ?? {};
+    const labels = data.labels ?? {};
+    const ruleSuggestions = data.ruleSuggestions ?? [];
+    const studies = data.studies ?? [];
+    const ruleSuggestionSection = ruleSuggestions.length
+      ? el("section", { class: "panel" }, el("h2", {}, "Sugestões de novas regras"),
+        el("p", { class: "muted small" }, "Rascunhos sugeridos por estudos. Criar rascunho não publica."),
+        el("div", { class: "o-stack" }, ruleSuggestions.map((s) => el("article", { class: "o-stack" },
+          el("p", {}, el("strong", {}, `${s.ruleKey} · ${s.name}`), " — ", s.summary || s.note),
+          el("p", { class: "mono small" }, `${s.kind} → ${s.outcome} · prioridade ${s.priority}`),
+          isAdmin && s.status === "SUGGESTED" ? button({ size: "sm", onClick: async () => { await api(`/api/admin/ml/rule-suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } }, "Criar rascunho dinâmico") : null))))
+      : null;
+    replace(box,
       head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo. Uma falha do modelo não libera a compra."),
       notice("warn", "Leia antes de citar número", data.limitation),
       el("section", { class: "panel o-stack" },
         el("h2", {}, "Rótulos e origem dos dados"),
-        el("p", { class: "muted" }, data.labels?.syntheticNote || ""),
-        el("p", {}, `Revisados (fraude/legítimo): ${data.labels?.reviewedFraudLegit ?? "—"} · Relatos pendentes: ${data.labels?.pendingReports ?? "—"}`),
-        el("p", { class: "small" }, data.labels?.trainingLabelPolicy || "")),
+        el("p", { class: "muted" }, labels.syntheticNote || "Experimentos usam operações sintéticas; contagem abaixo vem do banco."),
+        el("p", {}, `Revisados (fraude/legítimo, dados reais): ${count(labels.reviewedFraudLegit)} · Relatos pendentes: ${count(labels.pendingReports)} · Confirmados (FRAUD/LEGIT): ${count(data.confirmed)}`),
+        el("p", { class: "small" }, labels.trainingLabelPolicy || "")),
       el("section", { class: "panel o-stack" },
         el("h2", {}, "Estudos de política (pesos e regras)"),
         el("p", { class: "muted" }, "Não publica automaticamente. O motor dinâmico e o Safety Monitor permanecem."),
         el("div", { class: "pol-actions" },
-          button({ size: "sm", variant: "primary", onClick: async () => { await api("/api/ops/ml/studies/weights", { method: "POST", body: { seed: 42, costProfile: "standard" }, area: "ops" }); load(); } }, "Estudar pesos"),
-          button({ size: "sm", onClick: async () => { await api("/api/ops/ml/studies/rules", { method: "POST", area: "ops" }); load(); } }, "Estudar regras"),
+          button({
+            size: "sm", variant: "primary", onClick: async () => {
+              try {
+                await api("/api/ops/ml/studies/weights", { method: "POST", body: { seed: 42, costProfile: "standard" }, area: "ops" });
+                await load();
+              } catch (error) {
+                replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não enfileirei o estudo de pesos", error.message));
+              }
+            },
+          }, "Estudar pesos"),
+          button({
+            size: "sm", onClick: async () => {
+              try {
+                await api("/api/ops/ml/studies/rules", { method: "POST", area: "ops" });
+                await load();
+              } catch (error) {
+                replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não enfileirei o estudo de regras", error.message));
+              }
+            },
+          }, "Estudar regras"),
         ),
-        data.studies?.length ? table(["Id", "Tipo", "Status", "Custo", "Quem", "Quando"], data.studies.slice(0, 6).map((s) => [
-          String(s.id), s.kind, s.status, s.costProfile || "—", s.createdBy || "—", dateTime(s.createdAt),
+        studies.length ? table(["Id", "Tipo", "Status", "Custo", "Quem", "Quando", "Andamento"], studies.slice(0, 8).map((s) => [
+          String(s.id),
+          s.kind === "WEIGHTS" ? "Pesos" : s.kind === "RULES" ? "Regras" : (s.kind || "—"),
+          pill(STATUS_TONE[s.status] || "muted", s.status || "—"),
+          s.costProfile || "—",
+          s.createdBy || "—",
+          dateTime(s.createdAt),
+          studyResultCell(s),
         ])) : el("p", {}, "Nenhum estudo ainda.")),
-      data.ruleSuggestions?.length ? el("section", { class: "panel" }, el("h2", {}, "Sugestões de novas regras"),
-        el("div", { class: "o-stack" }, data.ruleSuggestions.map((s) => el("article", { class: "o-stack" },
-          el("p", {}, el("strong", {}, `${s.ruleKey} · ${s.name}`), " — ", s.summary || s.note),
-          el("p", { class: "mono small" }, `${s.kind} → ${s.outcome} · prioridade ${s.priority}`),
-          isAdmin && s.status === "SUGGESTED" ? button({ size: "sm", onClick: async () => { await api(`/api/admin/ml/rule-suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } }, "Criar rascunho dinâmico") : null)))) : null,
-      el("section", { class: "panel" }, el("h2", {}, "Modelos treinados"), data.models.length ? table(
-        ["Algoritmo", "Validação", "Status", "Uso", "Teste", "F1", "Recall", "Precisão", "FP", "FN"],
-        data.models.map((m) => {
-          const metric = m.metrics || {};
-          const usage = m.status === "APPROVED" ? "sombra" : m.validation === "PASS" ? "validado" : "treinado";
-          const tipo = m.featureSet === "context" ? "Contextual" : "Operacional";
-          const origem = m.validation === "RECORDED" ? "Pré-carregado" : "Treinado";
-          return [`${m.algorithm} · ${tipo} (${origem})`, pill(STATUS_TONE[m.validation] || "muted", m.validation || "—"), m.status, usage, m.examples == null ? "—" : String(m.examples), num(metric.f1), num(metric.recall), num(metric.precision), String(metric.falsePositives ?? "—"), String(metric.falseNegatives ?? "—")];
-        }),
-      ) : el("p", {}, "Nenhum modelo treinado ainda.")),
-      el("section", { class: "panel" }, el("h2", {}, "Modo sombra"), el("p", {}, `${data.shadow.predictions ?? 0} previsões sem erro, ${data.shadow.failures ?? 0} falhas, ${data.shadow.sameDirection ?? (data.shadow.disagreementsWithEngine == null ? "—" : Number(data.shadow.predictions || 0) - Number(data.shadow.disagreementsWithEngine))} na mesma direção do motor.`)),
-      el("section", { class: "panel" }, el("h2", {}, "Sugestões de peso"), data.suggestions.length ? el("div", { class: "o-stack" }, data.suggestions.map((s) => {
-        const m = s.metrics || {};
-        const base = m.baselineConfirm || m.baselineSearch || {};
-        const best = m.bestConfirm || m.bestSearch || {};
-        return el("article", { class: "o-stack" },
-          el("p", {}, s.note || s.status),
-          el("p", { class: "small mono" }, `Confirm: FP ${base.falsePositives ?? "—"}→${best.falsePositives ?? "—"} · FN ${base.falseNegatives ?? "—"}→${best.falseNegatives ?? "—"} · custo ${base.cost ?? "—"}→${best.cost ?? "—"}`),
-          el("p", { class: "muted small" }, m.dynamicRulesApplied ? "Busca com regras dinâmicas publicadas." : ""),
-          isAdmin && s.status === "SUGGESTED" ? button({ onClick: async () => { try { await api(`/api/admin/ml/suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } catch (error) { box.replaceChildren(head("Laboratório de Machine Learning"), notice("stop", "Não criei o rascunho", error.message)); } } }, "Criar rascunho de pesos") : null);
-      })) : el("p", {}, "Nenhuma sugestão guardada. A busca não publica sozinha.")),
-      el("section", { class: "panel" }, el("h2", {}, "Novo experimento"), el("p", { class: "muted" }, "Roda no servidor, numa fila de um por vez. O navegador não executa comando."), el("form", { class: "row", onSubmit: async (e) => { e.preventDefault(); const form = new FormData(e.currentTarget); const out = el("p", { "data-job": "" }); e.currentTarget.after(out); const job = await api("/api/ops/ml/experiments", { method: "POST", body: { examples: Number(form.get("examples")), seed: Number(form.get("seed")) }, area: "ops" }); poll(job.id, out); } },
+      ruleSuggestionSection,
+      el("section", { class: "panel" }, el("h2", {}, "Modelos treinados"),
+        el("p", { class: "muted small" }, "Validação PASS = experimento sintético. RECORDED = pré-carregado. Aprovado = sombra apenas."),
+        models.length ? table(
+          ["Algoritmo", "Validação", "Status", "Uso", "Origem dados", "Teste", "F1", "Recall", "Precisão", "FP", "FN"],
+          models.map((m) => {
+            const metric = m.metrics || {};
+            const usage = m.status === "APPROVED" ? "sombra" : m.validation === "PASS" ? "validado (sintético)" : "treinado";
+            const tipo = m.featureSet === "context" ? "Contextual" : "Operacional";
+            const dataOrigin = m.origin === "sintetico" ? "Sintético" : m.validation === "RECORDED" ? "Pré-carregado" : (m.origin || "—");
+            const origemTag = m.validation === "RECORDED" ? "Pré-carregado" : "Treino";
+            return [`${m.algorithm} · ${tipo} (${origemTag})`, pill(STATUS_TONE[m.validation] || "muted", m.validation || "—"), m.status, usage, dataOrigin, m.examples == null ? "0" : String(m.examples), num(metric.f1), num(metric.recall), num(metric.precision), metric.falsePositives == null ? "—" : String(metric.falsePositives), metric.falseNegatives == null ? "—" : String(metric.falseNegatives)];
+          }),
+        ) : el("p", {}, "Nenhum modelo treinado ainda.")),
+      el("section", { class: "panel" }, el("h2", {}, "Modo sombra"),
+        el("p", {}, `${count(shadow.predictions)} previsões sem erro, ${count(shadow.failures)} falhas, ${shadowSameDirection(shadow)} na mesma direção do motor.`),
+        el("p", { class: "muted small" }, "Contagens operacionais. Não substituem auditoria de fraude real.")),
+      el("section", { class: "panel" }, el("h2", {}, "Sugestões de peso"),
+        el("p", { class: "muted small" }, "Métricas de busca sintética. Criar rascunho exige aprovação humana."),
+        suggestions.length ? el("div", { class: "o-stack" }, suggestions.map((s) => {
+          const m = s.metrics || {};
+          const base = m.baselineConfirm || m.baselineSearch || {};
+          const best = m.bestConfirm || m.bestSearch || {};
+          return el("article", { class: "o-stack" },
+            el("p", {}, s.note || s.status),
+            el("p", { class: "small mono" }, `Confirm: FP ${base.falsePositives ?? "—"}→${best.falsePositives ?? "—"} · FN ${base.falseNegatives ?? "—"}→${best.falseNegatives ?? "—"} · custo ${base.cost ?? "—"}→${best.cost ?? "—"}`),
+            el("p", { class: "muted small" }, m.dynamicRulesApplied ? "Busca com regras dinâmicas publicadas." : ""),
+            isAdmin && s.status === "SUGGESTED" ? button({ onClick: async () => { try { await api(`/api/admin/ml/suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } catch (error) { replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não criei o rascunho", error.message)); } } }, "Criar rascunho de pesos") : null);
+        })) : el("p", {}, "Nenhuma sugestão guardada. A busca não publica sozinha.")),
+      el("section", { class: "panel" }, el("h2", {}, "Novo experimento"), el("p", { class: "muted" }, "Roda no servidor, numa fila de um por vez. Dados sintéticos — não validam fraude real."), el("form", { class: "row", onSubmit: async (e) => { e.preventDefault(); const form = new FormData(e.currentTarget); const out = el("p", { "data-job": "" }); e.currentTarget.after(out); const job = await api("/api/ops/ml/experiments", { method: "POST", body: { examples: Number(form.get("examples")), seed: Number(form.get("seed")) }, area: "ops" }); poll(job.id, out); } },
         el("input", { name: "examples", type: "number", min: "200", max: "4000", value: "400", "aria-label": "Quantidade de operações sintéticas" }),
         el("input", { name: "seed", type: "number", value: "42", "aria-label": "Semente" }),
         button({ type: "submit", variant: "primary" }, icon("play", { size: 15 }), " Pedir experimento"))),
-      data.experiments?.length ? el("section", { class: "panel" }, el("h2", {}, "Experimentos"), table(["Id", "Status", "Exemplos", "Semente", "Quem"], data.experiments.slice(0, 8).map((ex) => [String(ex.id), ex.status, ex.examples == null ? "—" : String(ex.examples), ex.seed == null ? "—" : String(ex.seed), ex.requestedBy || "—"]))) : null,
+      (data.experiments ?? []).length ? el("section", { class: "panel" }, el("h2", {}, "Experimentos (sintético)"), table(["Id", "Status", "Exemplos", "Semente", "Quem"], data.experiments.slice(0, 8).map((ex) => [String(ex.id), ex.status, ex.examples == null ? "0" : String(ex.examples), ex.seed == null ? "—" : String(ex.seed), ex.requestedBy || "—"]))) : null,
       isAdmin ? el("section", { class: "panel" }, el("h2", {}, "Aprovar um modelo validado"), el("form", { class: "row", onSubmit: async (e) => { e.preventDefault(); const id = new FormData(e.currentTarget).get("id"); await api(`/api/admin/ml/models/${id}/approve`, { method: "POST", area: "ops" }); load(); } }, el("input", { name: "id", type: "number", required: true, "aria-label": "Id do modelo" }), button({ type: "submit" }, "Aprovar para o modo sombra"))) : notice("muted", "Aprovação", "Só administração publica um modelo. Treinar não publica."),
     );
   };
