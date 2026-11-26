@@ -1,4 +1,10 @@
 import { api } from "./api/client.js";
+import {
+  comparisonChartSeries,
+  improvementInterpretation,
+  summarizeWeightReport,
+  weightDiffRows,
+} from "./lab-study-report.js";
 import { button, notice, pill } from "./ui.js";
 import { el, replace } from "./utils/dom.js";
 import { dateTime, setTitle } from "./utils/format.js";
@@ -11,6 +17,128 @@ function head(title, sub) {
 
 function table(headers, rows) {
   return el("div", { class: "table-wrap" }, el("table", { class: "table o-table" }, el("thead", {}, el("tr", {}, headers.map((h) => el("th", {}, h)))), el("tbody", {}, rows.map((cells) => el("tr", {}, cells.map((c) => el("td", {}, c)))))));
+}
+
+function studiesTable(headers, rowSpecs) {
+  return el("div", { class: "table-wrap" }, el("table", { class: "table o-table study-table" },
+    el("thead", {}, el("tr", {}, headers.map((h) => el("th", {}, h)))),
+    el("tbody", {}, rowSpecs.map(({ cells, selected, onSelect }) => el("tr", {
+      class: `study-row${selected ? " is-selected" : ""}`,
+      tabIndex: 0,
+      role: "button",
+      "aria-pressed": selected ? "true" : "false",
+      onClick: onSelect,
+      onKeydown: (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      },
+    }, cells.map((c) => el("td", {}, c))))),
+  ));
+}
+
+function studyMetricChart(title, series) {
+  const vals = series.flatMap((m) => [m.before, m.after]).filter((v) => v != null);
+  const max = Math.max(1, ...vals.map(Number));
+  return el("section", { class: "study-chart-block" },
+    el("h4", { class: "study-chart-title" }, title),
+    el("div", { class: "study-chart", role: "img", "aria-label": title },
+      series.map((m) => {
+        if (m.before == null && m.after == null) return null;
+        const before = m.before ?? 0;
+        const after = m.after ?? 0;
+        return el("div", { class: "study-chart-row" },
+          el("span", { class: "study-chart-label" }, m.label),
+          el("div", { class: "study-chart-bars" },
+            el("div", { class: "study-bar is-before", style: { width: `${(before / max) * 100}%` } }, el("span", {}, `Antes ${before}`)),
+            el("div", { class: "study-bar is-after", style: { width: `${(after / max) * 100}%` } }, el("span", {}, `Depois ${after}`)),
+          ),
+        );
+      }),
+    ),
+  );
+}
+
+function studyDetailSection(study, onClose) {
+  if (!study) return null;
+  const headRow = el("div", { class: "study-detail-head" },
+    el("h3", {}, `Estudo #${study.id} · ${study.kind === "WEIGHTS" ? "Pesos" : study.kind === "RULES" ? "Regras" : study.kind}`),
+    button({ size: "sm", onClick: onClose }, "Fechar"),
+  );
+  if (study.status === "QUEUED" || study.status === "RUNNING") {
+    return el("section", { class: "panel study-detail o-stack" }, headRow,
+      notice("info", "Em execução", "O relatório aparece ao concluir. A lista atualiza a cada poucos segundos."),
+      study.note ? el("p", { class: "muted" }, study.note) : null);
+  }
+  if (study.status === "FAILED") {
+    return el("section", { class: "panel study-detail o-stack" }, headRow,
+      notice("stop", "Estudo falhou", study.error || "Erro não detalhado."));
+  }
+  const report = study.report;
+  if (!report || (typeof report === "object" && !Object.keys(report).length)) {
+    return el("section", { class: "panel study-detail o-stack" }, headRow,
+      notice("muted", "Sem relatório", "Este estudo terminou sem report_json ou o conteúdo está vazio."));
+  }
+  if (study.kind === "RULES") return ruleStudyDetail(study, headRow);
+  return weightStudyDetail(study, headRow);
+}
+
+function weightStudyDetail(study, headRow) {
+  const summary = summarizeWeightReport(study.report);
+  const opt = study.report.syntheticOptimization || {};
+  const interp = summary.interp;
+  const charts = comparisonChartSeries(opt);
+  const diffs = weightDiffRows(study.report.publishedWeights, opt.suggestedWeights);
+  const tones = interp.acceptCriteria ? "ok" : "muted";
+  return el("section", { class: "panel study-detail o-stack" }, headRow,
+    notice(tones, interp.headline, interp.detail || summary.note || "Critério: melhorar busca sem piorar confirmação (improvedOnBothSets)."),
+    interp.misleadingDualImprovement ? notice("warn", "Nome do campo", 'improvedOnBothSets não significa "melhoria nas duas etapas" — use o título acima.') : null,
+    notice("info", "Publicação", summary.published
+      ? "O relatório marcou published=true; mesmo assim nada entra no motor sem aprovação."
+      : "Este estudo não altera automaticamente pesos, regras nem decisões (published=false)."),
+    el("dl", { class: "study-kv" },
+      el("div", {}, el("dt", {}, "Método"), el("dd", {}, summary.method)),
+      el("div", {}, el("dt", {}, "Candidatos avaliados"), el("dd", { class: "num" }, String(summary.candidates))),
+      el("div", {}, el("dt", {}, "Origem dos dados"), el("dd", {}, summary.origin + ` (${summary.reviewedCount} revisados)`)),
+      el("div", {}, el("dt", {}, "Perfil de custo"), el("dd", {}, summary.costProfile)),
+      el("div", {}, el("dt", {}, "Regras dinâmicas"), el("dd", { class: "num" }, String(summary.rulesCount))),
+    ),
+    summary.warnings.map((w) => notice("warn", "Dados reais", w)),
+    summary.syntheticWarning ? el("p", { class: "muted small" }, summary.syntheticWarning) : null,
+    el("p", {}, el("strong", {}, "Recomendação: "), summary.recommendation),
+    summary.leakageControl ? el("p", { class: "small muted" }, summary.leakageControl) : null,
+    studyMetricChart("Conjunto de busca (sintético)", charts.search),
+    studyMetricChart("Conjunto de confirmação (sintético)", charts.confirm),
+    diffs.length ? el("section", { class: "o-stack" },
+      el("h4", {}, "Pesos sugeridos vs publicados"),
+      table(["Chave", "Publicado", "Sugerido"], diffs.map((d) => [d.key, String(d.from ?? "—"), String(d.to ?? "—")])),
+      (opt.reasons || []).map((r) => el("p", { class: "small" }, `${r.key}: ${r.why || ""}`)),
+    ) : el("p", { class: "muted" }, "Nenhuma alteração de peso sugerida neste relatório."),
+  );
+}
+
+function ruleStudyDetail(study, headRow) {
+  const report = study.report;
+  return el("section", { class: "panel study-detail o-stack" }, headRow,
+    notice("info", "Publicação", "Sugestões ficam em rascunho até aprovação humana. O motor publicado não muda sozinho."),
+    report.insufficientData ? notice("warn", "Dados insuficientes", report.message || "Poucos rótulos revisados.") : null,
+    el("dl", { class: "study-kv" },
+      el("div", {}, el("dt", {}, "Regras publicadas"), el("dd", { class: "num" }, String(report.publishedRules ?? "—"))),
+      el("div", {}, el("dt", {}, "Sugestões geradas"), el("dd", { class: "num" }, String(report.suggestedRules ?? (report.rules?.length ?? 0)))),
+    ),
+    report.note ? el("p", {}, report.note) : null,
+    report.baseline ? el("p", { class: "mono small" }, `Baseline: custo ${report.baseline.cost ?? "—"} · FP ${report.baseline.falsePositives ?? "—"} · FN ${report.baseline.falseNegatives ?? "—"}`) : null,
+    Array.isArray(report.rules) && report.rules.length
+      ? table(["Regra", "Hits", "Custo sem regra", "FP", "FN"], report.rules.slice(0, 12).map((r) => [
+        `${r.displayKey || r.ruleKey} · ${r.name || ""}`,
+        String(r.assessmentHits ?? "—"),
+        String(r.withoutRuleCost ?? "—"),
+        String(r.withoutRuleFalsePositives ?? "—"),
+        String(r.withoutRuleFalseNegatives ?? "—"),
+      ]))
+      : null,
+  );
 }
 
 const STATUS_TONE = { PUBLISHED: "ok", APPROVED: "info", PENDING: "warn", DRAFT: "muted", REJECTED: "stop", ARCHIVED: "muted", TRAINED: "info", PASS: "ok", FAIL: "stop", SUGGESTED: "warn", DONE: "ok", RUNNING: "info", FAILED: "stop", QUEUED: "muted" };
@@ -316,7 +444,11 @@ function studyResultCell(s) {
   if (s.status === "RUNNING" || s.status === "QUEUED") return "Em andamento…";
   if (s.status !== "DONE") return "—";
   const report = s.report || {};
-  if (report.syntheticBaseline?.warning) return "Concluído · métricas sintéticas (não comprovam fraude real)";
+  const opt = report.syntheticOptimization;
+  if (opt) {
+    const interp = improvementInterpretation(opt);
+    if (interp.headline) return interp.headline;
+  }
   if (report.reviewedInsufficient) return report.reviewedMessage || "Concluído · poucos rótulos revisados";
   if (s.note) return `Concluído · ${s.note}`;
   return "Concluído (sombra; sem publicação automática)";
@@ -325,15 +457,38 @@ function studyResultCell(s) {
 export function labPage(isAdmin) {
   const box = el("div", { class: "o-stack" }, head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo."), el("p", { class: "muted" }, "Carregando…"));
   let studyPollTimer = null;
+  let selectedStudyId = null;
+  let selectedStudyDetail = null;
   const stopStudyPoll = () => {
     if (studyPollTimer) {
       clearInterval(studyPollTimer);
       studyPollTimer = null;
     }
   };
+  const closeStudy = () => {
+    selectedStudyId = null;
+    selectedStudyDetail = null;
+  };
+  const openStudy = async (id) => {
+    selectedStudyId = id;
+    try {
+      selectedStudyDetail = await api(`/api/ops/ml/studies/${id}`, { area: "ops" });
+    } catch (error) {
+      selectedStudyDetail = { id, status: "FAILED", error: error.message, kind: "WEIGHTS", report: null };
+    }
+    const data = await api("/api/ops/ml", { area: "ops" }).catch(() => null);
+    if (data) paint(data);
+  };
   const load = async () => {
     try {
       const data = await api("/api/ops/ml", { area: "ops" });
+      if (selectedStudyId) {
+        try {
+          selectedStudyDetail = await api(`/api/ops/ml/studies/${selectedStudyId}`, { area: "ops" });
+        } catch {
+          /* mantém último detalhe ou fecha */
+        }
+      }
       paint(data);
       stopStudyPoll();
       const active = (data.studies ?? []).some((s) => s.status === "QUEUED" || s.status === "RUNNING");
@@ -391,15 +546,23 @@ export function labPage(isAdmin) {
             },
           }, "Estudar regras"),
         ),
-        studies.length ? table(["Id", "Tipo", "Status", "Custo", "Quem", "Quando", "Andamento"], studies.slice(0, 8).map((s) => [
-          String(s.id),
-          s.kind === "WEIGHTS" ? "Pesos" : s.kind === "RULES" ? "Regras" : (s.kind || "—"),
-          pill(STATUS_TONE[s.status] || "muted", s.status || "—"),
-          s.costProfile || "—",
-          s.createdBy || "—",
-          dateTime(s.createdAt),
-          studyResultCell(s),
-        ])) : el("p", {}, "Nenhum estudo ainda.")),
+        studies.length ? el("div", { class: "o-stack" },
+          el("p", { class: "muted small" }, "Clique em uma linha para ver o relatório completo."),
+          studiesTable(["Id", "Tipo", "Status", "Custo", "Quem", "Quando", "Andamento"], studies.map((s) => ({
+            selected: s.id === selectedStudyId,
+            onSelect: () => openStudy(s.id),
+            cells: [
+              String(s.id),
+              s.kind === "WEIGHTS" ? "Pesos" : s.kind === "RULES" ? "Regras" : (s.kind || "—"),
+              pill(STATUS_TONE[s.status] || "muted", s.status || "—"),
+              s.costProfile || "—",
+              s.createdBy || "—",
+              dateTime(s.createdAt),
+              studyResultCell(s),
+            ],
+          }))),
+          studyDetailSection(selectedStudyDetail, () => { closeStudy(); load(); }),
+        ) : el("p", {}, "Nenhum estudo ainda.")),
       ruleSuggestionSection,
       el("section", { class: "panel" }, el("h2", {}, "Modelos treinados"),
         el("p", { class: "muted small" }, "Validação PASS = experimento sintético. RECORDED = pré-carregado. Aprovado = sombra apenas."),

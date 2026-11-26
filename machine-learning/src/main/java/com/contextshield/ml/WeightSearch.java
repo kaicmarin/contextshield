@@ -86,6 +86,17 @@ public final class WeightSearch {
         out.put("bestSearch", bestSearch.toMap());
         out.put("bestConfirm", bestConfirm.toMap());
         out.put("improvedOnBothSets", improved);
+        boolean confirmUnchanged = bestConfirm.cost == baselineConfirm.cost
+                && bestConfirm.falsePositives == baselineConfirm.falsePositives
+                && bestConfirm.falseNegatives == baselineConfirm.falseNegatives;
+        out.put("searchCostImproved", bestSearch.cost < baselineSearch.cost);
+        out.put("confirmNotWorsened", bestConfirm.cost <= baselineConfirm.cost
+                && bestConfirm.falseNegatives <= baselineConfirm.falseNegatives);
+        out.put("improvementSummary", improved
+                ? (confirmUnchanged
+                ? "Melhorou a busca e não piorou a confirmação"
+                : "Melhorou a busca e manteve a confirmação dentro do patamar aceito")
+                : "Nenhuma candidata melhorou a busca sem piorar a confirmação");
         out.put("suggestedWeights", improved ? best : Map.of());
         out.put("requestedCandidates", requested);
         out.put("independentConfirm", true);

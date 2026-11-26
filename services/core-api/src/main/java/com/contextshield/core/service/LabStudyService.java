@@ -233,8 +233,11 @@ public class LabStudyService {
             @SuppressWarnings("unchecked")
             Map<String, Integer> suggested = (Map<String, Integer>) optimization.get("suggestedWeights");
             boolean improved = Boolean.TRUE.equals(optimization.get("improvedOnBothSets"));
+            Object summary = optimization.get("improvementSummary");
             report.put("recommendation", improved
-                    ? "Há candidata de pesos que melhorou busca e manteve confirmação sintética, com regras dinâmicas atuais."
+                    ? (summary != null ? String.valueOf(summary)
+                    + " Métricas sintéticas; o motor publicado não muda automaticamente."
+                    : "Melhorou a busca sem piorar a confirmação sintética. O motor publicado não muda automaticamente.")
                     : "Nenhuma melhoria confiável; política publicada permanece.");
 
             jdbc.update("update ml_study set status = 'DONE', finished_at = ?, report_json = ? where id = ?",
