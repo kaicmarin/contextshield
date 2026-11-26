@@ -61,7 +61,7 @@ jobs:
     needs: [backend]
     steps:
       - uses: actions/checkout@v4
-      - run: chmod +x scripts/aws/apply-ci-env.sh scripts/aws/fix-ci-seed-mount-perms.sh scripts/aws/validate-deploy-isolated.sh scripts/aws/deploy-app-update.sh
+      - run: chmod +x scripts/aws/ci-seed-host-perms.sh scripts/aws/apply-ci-env.sh scripts/aws/fix-ci-seed-mount-perms.sh scripts/aws/validate-deploy-isolated.sh scripts/aws/deploy-app-update.sh
       - run: bash scripts/aws/validate-deploy-isolated.sh
       - name: Publicar artefato de evidência
         if: always()
