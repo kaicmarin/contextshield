@@ -6,6 +6,17 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Credenciais descartáveis só para `docker compose build` no CI — nunca produção.
+env:
+  DB_PASSWORD: ci-github-disposable-postgres
+  CORE_DB_PASSWORD: ci-github-disposable-core
+  THREAT_DB_PASSWORD: ci-github-disposable-threat
+  INVESTIGATION_DB_PASSWORD: ci-github-disposable-investigation
+  ML_DB_PASSWORD: ci-github-disposable-ml
+  JWT_SECRET: ci-github-disposable-jwt-secret-32chars-min
+  JWT_ALLOW_DEV_SECRET: "false"
+  SEED_ENABLED: "false"
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -50,8 +61,7 @@ jobs:
     needs: [backend]
     steps:
       - uses: actions/checkout@v4
-      - run: cp .env.example .env
-      - run: chmod +x scripts/aws/validate-deploy-isolated.sh scripts/aws/deploy-app-update.sh
+      - run: chmod +x scripts/aws/apply-ci-env.sh scripts/aws/validate-deploy-isolated.sh scripts/aws/deploy-app-update.sh
       - run: bash scripts/aws/validate-deploy-isolated.sh
       - name: Publicar artefato de evidência
         if: always()

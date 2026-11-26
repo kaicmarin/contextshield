@@ -1,26 +1,50 @@
 #!/usr/bin/env bash
 # Validação descartável do deploy (Docker local/CI). Não usa EC2 de produção.
+# Fluxo: Postgres → primeiro deploy (Flyway + seed) → baseline de dados → backup → deploy-app-update → preservação.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
-test -f .env || cp .env.example .env
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-cs-deploy-validate}"
 export COMPOSE="docker compose -f $ROOT/docker-compose.aws-free.yml"
 
-if grep -q 'troque-este-segredo' .env 2>/dev/null; then
-  # CI/local: valores mínimos para subir o compose (não usar em produção).
-  if command -v sed >/dev/null; then
-    sed -i.bak 's/^JWT_SECRET=.*/JWT_SECRET=ci-isolated-jwt-secret-32chars-min-ok/' .env
-    sed -i.bak 's/^DB_PASSWORD=.*/DB_PASSWORD=ci-db-pass-change-me/' .env
-    sed -i.bak 's/^CORE_DB_PASSWORD=.*/CORE_DB_PASSWORD=ci-core-pass-change-me/' .env
-    sed -i.bak 's/^THREAT_DB_PASSWORD=.*/THREAT_DB_PASSWORD=ci-threat-pass/' .env
-    sed -i.bak 's/^INVESTIGATION_DB_PASSWORD=.*/INVESTIGATION_DB_PASSWORD=ci-invest-pass/' .env
-    sed -i.bak 's/^ML_DB_PASSWORD=.*/ML_DB_PASSWORD=ci-ml-pass/' .env
-    sed -i.bak 's/^JWT_ALLOW_DEV_SECRET=.*/JWT_ALLOW_DEV_SECRET=true/' .env
-    sed -i.bak 's/^SEED_ENABLED=.*/SEED_ENABLED=true/' .env
-    rm -f .env.bak
-  fi
-fi
+bash "$ROOT/scripts/aws/apply-ci-env.sh"
+
+set -a
+# shellcheck disable=SC1091
+source "$ROOT/.env"
+set +a
+
+psql_count() {
+  $COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc "$1" | tr -d '[:space:]'
+}
+
+wait_core_up() {
+  local tries="${1:-50}"
+  until $COMPOSE exec -T core-api wget -qO- http://127.0.0.1:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"'; do
+    tries=$((tries - 1))
+    test "$tries" -gt 0 || {
+      echo "core-api unhealthy"
+      $COMPOSE logs --tail 60 core-api
+      exit 1
+    }
+    sleep 3
+  done
+}
+
+assert_health_five() {
+  $COMPOSE exec -T core-api wget -qO- http://127.0.0.1:8080/actuator/health | grep -q '"status":"UP"'
+  $COMPOSE exec -T risk-engine wget -qO- http://127.0.0.1:8081/actuator/health | grep -q UP
+  $COMPOSE exec -T ml-service wget -qO- http://127.0.0.1:8082/actuator/health | grep -q UP
+  $COMPOSE exec -T threat-service wget -qO- http://127.0.0.1:8083/actuator/health | grep -q UP
+  $COMPOSE exec -T investigation-service wget -qO- http://127.0.0.1:8084/actuator/health | grep -q UP
+}
+
+assert_flyway_core_12_14() {
+  for v in 12 13 14; do
+    C=$(psql_count "select count(*) from flyway_schema_history where version='$v' and success")
+    test "$C" -ge 1 || { echo "Flyway core V$v ausente"; exit 1; }
+  done
+}
 
 echo "== Subir Postgres (volume pgdata do projeto $COMPOSE_PROJECT_NAME) =="
 $COMPOSE up -d postgres
@@ -28,55 +52,59 @@ for _ in $(seq 1 36); do
   if $COMPOSE exec -T postgres pg_isready -U contextshield >/dev/null 2>&1; then break; fi
   sleep 2
 done
+$COMPOSE exec -T postgres pg_isready -U contextshield
 
-USERS_BEFORE=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc "select count(*) from app_user" | tr -d '[:space:]')
-RULES_BEFORE=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc "select count(*) from risk_engine_rule where status='PUBLISHED'" 2>/dev/null | tr -d '[:space:]' || echo "0")
 MODELS_HOST=$(find machine-learning/models -name '*.ser' 2>/dev/null | wc -l | tr -d '[:space:]')
 
-echo "== Build e subida (Flyway na core + ml-service) =="
+echo "== Primeiro deploy: build + Flyway (schema + dados seed no volume existente) =="
 $COMPOSE build core-api risk-engine ml-service threat-service investigation-service
 $COMPOSE up -d risk-engine ml-service threat-service investigation-service
 $COMPOSE up -d core-api
 
-TRIES=50
-until $COMPOSE exec -T core-api wget -qO- http://127.0.0.1:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"'; do
-  TRIES=$((TRIES - 1))
-  test "$TRIES" -gt 0 || { echo "core-api unhealthy"; $COMPOSE logs --tail 40 core-api; exit 1; }
-  sleep 3
-done
+wait_core_up 50
+assert_health_five
+assert_flyway_core_12_14
 
-FLYWAY_MAX=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
-  "select coalesce(max(version::int),0) from flyway_schema_history where success" | tr -d '[:space:]')
-for v in 12 13 14; do
-  C=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
-    "select count(*) from flyway_schema_history where version='$v' and success" | tr -d '[:space:]')
-  test "$C" -ge 1 || { echo "Flyway core V$v ausente"; exit 1; }
+FLYWAY_MAX=$(psql_count "select coalesce(max(version::int),0) from flyway_schema_history where success")
+ML_V=$(psql_count "select coalesce(max(version::int),0) from flyway_ml_history where success")
+
+USERS_BASELINE=0
+for _ in $(seq 1 45); do
+  USERS_BASELINE=$(psql_count "select count(*) from app_user")
+  test "$USERS_BASELINE" -gt 0 && break
+  sleep 2
 done
-ML_V=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
-  "select coalesce(max(version::int),0) from flyway_ml_history where success" 2>/dev/null | tr -d '[:space:]' || echo "0")
-RULES_AFTER=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
-  "select count(*) from risk_engine_rule where status='PUBLISHED'" | tr -d '[:space:]')
+RULES_BASELINE=$(psql_count "select count(*) from risk_engine_rule where status='PUBLISHED'")
+POL_BASELINE=$(psql_count "select count(*) from risk_policy where status='PUBLISHED'")
+
+test "$USERS_BASELINE" -gt 0 || { echo "Nenhum app_user após seed/migrações; verifique SEED_ENABLED"; exit 1; }
+test "$RULES_BASELINE" -ge 12 || { echo "Regras publicadas V12 insuficientes ($RULES_BASELINE)"; exit 1; }
+test "$POL_BASELINE" -ge 1 || { echo "Nenhuma política publicada após deploy inicial"; exit 1; }
+
+echo "== Baseline: usuarios=$USERS_BASELINE regras_publicadas=$RULES_BASELINE politicas_publicadas=$POL_BASELINE =="
 
 mkdir -p "$ROOT/backups"
 BAK="$ROOT/backups/isolated-$(date +%Y%m%d-%H%M%S).sql.gz"
 $COMPOSE exec -T postgres pg_dump -U contextshield contextshield | gzip -c > "$BAK"
 test -s "$BAK"
+echo "Backup lógico criado ($(du -h "$BAK" | cut -f1)); sem restauração automática."
 
-USERS_AFTER=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc "select count(*) from app_user" | tr -d '[:space:]')
-
-$COMPOSE exec -T risk-engine wget -qO- http://127.0.0.1:8081/actuator/health | grep -q UP
-$COMPOSE exec -T ml-service wget -qO- http://127.0.0.1:8082/actuator/health | grep -q UP
-$COMPOSE exec -T threat-service wget -qO- http://127.0.0.1:8083/actuator/health | grep -q UP
-$COMPOSE exec -T investigation-service wget -qO- http://127.0.0.1:8084/actuator/health | grep -q UP
-
-echo "== Segundo deploy (preserva pgdata + volumes; sem restaurar backup) =="
+echo "== Segundo deploy (deploy-app-update: backup + build + migrações idempotentes) =="
 export COMPOSE
 export COMPOSE_PROJECT_NAME
 bash "$ROOT/scripts/aws/deploy-app-update.sh"
 
-USERS_2=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc "select count(*) from app_user" | tr -d '[:space:]")
-POL_PUBLISHED=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
-  "select count(*) from risk_policy where status='PUBLISHED'" 2>/dev/null | tr -d '[:space:]' || echo "0")
+wait_core_up 40
+assert_health_five
+assert_flyway_core_12_14
+
+USERS_AFTER=$(psql_count "select count(*) from app_user")
+RULES_AFTER=$(psql_count "select count(*) from risk_engine_rule where status='PUBLISHED'")
+POL_AFTER=$(psql_count "select count(*) from risk_policy where status='PUBLISHED'")
+
+test "$USERS_BASELINE" = "$USERS_AFTER" || { echo "Usuarios alterados após redeploy ($USERS_BASELINE -> $USERS_AFTER)"; exit 1; }
+test "$RULES_BASELINE" = "$RULES_AFTER" || { echo "Regras publicadas alteradas ($RULES_BASELINE -> $RULES_AFTER)"; exit 1; }
+test "$POL_BASELINE" = "$POL_AFTER" || { echo "Politicas publicadas alteradas ($POL_BASELINE -> $POL_AFTER)"; exit 1; }
 
 cat >"$ROOT/docs/DEPLOY-ISOLATED-TEST.json" <<EOF
 {
@@ -88,10 +116,13 @@ cat >"$ROOT/docs/DEPLOY-ISOLATED-TEST.json" <<EOF
   "flywayV12": true,
   "flywayV13": true,
   "flywayV14": true,
-  "rulesPublished": $RULES_AFTER,
-  "policiesPublished": $POL_PUBLISHED,
-  "usersPreservedFirstDeploy": $([ "$USERS_BEFORE" = "$USERS_AFTER" ] && echo true || echo false),
-  "usersPreservedRedeploy": $([ "$USERS_AFTER" = "$USERS_2" ] && echo true || echo false),
+  "usersBaseline": $USERS_BASELINE,
+  "rulesPublishedBaseline": $RULES_BASELINE,
+  "policiesPublishedBaseline": $POL_BASELINE,
+  "usersAfterRedeploy": $USERS_AFTER,
+  "rulesPublishedAfterRedeploy": $RULES_AFTER,
+  "policiesPublishedAfterRedeploy": $POL_AFTER,
+  "usersPreserved": true,
   "hostSerFiles": $MODELS_HOST
 }
 EOF

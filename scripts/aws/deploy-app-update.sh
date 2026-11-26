@@ -35,7 +35,11 @@ echo "== 4/5 Aguarda core-api e Flyway =="
 TRIES=36
 until $COMPOSE exec -T core-api wget -qO- http://127.0.0.1:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"'; do
   TRIES=$((TRIES - 1))
-  test "$TRIES" -gt 0 || { echo "core-api não ficou saudável a tempo"; exit 1; }
+  if [ "$TRIES" -le 0 ]; then
+    echo "core-api não ficou saudável a tempo"
+    $COMPOSE logs --tail 80 core-api
+    exit 1
+  fi
   sleep 5
 done
 FLYWAY_MAX=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \

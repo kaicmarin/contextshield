@@ -6,10 +6,10 @@ spring:
 
 contextshield:
   seed:
-    enabled: false
-    allow-demo-reset: false
+    enabled: ${SEED_ENABLED:false}
+    allow-demo-reset: ${SEED_ALLOW_DEMO_RESET:false}
   jwt:
-    allow-dev-secret: false
+    allow-dev-secret: ${JWT_ALLOW_DEV_SECRET:false}
 
 springdoc:
   api-docs:
