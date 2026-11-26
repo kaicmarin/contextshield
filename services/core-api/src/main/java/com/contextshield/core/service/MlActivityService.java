@@ -79,7 +79,19 @@ public class MlActivityService {
         }
         out.put("recentStudies", jdbc.queryForObject(
                 "select count(*) from ml_study where organization_id = ? and created_at >= ?", Integer.class, organizationId, Timestamp.valueOf(since)));
-        out.put("models", listModelsBrief(organizationId));
+        // O catálogo principal fica no ml-service; o banco local é apenas fallback.
+        Object modelCatalog = listModelsBrief(organizationId);
+        if (remote.enabled()) {
+            try {
+                Object remoteModels = remote.overview(organizationId).get("models");
+                if (remoteModels instanceof List<?> modelList && !modelList.isEmpty()) {
+                    modelCatalog = modelList;
+                }
+            } catch (Exception ignored) {
+                // Mantém o catálogo local caso o serviço de ML esteja indisponível.
+            }
+        }
+        out.put("models", modelCatalog);
         out.put("shadowMode", true);
         out.put("affectsDecision", false);
         out.put("calibrationNote", CALIBRATION_NOTE);

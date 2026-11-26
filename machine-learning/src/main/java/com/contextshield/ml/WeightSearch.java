@@ -37,22 +37,29 @@ public final class WeightSearch {
 
     public static Map<String, Object> run(List<SyntheticCases.Case> search, List<SyntheticCases.Case> confirm, long seed,
                                           int requested, List<DynamicRule> rules, PolicyEvaluation.CostProfile cost) {
+        return run(search, confirm, seed, requested, rules, cost, Map.of());
+    }
+
+    public static Map<String, Object> run(List<SyntheticCases.Case> search, List<SyntheticCases.Case> confirm, long seed,
+                                          int requested, List<DynamicRule> rules, PolicyEvaluation.CostProfile cost,
+                                          Map<String, Integer> publishedWeights) {
+        Map<String, Integer> baselineWeights = Weights.merge(publishedWeights);
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule())
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         RiskAssessor assessor = new RiskAssessor();
         List<Ready> searchReady = ready(mapper, search);
         List<Ready> confirmReady = ready(mapper, confirm);
-        Score baselineSearch = score(assessor, searchReady, Map.of(), rules, cost);
-        Score baselineConfirm = score(assessor, confirmReady, Map.of(), rules, cost);
+        Score baselineSearch = score(assessor, searchReady, baselineWeights, rules, cost);
+        Score baselineConfirm = score(assessor, confirmReady, baselineWeights, rules, cost);
 
         Random random = new Random(seed);
         List<String> keys = Weights.CATALOG.stream().map(Weights.Bound::key).toList();
-        Map<String, Integer> best = Map.of();
+        Map<String, Integer> best = baselineWeights;
         Score bestSearch = baselineSearch;
         int evaluated = 0;
         int rounds = Math.max(8, Math.min(requested, 80));
         for (int candidate = 0; candidate < rounds; candidate++) {
-            Map<String, Integer> overlay = new LinkedHashMap<>();
+            Map<String, Integer> overlay = new LinkedHashMap<>(baselineWeights);
             int changes = 3 + random.nextInt(4);
             for (int change = 0; change < changes; change++) {
                 String key = keys.get(random.nextInt(keys.size()));
@@ -77,6 +84,7 @@ public final class WeightSearch {
         out.put("candidates", evaluated);
         out.put("cost", cost.description());
         out.put("costProfileId", cost.id());
+        out.put("baselineWeights", baselineWeights);
         out.put("dynamicRulesApplied", !rules.isEmpty());
         out.put("definition", "Falso negativo: fraude liberada (aprovada ou aprovada com alerta). Falso positivo: operação legítima não liberada.");
         out.put("searchExamples", searchReady.size());
@@ -106,7 +114,7 @@ public final class WeightSearch {
         out.put("falseNegativesFellOnConfirm", negativesFell);
         out.put("falsePositivesFellOnConfirm", positivesFell);
         out.put("criticalFloorsRespected", true);
-        out.put("reasons", reasons(improved ? best : Map.of()));
+        out.put("reasons", reasons(improved ? best : Map.of(), baselineWeights));
         String note = improved
                 ? "A sugestão reduziu o custo na busca e não piorou falso negativo nem custo na confirmação. Ela não foi publicada."
                 : "Nenhuma candidata melhorou a busca e se manteve na confirmação. A política ativa não muda.";
@@ -116,13 +124,15 @@ public final class WeightSearch {
         return out;
     }
 
-    private static List<Map<String, Object>> reasons(Map<String, Integer> overlay) {
+    private static List<Map<String, Object>> reasons(Map<String, Integer> overlay,
+                                                      Map<String, Integer> baselineWeights) {
         List<Map<String, Object>> out = new ArrayList<>();
         for (Map.Entry<String, Integer> change : overlay.entrySet()) {
+            if (change.getValue().equals(baselineWeights.get(change.getKey()))) continue;
             Weights.Bound bound = Weights.bound(change.getKey());
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("key", change.getKey());
-            row.put("from", bound.fallback());
+            row.put("from", baselineWeights.get(change.getKey()));
             row.put("to", change.getValue());
             row.put("safetyFloor", bound.safetyFloor());
             row.put("why", bound.detail() + " O valor ficou dentro do limite " + bound.min() + "–" + bound.max() + ".");
