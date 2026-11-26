@@ -37,7 +37,7 @@ until $COMPOSE exec -T core-api wget -qO- http://127.0.0.1:8080/actuator/health 
   TRIES=$((TRIES - 1))
   if [ "$TRIES" -le 0 ]; then
     echo "core-api não ficou saudável a tempo"
-    $COMPOSE logs --tail 80 core-api
+    $COMPOSE logs --no-color core-api
     exit 1
   fi
   sleep 5

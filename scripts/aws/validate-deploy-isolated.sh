@@ -5,9 +5,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-cs-deploy-validate}"
-export COMPOSE="docker compose -f $ROOT/docker-compose.aws-free.yml"
+export CI_ISOLATED_VALIDATE=1
+export COMPOSE="docker compose -f $ROOT/docker-compose.aws-free.yml -f $ROOT/docker-compose.ci-seed.yml"
 
 bash "$ROOT/scripts/aws/apply-ci-env.sh"
+test -f "$ROOT/.ci/seed-credentials.json" || { echo "Credenciais de seed CI ausentes (.ci/seed-credentials.json)"; exit 1; }
 
 set -a
 # shellcheck disable=SC1091
@@ -18,15 +20,23 @@ psql_count() {
   $COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc "$1" | tr -d '[:space:]'
 }
 
+dump_core_api_logs() {
+  local dest="$ROOT/docs/DEPLOY-ISOLATED-CORE-API.log"
+  mkdir -p "$(dirname "$dest")"
+  $COMPOSE logs --no-color core-api >"$dest" 2>&1 || true
+  echo "========== core-api (log completo: $dest) =========="
+  cat "$dest"
+}
+
 wait_core_up() {
   local tries="${1:-50}"
   until $COMPOSE exec -T core-api wget -qO- http://127.0.0.1:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"'; do
     tries=$((tries - 1))
-    test "$tries" -gt 0 || {
-      echo "core-api unhealthy"
-      $COMPOSE logs --tail 60 core-api
+    if [ "$tries" -le 0 ]; then
+      echo "core-api unhealthy (primeira subida ou redeploy)"
+      dump_core_api_logs
       exit 1
-    }
+    fi
     sleep 3
   done
 }
@@ -126,5 +136,10 @@ cat >"$ROOT/docs/DEPLOY-ISOLATED-TEST.json" <<EOF
   "hostSerFiles": $MODELS_HOST
 }
 EOF
+
+LOG_DEST="$ROOT/docs/DEPLOY-ISOLATED-CORE-API.log"
+if [ ! -f "$LOG_DEST" ]; then
+  $COMPOSE logs --no-color core-api >"$LOG_DEST" 2>&1 || true
+fi
 
 echo "OK validate-deploy-isolated (projeto $COMPOSE_PROJECT_NAME, rollback manual apenas)"
