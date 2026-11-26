@@ -8,6 +8,11 @@ import { ApiError, api, getSession, setSession } from "../assets/js/api/client.j
 import { cardErrors, maskCard, maskCep, maskExp } from "../assets/js/utils/card.js";
 import { brl, STATUS } from "../assets/js/utils/format.js";
 import { filterPaintChildren } from "../assets/js/ops-lab.js";
+import {
+  STUDY_10_REGRESSION,
+  improvementInterpretation,
+  summarizeWeightReport,
+} from "../assets/js/lab-study-report.js";
 
 const store = new Map();
 globalThis.localStorage = {
@@ -57,5 +62,22 @@ globalThis.fetch = async () => { throw new TypeError("failed"); };
 await assert.rejects(() => api("/api/me"), (e) => e instanceof ApiError && e.status === 0);
 
 assert.deepEqual(filterPaintChildren(["ok", null, undefined, false, 0, "tail"]), ["ok", 0, "tail"]);
+
+const study10 = STUDY_10_REGRESSION.report;
+const opt10 = study10.syntheticOptimization;
+const interp10 = improvementInterpretation(opt10);
+assert.equal(interp10.headline, "Melhorou a busca e não piorou a confirmação");
+assert.equal(interp10.misleadingDualImprovement, true);
+assert.equal(interp10.autoPublish, false);
+assert.equal(interp10.published, false);
+const sum10 = summarizeWeightReport(study10);
+assert.equal(sum10.candidates, 48);
+assert.equal(sum10.rulesCount, 16);
+assert.equal(sum10.reviewedCount, 0);
+assert.equal(sum10.charts.search.find((m) => m.key === "cost").before, 50);
+assert.equal(sum10.charts.search.find((m) => m.key === "cost").after, 49);
+assert.equal(sum10.charts.confirm.find((m) => m.key === "cost").before, 36);
+assert.equal(sum10.charts.confirm.find((m) => m.key === "cost").after, 36);
+assert.ok(sum10.warnings.some((w) => w.includes("Nenhum rótulo")));
 
 console.log("unit: ok");
