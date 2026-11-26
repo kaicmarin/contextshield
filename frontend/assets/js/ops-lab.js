@@ -7,7 +7,11 @@ import {
 } from "./lab-study-report.js";
 import { button, notice, pill } from "./ui.js";
 import { el, replace } from "./utils/dom.js";
-import { mountLabActivity } from "./lab-activity.js";
+import { disposeLabActivity, mountLabActivity } from "./lab-activity.js";
+
+export function disposeLabActivityMount() {
+  disposeLabActivity();
+}
 import { dateTime, setTitle } from "./utils/format.js";
 import { icon } from "./utils/icons.js";
 

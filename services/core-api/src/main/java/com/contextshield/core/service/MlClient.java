@@ -86,10 +86,14 @@ public class MlClient {
         return body instanceof Map<?, ?> map ? (Map<String, Object>) map : Map.of();
     }
 
+    /**
+     * Eventos do ML Service sem paginação local — a Core API faz merge e pagina uma vez.
+     */
     @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> activityFeed(long organizationId, MlActivityService.ActivityQuery query) {
+    public List<Map<String, Object>> activityEvents(long organizationId, MlActivityService.ActivityQuery query, int limit) {
         var uri = http.get().uri(builder -> {
-            var b = builder.path("/internal/v1/activity").queryParam("page", query.safePage()).queryParam("size", query.safeSize());
+            var b = builder.path("/internal/v1/activity/events")
+                    .queryParam("limit", Math.min(Math.max(limit, 1), MlActivityService.SOURCE_FETCH_LIMIT));
             if (query.modelId() != null) b.queryParam("modelId", query.modelId());
             if (query.algorithm() != null && !query.algorithm().isBlank()) b.queryParam("algorithm", query.algorithm());
             if (query.eventType() != null && !query.eventType().isBlank()) b.queryParam("eventType", query.eventType());
@@ -99,16 +103,13 @@ public class MlClient {
             if (query.status() != null && !query.status().isBlank()) b.queryParam("status", query.status());
             if (query.q() != null && !query.q().isBlank()) b.queryParam("q", query.q());
             if (query.cursor() != null && !query.cursor().isBlank()) b.queryParam("cursor", query.cursor());
+            if (query.from() != null) b.queryParam("from", query.from().toString());
+            if (query.to() != null) b.queryParam("to", query.to().toString());
             return b.build();
         });
-        Map body = uri.header("Authorization", "Bearer " + jwt.serviceToken(organizationId, "core-api", "read"))
-                .retrieve().body(Map.class);
-        if (body == null) return List.of();
-        Object items = body.get("items");
-        if (items instanceof List<?> list) {
-            return (List<Map<String, Object>>) list;
-        }
-        return List.of();
+        List body = uri.header("Authorization", "Bearer " + jwt.serviceToken(organizationId, "core-api", "read"))
+                .retrieve().body(List.class);
+        return body == null ? List.of() : (List<Map<String, Object>>) body;
     }
 
     public Map<String, Object> modelActivity(long organizationId, long modelId) {

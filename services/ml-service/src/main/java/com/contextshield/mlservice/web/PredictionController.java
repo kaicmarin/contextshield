@@ -4,6 +4,7 @@ import com.contextshield.mlservice.ActivityService;
 import com.contextshield.mlservice.CatalogService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,6 +102,26 @@ public class PredictionController {
         return activity.summary(org(request), days);
     }
 
+    @GetMapping("/activity/events")
+    public List<Map<String, Object>> activityEvents(HttpServletRequest request,
+                                                   @RequestParam(defaultValue = "200") int limit,
+                                                   @RequestParam(required = false) String cursor,
+                                                   @RequestParam(required = false) Long modelId,
+                                                   @RequestParam(required = false) String algorithm,
+                                                   @RequestParam(required = false) String eventType,
+                                                   @RequestParam(required = false) String prediction,
+                                                   @RequestParam(required = false) String align,
+                                                   @RequestParam(required = false) String stage,
+                                                   @RequestParam(required = false) String status,
+                                                   @RequestParam(required = false) String q,
+                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        scope(request, "read");
+        return activity.eventsForMerge(org(request), limit, cursor, modelId, algorithm, eventType,
+                prediction, align, stage, status, q, from, to);
+    }
+
+    /** Mantido para chamadas diretas ao ML; a Core API prefere /activity/events. */
     @GetMapping("/activity")
     public Map<String, Object> activity(HttpServletRequest request,
                                          @RequestParam(defaultValue = "0") int page,
