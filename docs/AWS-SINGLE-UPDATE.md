@@ -36,7 +36,8 @@ Arquivos `machine-learning/models/*.ser`, volume `pgdata` e `mlwork` **não são
 
 1. Push na branch `main` ou abra um PR → job **`deploy-isolated`** na aba Actions.
 2. Ou: **Actions → CI → Run workflow** (`workflow_dispatch`), branch `main`.
-3. Artefato **`deploy-isolated-report`** contém `docs/DEPLOY-ISOLATED-TEST.json` (Flyway, preservação de usuários, `autoRestore: false`).
+3. Artefato **`deploy-isolated-report`** contém `docs/DEPLOY-ISOLATED-TEST.json` (Flyway V12–V14, baseline de usuários/políticas, `autoRestore: false`).
+4. O job `docker` usa variáveis descartáveis no workflow (não são segredos de produção).
 
 ## Não fazer na produção sem checklist
 
