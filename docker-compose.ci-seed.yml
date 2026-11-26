@@ -1,0 +1,8 @@
+# Overlay só para validação isolada (GitHub Actions / CI). Nunca use na EC2.
+# Monta credenciais geradas em .ci/seed-credentials.json (gitignored).
+services:
+  core-api:
+    environment:
+      SEED_CREDENTIALS_FILE: file:/config/seed-credentials.json
+    volumes:
+      - ./.ci/seed-credentials.json:/config/seed-credentials.json:ro

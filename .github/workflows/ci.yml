@@ -68,4 +68,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: deploy-isolated-report
-          path: docs/DEPLOY-ISOLATED-TEST.json
+          path: |
+            docs/DEPLOY-ISOLATED-TEST.json
+            docs/DEPLOY-ISOLATED-CORE-API.log
