@@ -1,10 +1,10 @@
 import { api, ApiError, getSession, login, onSession, setSession } from "./api/client.js";
 import { createRouter } from "./router.js";
 import { button, changePasswordForm, dialog, empty, errorNotice, field, loginForm, notice, pill, skeleton, tabs, toast, txPill } from "./ui.js";
-import { el } from "./utils/dom.js";
+import { el, replace } from "./utils/dom.js";
 import { BAND, BAND_TONE, brl, CHANNEL, dateTime, DECISION, ENTITY_KIND, INCIDENT_STATUS, INCIDENT_TYPE, ms, ORIGIN, relative, setTitle, SOURCE, STATUS, STATUS_ICON } from "./utils/format.js";
 import { icon, mark } from "./utils/icons.js";
-import { labPage, policiesPage, rulesPage } from "./ops-lab.js?v=10";
+import { disposeLabActivityMount, labPage, policiesPage, rulesPage } from "./ops-lab.js?v=11";
 
 const ATTENTION = ["INTERVENTION", "CONTEXT_REQUIRED", "ANALYZING", "BLOCKED"];
 const STATUS_ORDER = ["INTERVENTION", "BLOCKED", "CONTEXT_REQUIRED", "ANALYZING", "RECEIVED", "INCIDENT_RECORDED", "APPROVED_WITH_ALERT", "APPROVED", "CANCELLED"];
@@ -870,7 +870,7 @@ function paintTx(box, data, back) {
   const draw = () => {
     const a = assessments[idx];
     const next = NEXT[s.status] ?? [];
-    box.replaceChildren(
+    replace(box,
       head(s.id, { heading: el("span", { class: "mono" }, s.id), back, badge: txPill(s.status), sub: el("span", {}, `${s.customerName} · ${s.description} · `, el("span", { class: "num" }, brl(s.amount)), ` · ${dateTime(s.createdAt)}`) }),
       assessments.length > 1 ? tabs({ value: String(idx), label: "Avaliações desta compra", onChange: (v) => { idx = Number(v); draw(); }, items: assessments.map((x, i) => ({ value: String(i), label: `${x.stage === "initial" ? "No checkout" : x.stage === "recalculated" ? "Após a verificação" : x.stage} · ${DECISION[x.decision] ?? x.decision}` })) }) : null,
       a ? verdict(a) : notice("muted", "Sem avaliação", "O motor ainda não respondeu para esta compra."),
@@ -2100,7 +2100,7 @@ function demo(search) {
     const alert = { customerId: customers[0]?.id ?? "CUST-001", title: "", body: "" };
     if (search.get("confirmar") === "reiniciar") confirmReset();
     const draw = () => {
-      box.replaceChildren(
+      replace(box,
         head("Demonstração", { sub: "Roteiro da banca: cada cenário passa pelo mesmo caminho do checkout real.", actions: button({ variant: "danger", onClick: confirmReset }, icon("refresh", { size: 18 }), " Reiniciar dados") }),
         error ? errorNotice(error) : null,
         el("h2", { class: "o-sec-h" }, "Cenários"),
@@ -2243,6 +2243,7 @@ async function render(loc) {
     if (!shell.parentElement) document.body.append(shell);
     return;
   }
+  if (loc.name !== "lab") disposeLabActivityMount();
   shell.className = "ops";
   if (!txs) await poll(false);
   opsShell(loc);

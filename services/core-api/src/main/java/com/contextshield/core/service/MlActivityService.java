@@ -23,6 +23,8 @@ public class MlActivityService {
 
     static final int MAX_PAGE = 50;
     static final int DEFAULT_PAGE = 25;
+    /** Máximo por fonte SQL em uma página (evita carregar o histórico inteiro). */
+    static final int SOURCE_FETCH_LIMIT = 400;
     static final String CALIBRATION_NOTE = "A probabilidade exibida é a saída do classificador. Não representa risco calibrado "
             + "de fraude real, salvo validação explícita de calibração.";
     static final String ALIGN_NOTE = "Concordância com o motor indica alinhamento de direção, não acerto da previsão.";
@@ -90,73 +92,148 @@ public class MlActivityService {
 
     public Map<String, Object> activity(long organizationId, ActivityQuery query) {
         int take = query.safeSize();
+        ActivityCursor cursor = ActivityCursor.parse(query.cursor()).orElse(null);
+        if (cursor == null && query.safePage() > 0 && remote.enabled() && (query.cursor() == null || query.cursor().isBlank())) {
+            throw new ApiException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Use nextCursor para páginas após a primeira (paginação unificada).");
+        }
         List<Map<String, Object>> events = new ArrayList<>();
         if (!remote.enabled() || includeCoreEvents(query.eventType())) {
-            events.addAll(coreEvents(organizationId, query));
+            events.addAll(coreEvents(organizationId, query, cursor, SOURCE_FETCH_LIMIT));
         }
         if (remote.enabled() && includeRemoteEvents(query.eventType())) {
             try {
-                for (Map<String, Object> e : remote.activityFeed(organizationId, query)) {
+                for (Map<String, Object> e : remote.activityEvents(organizationId, query, SOURCE_FETCH_LIMIT)) {
                     normalizeEventTimestamps(e);
-                    events.add(e);
+                    if (cursor == null || cursor.isOlderThan(e)) events.add(e);
                 }
             } catch (Exception ignored) {
                 /* mantém eventos da Core quando o ML Service falhar */
             }
         }
-        events.sort(Comparator.comparing(MlActivityService::eventAt).reversed()
-                .thenComparing(e -> String.valueOf(e.get("key"))));
+        events.sort(ACTIVITY_ORDER);
         events = dedupe(events);
-        int from = query.cursor != null && !query.cursor.isBlank() ? indexAfterCursor(events, query.cursor) : query.safePage() * take;
-        int to = Math.min(events.size(), from + take);
-        List<Map<String, Object>> page = from >= events.size() ? List.of() : events.subList(from, to);
-        String nextCursor = page.isEmpty() ? null : String.valueOf(page.get(page.size() - 1).get("key"));
-        return Map.of(
-                "items", page,
-                "totalApprox", events.size(),
-                "page", query.safePage(),
-                "size", take,
-                "hasMore", to < events.size(),
-                "nextCursor", nextCursor == null ? "" : nextCursor,
-                "shadowMode", true,
-                "calibrationNote", CALIBRATION_NOTE,
-                "alignNote", ALIGN_NOTE);
+        if (cursor != null) {
+            events = events.stream().filter(cursor::isOlderThan).toList();
+        }
+        int from = cursor == null && query.safePage() > 0 && !remote.enabled() ? query.safePage() * take : 0;
+        if (from > 0) {
+            if (from >= events.size()) events = List.of();
+            else events = events.subList(from, events.size());
+        }
+        boolean hasMore = events.size() > take;
+        List<Map<String, Object>> page = events.size() <= take ? events : events.subList(0, take);
+        String nextCursor = hasMore && !page.isEmpty() ? ActivityCursor.encode(page.get(page.size() - 1)) : "";
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("items", page);
+        out.put("totalApprox", page.size() + (hasMore ? 1 : 0));
+        out.put("page", query.safePage());
+        out.put("size", take);
+        out.put("hasMore", hasMore);
+        out.put("nextCursor", nextCursor);
+        out.put("shadowMode", true);
+        out.put("calibrationNote", CALIBRATION_NOTE);
+        out.put("alignNote", ALIGN_NOTE);
+        return out;
     }
 
+    private static final Comparator<Map<String, Object>> ACTIVITY_ORDER = Comparator
+            .comparing(MlActivityService::eventAt).reversed()
+            .thenComparing(e -> String.valueOf(e.get("key")), Comparator.reverseOrder());
+
     public Map<String, Object> modelActivity(long organizationId, long modelId) {
-        requireModel(organizationId, modelId);
-        Map<String, Object> out = new LinkedHashMap<>();
-        out.put("model", modelRow(organizationId, modelId));
+        Map<String, Object> coreModel = findCoreModel(organizationId, modelId);
+        Map<String, Object> remotePayload = Map.of();
         if (remote.enabled()) {
-            out.putAll(remote.modelActivity(organizationId, modelId));
+            try {
+                remotePayload = remote.modelActivity(organizationId, modelId);
+            } catch (Exception ignored) {
+                remotePayload = Map.of();
+            }
+        }
+        Object remoteModel = remotePayload.get("model");
+        if (coreModel == null && !(remoteModel instanceof Map<?, ?>)) {
+            throw ApiException.notFound("Modelo");
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.putAll(remotePayload);
+        if (coreModel != null) {
+            out.put("model", mergeModelMetadata(coreModel, remoteModel instanceof Map<?, ?> rm ? (Map<String, Object>) rm : null));
+            out.put("catalogSource", remoteModel instanceof Map<?, ?> ? "BOTH" : "CORE");
         } else {
+            out.put("model", remoteModel);
+            out.put("catalogSource", "ML_SERVICE");
+        }
+        if (!out.containsKey("predictionTotal")) {
             out.putAll(localModelStats(organizationId, modelId));
         }
-        out.put("experiments", jdbc.query("""
-                        select e.id, e.status, e.example_count, e.seed, e.created_at, e.finished_at, e.error
-                        from ml_experiment e
-                        join ml_model m on m.experiment_id = e.id
-                        where m.id = ? and coalesce(e.organization_id, 1) = ?
-                        order by e.id desc limit 12
-                        """, (rs, n) -> Map.of(
-                        "id", rs.getLong("id"),
-                        "status", rs.getString("status"),
-                        "examples", rs.getObject("example_count"),
-                        "seed", rs.getObject("seed"),
-                        "createdAt", rs.getTimestamp("created_at").toLocalDateTime(),
-                        "finishedAt", rs.getTimestamp("finished_at") == null ? null : rs.getTimestamp("finished_at").toLocalDateTime(),
-                        "error", rs.getString("error")), modelId, organizationId));
+        out.put("experiments", coreExperimentsForModel(organizationId, modelId));
         out.put("calibrationNote", CALIBRATION_NOTE);
         out.put("alignNote", ALIGN_NOTE);
         out.put("shadowMode", true);
         return out;
     }
 
-    private boolean includeCoreEvents(String eventType) {
-        if (eventType == null || eventType.isBlank()) return true;
-        String t = eventType.toUpperCase(Locale.ROOT);
-        if (t.startsWith("STUDY") || t.startsWith("AUDIT")) return true;
-        return !remote.enabled();
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> mergeModelMetadata(Map<String, Object> core, Map<String, Object> remote) {
+        if (remote == null) return core;
+        Map<String, Object> merged = new LinkedHashMap<>(core);
+        merged.put("metrics", pick(remote.get("metrics"), core.get("metrics")));
+        merged.put("validation", pick(core.get("validation"), remote.get("validation")));
+        merged.put("status", pick(core.get("status"), remote.get("status")));
+        return merged;
+    }
+
+    private static Object pick(Object preferred, Object fallback) {
+        return preferred != null ? preferred : fallback;
+    }
+
+    private List<Map<String, Object>> coreExperimentsForModel(long organizationId, long modelId) {
+        return jdbc.query("""
+                        select e.id, e.status, e.example_count, e.seed, e.created_at, e.finished_at, e.error
+                        from ml_experiment e
+                        join ml_model m on m.experiment_id = e.id
+                        where m.id = ? and coalesce(e.organization_id, 1) = ?
+                        order by e.id desc limit 12
+                        """, (rs, n) -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getLong("id"));
+                    row.put("status", rs.getString("status"));
+                    row.put("examples", rs.getObject("example_count"));
+                    row.put("seed", rs.getObject("seed"));
+                    row.put("createdAt", rs.getTimestamp("created_at").toLocalDateTime());
+                    Timestamp fin = rs.getTimestamp("finished_at");
+                    row.put("finishedAt", fin == null ? null : fin.toLocalDateTime());
+                    row.put("error", rs.getString("error"));
+                    return row;
+                }, modelId, organizationId);
+    }
+
+    private Map<String, Object> findCoreModel(long organizationId, long modelId) {
+        List<Map<String, Object>> rows = jdbc.query("""
+                        select id, algorithm, status, validation, feature_set, data_origin, metrics_json, experiment_id,
+                               example_count, created_at, approved_at, approved_by, decision_authorized
+                        from ml_model where id = ? and coalesce(organization_id, 1) = ?
+                        """, (rs, n) -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", rs.getLong("id"));
+                    m.put("algorithm", rs.getString("algorithm"));
+                    m.put("status", rs.getString("status"));
+                    m.put("validation", rs.getString("validation"));
+                    m.put("featureSet", rs.getString("feature_set"));
+                    m.put("dataOrigin", rs.getString("data_origin"));
+                    m.put("experimentId", rs.getObject("experiment_id"));
+                    m.put("examples", rs.getObject("example_count"));
+                    m.put("metrics", readJson(rs.getString("metrics_json")));
+                    m.put("createdAt", rs.getTimestamp("created_at").toLocalDateTime());
+                    Timestamp ap = rs.getTimestamp("approved_at");
+                    m.put("approvedAt", ap == null ? null : ap.toLocalDateTime());
+                    m.put("approvedBy", rs.getString("approved_by"));
+                    m.put("decisionAuthorized", rs.getBoolean("decision_authorized"));
+                    m.put("usage", "APPROVED".equals(rs.getString("status")) ? "shadow" : "stored");
+                    return m;
+                }, modelId, organizationId);
+        return rows.isEmpty() ? null : rows.get(0);
     }
 
     private boolean includeRemoteEvents(String eventType) {
@@ -165,19 +242,39 @@ public class MlActivityService {
         return t.startsWith("PREDICTION") || t.startsWith("SHADOW") || t.startsWith("MODEL") || t.startsWith("EXPERIMENT");
     }
 
-    private List<Map<String, Object>> coreEvents(long organizationId, ActivityQuery q) {
+    private boolean includeCoreEvents(String eventType) {
+        if (eventType == null || eventType.isBlank()) return true;
+        String t = eventType.toUpperCase(Locale.ROOT);
+        if (t.startsWith("STUDY") || t.startsWith("AUDIT")) return true;
+        if (t.startsWith("PREDICTION") || t.startsWith("SHADOW") || t.startsWith("MODEL") || t.startsWith("EXPERIMENT")) {
+            return !remote.enabled();
+        }
+        return !remote.enabled();
+    }
+
+    private List<Map<String, Object>> coreEvents(long organizationId, ActivityQuery q, ActivityCursor cursor, int fetchLimit) {
         List<Map<String, Object>> rows = new ArrayList<>();
-        rows.addAll(studyEvents(organizationId, q));
-        rows.addAll(auditEvents(organizationId, q));
+        rows.addAll(filterOlder(studyEvents(organizationId, q), cursor, fetchLimit));
+        rows.addAll(filterOlder(auditEvents(organizationId, q), cursor, fetchLimit));
         if (!remote.enabled()) {
-            rows.addAll(shadowEvents(organizationId, q));
-            rows.addAll(experimentEvents(organizationId, q));
-            rows.addAll(modelApprovalEvents(organizationId, q));
+            rows.addAll(shadowEvents(organizationId, q, cursor, fetchLimit));
+            rows.addAll(filterOlder(experimentEvents(organizationId, q), cursor, fetchLimit));
+            rows.addAll(filterOlder(modelApprovalEvents(organizationId, q), cursor, fetchLimit));
         }
         return rows;
     }
 
-    private List<Map<String, Object>> shadowEvents(long organizationId, ActivityQuery q) {
+    private static List<Map<String, Object>> filterOlder(List<Map<String, Object>> events, ActivityCursor cursor, int cap) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> e : events) {
+            if (cursor != null && !cursor.isOlderThan(e)) continue;
+            out.add(e);
+            if (out.size() >= cap) break;
+        }
+        return out;
+    }
+
+    private List<Map<String, Object>> shadowEvents(long organizationId, ActivityQuery q, ActivityCursor cursor, int fetchLimit) {
         StringBuilder sql = new StringBuilder("""
                 select s.id, s.at, s.tx_id, s.model_id, s.algorithm, s.prediction, s.probability, s.engine_decision,
                        s.latency_ms, s.error, s.stage, m.validation, m.feature_set, m.status model_status
@@ -188,8 +285,27 @@ public class MlActivityService {
         List<Object> args = new ArrayList<>();
         args.add(organizationId);
         appendShadowFilters(sql, args, q);
-        sql.append(" order by s.at desc, s.id desc limit 500");
+        appendShadowKeyset(sql, args, cursor);
+        sql.append(" order by s.at desc, s.id desc limit ?");
+        args.add(fetchLimit);
         return jdbc.query(sql.toString(), (rs, n) -> shadowRow(rs), args.toArray());
+    }
+
+    private static void appendShadowKeyset(StringBuilder sql, List<Object> args, ActivityCursor cursor) {
+        if (cursor == null) return;
+        Long shadowId = cursor.shadowId();
+        if (shadowId != null && cursor.at != null) {
+            sql.append(" and (s.at < ? or (s.at = ? and s.id < ?))");
+            args.add(Timestamp.valueOf(cursor.at));
+            args.add(Timestamp.valueOf(cursor.at));
+            args.add(shadowId);
+        } else if (shadowId != null) {
+            sql.append(" and s.id < ?");
+            args.add(shadowId);
+        } else if (cursor.at != null) {
+            sql.append(" and s.at < ?");
+            args.add(Timestamp.valueOf(cursor.at));
+        }
     }
 
     private Map<String, Object> shadowRow(java.sql.ResultSet rs) throws java.sql.SQLException {
@@ -222,6 +338,11 @@ public class MlActivityService {
     }
 
     private void appendShadowFilters(StringBuilder sql, List<Object> args, ActivityQuery q) {
+        if (q.eventType() != null && !q.eventType().isBlank()) {
+            String t = q.eventType().toUpperCase(Locale.ROOT);
+            if ("PREDICTION".equals(t)) sql.append(" and s.error is null");
+            else if ("SHADOW_FAILURE".equals(t)) sql.append(" and s.error is not null");
+        }
         if (q.modelId() != null) {
             sql.append(" and s.model_id = ?");
             args.add(q.modelId());
@@ -392,7 +513,15 @@ public class MlActivityService {
             sql.append(" and cast(id as varchar) like ?");
             args.add("%" + q.q().trim() + "%");
         }
-        sql.append(" order by coalesce(finished_at, created_at) desc limit 60");
+        if (q.from() != null) {
+            sql.append(" and coalesce(finished_at, created_at) >= ?");
+            args.add(Timestamp.valueOf(q.from()));
+        }
+        if (q.to() != null) {
+            sql.append(" and coalesce(finished_at, created_at) <= ?");
+            args.add(Timestamp.valueOf(q.to()));
+        }
+        sql.append(" order by coalesce(finished_at, created_at) desc, id desc limit 60");
         return jdbc.query(sql.toString(), (rs, n) -> {
             LocalDateTime at = rs.getTimestamp("finished_at") != null
                     ? rs.getTimestamp("finished_at").toLocalDateTime()
@@ -551,13 +680,16 @@ public class MlActivityService {
         var last = jdbc.query("""
                         select at, tx_id, prediction, engine_decision, latency_ms
                         from ml_shadow where organization_id = ? and model_id = ? order by at desc limit 1
-                        """, rs -> rs.next() ? Map.of(
-                        "at", rs.getTimestamp("at").toLocalDateTime(),
-                        "txId", rs.getString("tx_id"),
-                        "prediction", rs.getString("prediction"),
-                        "engineDecision", rs.getString("engine_decision"),
-                        "latencyMs", rs.getObject("latency_ms")) : null,
-                organizationId, modelId);
+                        """, rs -> {
+                    if (!rs.next()) return null;
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("at", rs.getTimestamp("at").toLocalDateTime());
+                    row.put("txId", rs.getString("tx_id"));
+                    row.put("prediction", rs.getString("prediction"));
+                    row.put("engineDecision", rs.getString("engine_decision"));
+                    row.put("latencyMs", rs.getObject("latency_ms"));
+                    return row;
+                }, organizationId, modelId);
         int t = total == null ? 0 : total;
         int a = agree == null ? 0 : agree;
         stats.put("predictionTotal", t);
@@ -565,7 +697,8 @@ public class MlActivityService {
         stats.put("meanLatencyMs", latency == null ? null : Math.round(latency * 1000.0) / 1000.0);
         stats.put("lastPrediction", last);
         stats.put("recentActivity", shadowEvents(organizationId,
-                new ActivityQuery(0, 12, null, modelId, null, null, null, null, null, null, null, null, null, false)));
+                new ActivityQuery(0, 12, null, modelId, null, null, null, null, null, null, null, null, null, false),
+                null, 12));
         return stats;
     }
 
@@ -587,39 +720,6 @@ public class MlActivityService {
                 }, organizationId);
     }
 
-    private Map<String, Object> modelRow(long organizationId, long modelId) {
-        List<Map<String, Object>> rows = jdbc.query("""
-                        select id, algorithm, status, validation, feature_set, data_origin, metrics_json, experiment_id,
-                               example_count, created_at, approved_at, approved_by, decision_authorized
-                        from ml_model where id = ? and coalesce(organization_id, 1) = ?
-                        """, (rs, n) -> {
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("id", rs.getLong("id"));
-                    m.put("algorithm", rs.getString("algorithm"));
-                    m.put("status", rs.getString("status"));
-                    m.put("validation", rs.getString("validation"));
-                    m.put("featureSet", rs.getString("feature_set"));
-                    m.put("dataOrigin", rs.getString("data_origin"));
-                    m.put("experimentId", rs.getObject("experiment_id"));
-                    m.put("examples", rs.getObject("example_count"));
-                    m.put("metrics", readJson(rs.getString("metrics_json")));
-                    m.put("createdAt", rs.getTimestamp("created_at").toLocalDateTime());
-                    m.put("approvedAt", rs.getTimestamp("approved_at") == null ? null : rs.getTimestamp("approved_at").toLocalDateTime());
-                    m.put("approvedBy", rs.getString("approved_by"));
-                    m.put("decisionAuthorized", rs.getBoolean("decision_authorized"));
-                    m.put("usage", "APPROVED".equals(rs.getString("status")) ? "shadow" : "stored");
-                    return m;
-                }, modelId, organizationId);
-        if (rows.isEmpty()) throw ApiException.notFound("Modelo");
-        return rows.get(0);
-    }
-
-    private void requireModel(long organizationId, long modelId) {
-        Integer n = jdbc.queryForObject(
-                "select count(*) from ml_model where id = ? and coalesce(organization_id, 1) = ?", Integer.class, modelId, organizationId);
-        if (n == null || n == 0) throw ApiException.notFound("Modelo");
-    }
-
     private static List<Map<String, Object>> dedupe(List<Map<String, Object>> events) {
         List<Map<String, Object>> out = new ArrayList<>();
         java.util.Set<String> seen = new java.util.LinkedHashSet<>();
@@ -630,13 +730,6 @@ public class MlActivityService {
         return out;
     }
 
-    private static int indexAfterCursor(List<Map<String, Object>> events, String cursor) {
-        for (int i = 0; i < events.size(); i++) {
-            if (cursor.equals(String.valueOf(events.get(i).get("key")))) return i + 1;
-        }
-        return 0;
-    }
-
     private static void normalizeEventTimestamps(Map<String, Object> e) {
         Object at = e.get("at");
         if (at instanceof String s && !s.isBlank()) {
@@ -644,7 +737,7 @@ public class MlActivityService {
         }
     }
 
-    private static LocalDateTime eventAt(Map<String, Object> e) {
+    static LocalDateTime eventAt(Map<String, Object> e) {
         Object at = e.get("at");
         if (at instanceof LocalDateTime ldt) {
             return ldt;

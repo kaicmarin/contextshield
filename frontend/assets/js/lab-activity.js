@@ -8,6 +8,15 @@ import { miniBarChart, stackedBars } from "./lab-charts.js";
 const LIVE_MS_DEFAULT = 10000;
 const TONE = { PREDICTION: "info", SHADOW_FAILURE: "stop", EXPERIMENT_DONE: "ok", EXPERIMENT_FAILED: "stop", MODEL_APPROVED: "ok", STUDY_DONE: "ok", STUDY_FAILED: "stop" };
 
+let activeMount = null;
+
+export function disposeLabActivity() {
+  if (activeMount?.destroy) {
+    activeMount.destroy();
+    activeMount = null;
+  }
+}
+
 function qs(params) {
   const p = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
@@ -20,7 +29,7 @@ function qs(params) {
 function card(label, value, hint) {
   return el("article", { class: "ml-act-card" },
     el("span", { class: "ml-act-card-label" }, label),
-    el("strong", { class: "ml-act-card-value" }, value == null ? "0" : String(value)),
+    el("strong", { class: "ml-act-card-value" }, value == null || value === "" ? "—" : String(value)),
     hint ? el("span", { class: "ml-act-card-hint" }, hint) : null);
 }
 
@@ -59,27 +68,31 @@ function timelineItem(ev, onSelectModel) {
 }
 
 export function mountLabActivity(mount, { isAdmin } = {}) {
+  disposeLabActivity();
   let tab = "live";
-  let filters = { page: 0, size: 25, days: 7, liveIntervalMs: LIVE_MS_DEFAULT };
+  let filters = { page: 0, size: 25, days: 7, liveIntervalMs: LIVE_MS_DEFAULT, cursor: "", cursorStack: [] };
   let summary = null;
   let items = [];
   let seen = new Set();
   let lastRefresh = null;
   let liveTimer = null;
+  let inflight = null;
   let loading = false;
   let error = null;
   let empty = false;
   let selectedModel = null;
   let modelDetail = null;
   let scrollTop = 0;
+  let destroyed = false;
+
   const listEl = () => mount.querySelector(".ml-tl-list");
   const persistScroll = () => { const ul = listEl(); if (ul) scrollTop = ul.scrollTop; };
-  const restoreScroll = () => { const ul = listEl(); if (ul) ul.scrollTop = scrollTop; };
+  const restoreScroll = () => { const ul = listEl(); if (ul) scrollTop = ul.scrollTop; };
 
   const stopLive = () => { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } };
   const scheduleLive = () => {
     stopLive();
-    if (tab !== "live" || document.hidden) return;
+    if (destroyed || tab !== "live" || document.hidden) return;
     liveTimer = setInterval(() => refreshFeed(true), filters.liveIntervalMs);
   };
 
@@ -87,22 +100,26 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
     summary = await api(`/api/ops/ml/activity/summary?days=${filters.days}`, { area: "ops" });
   };
 
+  const buildQuery = (liveOnly) => ({
+    page: liveOnly ? 0 : filters.page,
+    size: liveOnly ? 15 : filters.size,
+    cursor: liveOnly ? "" : (filters.cursor || undefined),
+    modelId: filters.modelId,
+    algorithm: filters.algorithm,
+    eventType: filters.eventType,
+    prediction: filters.prediction,
+    align: filters.align,
+    stage: filters.stage,
+    status: filters.status,
+    q: filters.q,
+    from: filters.from,
+    to: filters.to,
+    live: liveOnly,
+  });
+
   const loadFeed = async (liveOnly = false) => {
-    const query = {
-      page: liveOnly ? 0 : filters.page,
-      size: liveOnly ? 15 : filters.size,
-      modelId: filters.modelId,
-      algorithm: filters.algorithm,
-      eventType: filters.eventType,
-      prediction: filters.prediction,
-      align: filters.align,
-      stage: filters.stage,
-      status: filters.status,
-      q: filters.q,
-      live: liveOnly,
-    };
-    const res = await api(`/api/ops/ml/activity${qs(query)}`, { area: "ops" });
-  const incoming = res.items ?? [];
+    const res = await api(`/api/ops/ml/activity${qs(buildQuery(liveOnly))}`, { area: "ops" });
+    const incoming = res.items ?? [];
     if (liveOnly) {
       const fresh = incoming.filter((ev) => !seen.has(ev.key));
       fresh.forEach((ev) => seen.add(ev.key));
@@ -110,41 +127,47 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
     } else {
       items = incoming;
       seen = new Set(items.map((e) => e.key));
+      if (res.nextCursor) filters.nextCursor = res.nextCursor;
     }
     empty = items.length === 0;
     return res;
   };
 
   const refreshFeed = async (liveTick = false) => {
-    if (loading) return;
-    loading = true;
+    if (destroyed) return;
+    if (inflight) return inflight;
+    loading = !liveTick;
     error = null;
-    try {
-      if (!liveTick) await loadSummary();
-      persistScroll();
-      await loadFeed(liveTick);
-      lastRefresh = new Date();
-      paintShell();
-      restoreScroll();
-      mergeLiveItems(liveTick);
-    } catch (e) {
-      error = e.message || "Falha ao carregar atividades.";
-      paintShell();
-    } finally {
-      loading = false;
-    }
+    const run = async () => {
+      try {
+        if (!liveTick) await loadSummary();
+        persistScroll();
+        await loadFeed(liveTick);
+        lastRefresh = new Date();
+        if (!liveTick) paintShell();
+        else patchLiveHead();
+        restoreScroll();
+      } catch (e) {
+        error = e.message || "Falha ao carregar atividades.";
+        if (!liveTick) paintShell();
+      } finally {
+        loading = false;
+        inflight = null;
+      }
+    };
+    inflight = run();
+    return inflight;
   };
 
-  const mergeLiveItems = (liveTick) => {
-    if (!liveTick) return;
+  const patchLiveHead = () => {
+    const stamp = mount.querySelector("[data-ml-refresh]");
+    if (stamp) stamp.textContent = lastRefresh ? `Atualizado ${lastRefresh.toLocaleTimeString()}` : "";
     const ul = listEl();
-    if (!ul) return;
-    const firstKey = items[0]?.key;
-    const existing = ul.querySelector(`[data-event-key="${firstKey}"]`);
-    if (!existing && firstKey) {
-      const li = timelineItem(items[0], selectModel);
-      ul.prepend(li);
-    }
+    if (!ul || items.length === 0) return;
+    const newest = items[0];
+    if (ul.querySelector(`[data-event-key="${newest.key}"]`)) return;
+    ul.prepend(timelineItem(newest, selectModel));
+    while (ul.children.length > 200) ul.lastElementChild?.remove();
   };
 
   const selectModel = async (id) => {
@@ -157,7 +180,15 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
     paintShell();
   };
 
+  const resetPagination = () => {
+    filters.page = 0;
+    filters.cursor = "";
+    filters.cursorStack = [];
+    filters.nextCursor = "";
+  };
+
   const paintShell = () => {
+    if (destroyed) return;
     const cards = summary?.cards ?? {};
     const charts = summary?.charts ?? {};
     const headRow = el("div", { class: "ml-act-head" },
@@ -167,7 +198,7 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
       el("div", { class: "pol-actions" },
         button({ size: "sm", variant: tab === "live" ? "primary" : "default", onClick: () => { tab = "live"; scheduleLive(); refreshFeed(); } }, icon("play", { size: 14 }), " Ao vivo"),
         button({ size: "sm", variant: tab === "history" ? "primary" : "default", onClick: () => { tab = "history"; stopLive(); refreshFeed(); } }, icon("receipt", { size: 14 }), " Histórico completo"),
-        el("span", { class: "small muted" }, lastRefresh ? `Atualizado ${lastRefresh.toLocaleTimeString()}` : loading ? "Atualizando…" : ""),
+        el("span", { class: "small muted", "data-ml-refresh": "" }, lastRefresh ? `Atualizado ${lastRefresh.toLocaleTimeString()}` : loading ? "Atualizando…" : ""),
       ),
     );
     const dashboard = el("div", { class: "ml-act-grid" },
@@ -177,7 +208,7 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
       card("Concordâncias", cards.agreements, "Direção, não acerto"),
       card("Divergências", cards.disagreements),
       card("Falhas", cards.failures),
-      card("Latência média (ms)", cards.meanLatencyMs == null ? "—" : cards.meanLatencyMs),
+      card("Latência média (ms)", cards.meanLatencyMs),
       card("Experimentos recentes", cards.recentExperiments),
       card("Estudos de política", summary?.recentStudies ?? 0, "Core API"),
     );
@@ -191,33 +222,44 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
       e.preventDefault();
       const fd = new FormData(e.currentTarget);
       filters.modelId = fd.get("modelId") || undefined;
+      filters.algorithm = fd.get("algorithm") || undefined;
       filters.q = fd.get("q") || undefined;
       filters.eventType = fd.get("eventType") || undefined;
       filters.prediction = fd.get("prediction") || undefined;
       filters.align = fd.get("align") || undefined;
       filters.status = fd.get("status") || undefined;
-      filters.page = 0;
+      filters.stage = fd.get("stage") || undefined;
+      filters.from = fd.get("from") || undefined;
+      filters.to = fd.get("to") || undefined;
+      resetPagination();
       refreshFeed();
     } },
-      el("select", { class: "input", name: "modelId", onChange: (e) => { filters.modelId = e.target.value || undefined; } },
+      el("select", { class: "input", name: "modelId", value: filters.modelId ?? "" },
         el("option", { value: "" }, "Modelo"),
-        ...(summary?.models ?? []).map((m) => el("option", { value: String(m.id), selected: String(filters.modelId) === String(m.id) }, `${m.id} · ${m.algorithm}`))),
-      el("input", { class: "input", name: "q", placeholder: "TX ou experimento", onInput: (e) => { filters.q = e.target.value; } }),
-      el("select", { class: "input", name: "eventType", onChange: (e) => { filters.eventType = e.target.value || undefined; } },
+        ...(summary?.models ?? []).map((m) => el("option", { value: String(m.id) }, `${m.id} · ${m.algorithm}`))),
+      el("input", { class: "input", name: "algorithm", placeholder: "Algoritmo", value: filters.algorithm ?? "" }),
+      el("input", { class: "input", name: "q", placeholder: "TX ou experimento", defaultValue: filters.q ?? "" }),
+      el("select", { class: "input", name: "eventType", value: filters.eventType ?? "" },
         el("option", { value: "" }, "Tipo"),
-        ["PREDICTION", "SHADOW_FAILURE", "EXPERIMENT_DONE", "MODEL_APPROVED", "STUDY_DONE"].map((t) => el("option", { value: t }, t))),
-      el("select", { class: "input", name: "prediction", onChange: (e) => { filters.prediction = e.target.value || undefined; } },
+        ["PREDICTION", "SHADOW_FAILURE", "EXPERIMENT_DONE", "EXPERIMENT_QUEUED", "MODEL_APPROVED", "STUDY_DONE"].map((t) => el("option", { value: t }, t))),
+      el("select", { class: "input", name: "prediction", value: filters.prediction ?? "" },
         el("option", { value: "" }, "Resultado"),
         el("option", { value: "FRAUD" }, "FRAUD"),
         el("option", { value: "LEGIT" }, "LEGIT")),
-      el("select", { class: "input", name: "align", onChange: (e) => { filters.align = e.target.value || undefined; } },
+      el("select", { class: "input", name: "align", value: filters.align ?? "" },
         el("option", { value: "" }, "Alinhamento"),
         el("option", { value: "agree" }, "Concorda"),
         el("option", { value: "disagree" }, "Diverge")),
-      el("select", { class: "input", name: "status", onChange: (e) => { filters.status = e.target.value || undefined; } },
+      el("select", { class: "input", name: "stage", value: filters.stage ?? "" },
+        el("option", { value: "" }, "Etapa"),
+        el("option", { value: "initial" }, "Checkout"),
+        el("option", { value: "recalculated" }, "Após verificação")),
+      el("select", { class: "input", name: "status", value: filters.status ?? "" },
         el("option", { value: "" }, "Execução"),
         el("option", { value: "OK" }, "OK"),
         el("option", { value: "FAILED" }, "Falhou")),
+      el("input", { class: "input", name: "from", type: "datetime-local", "aria-label": "De", value: filters.from ?? "" }),
+      el("input", { class: "input", name: "to", type: "datetime-local", "aria-label": "Até", value: filters.to ?? "" }),
       button({ type: "submit", size: "sm", variant: "primary" }, "Filtrar"),
       tab === "live" ? el("label", { class: "small" }, "Atualização (s)",
         el("input", { type: "number", class: "input", min: "5", max: "120", value: String(filters.liveIntervalMs / 1000), onChange: (e) => {
@@ -228,18 +270,29 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
     const timeline = el("ul", { class: "ml-tl-list o-stack" },
       items.length ? items.map((ev) => timelineItem(ev, selectModel)) : el("li", { class: "muted" }, empty && !error ? "Nenhuma atividade no período." : "—"));
     const pager = tab === "history" ? el("div", { class: "pol-actions" },
-      button({ size: "sm", disabled: filters.page <= 0, onClick: () => { filters.page -= 1; refreshFeed(); } }, "Anterior"),
+      button({ size: "sm", disabled: filters.cursorStack.length === 0, onClick: () => {
+        filters.cursor = filters.cursorStack.pop() || "";
+        filters.page = Math.max(0, filters.page - 1);
+        refreshFeed();
+      } }, "Anterior"),
       el("span", { class: "small" }, `Página ${filters.page + 1}`),
-      button({ size: "sm", onClick: () => { filters.page += 1; refreshFeed(); } }, "Próxima"),
+      button({ size: "sm", disabled: !filters.nextCursor, onClick: () => {
+        filters.cursorStack.push(filters.cursor || "");
+        filters.cursor = filters.nextCursor || "";
+        filters.page += 1;
+        refreshFeed();
+      } }, "Próxima"),
     ) : null;
+    const catalogSrc = modelDetail?.catalogSource;
     const detail = selectedModel && modelDetail ? el("aside", { class: "ml-model-drawer panel" },
       el("div", { class: "ml-drawer-head" },
         el("h3", {}, `Modelo ${selectedModel}`),
         button({ size: "sm", onClick: () => { selectedModel = null; modelDetail = null; paintShell(); } }, "Fechar")),
       modelDetail.error ? notice("stop", "Não carregou", modelDetail.error)
         : el("div", { class: "o-stack small" },
+          catalogSrc ? el("p", { class: "muted" }, `Catálogo: ${catalogSrc}`) : null,
           el("p", {}, `${modelDetail.model?.algorithm ?? "—"} · ${modelDetail.model?.status ?? "—"}`),
-          el("p", { class: "muted" }, `Previsões: ${modelDetail.predictionTotal ?? 0} · Concordância: ${modelDetail.agreementRate ?? "—"}%`),
+          el("p", { class: "muted" }, `Previsões: ${modelDetail.predictionTotal ?? "—"} · Concordância: ${modelDetail.agreementRate ?? "—"}%`),
           el("p", { class: "muted" }, modelDetail.alignNote || ""),
         ),
     ) : null;
@@ -250,11 +303,23 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
     );
   };
 
-  document.addEventListener("visibilitychange", () => {
+  const onVisibility = () => {
     if (document.hidden) stopLive();
-    else scheduleLive();
-  });
+    else {
+      scheduleLive();
+      if (tab === "live") refreshFeed(true);
+    }
+  };
+  document.addEventListener("visibilitychange", onVisibility);
+
+  const destroy = () => {
+    destroyed = true;
+    stopLive();
+    document.removeEventListener("visibilitychange", onVisibility);
+  };
 
   refreshFeed().then(scheduleLive);
-  return { stop: stopLive, refresh: refreshFeed };
+  const ctl = { destroy, refresh: refreshFeed };
+  activeMount = ctl;
+  return ctl;
 }
