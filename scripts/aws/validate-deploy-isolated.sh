@@ -20,6 +20,9 @@ psql_count() {
   $COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc "$1" | tr -d '[:space:]'
 }
 
+# shellcheck source=flyway-sql-checks.sh
+. "$ROOT/scripts/aws/flyway-sql-checks.sh"
+
 dump_core_api_logs() {
   local dest="$ROOT/docs/DEPLOY-ISOLATED-CORE-API.log"
   mkdir -p "$(dirname "$dest")"
@@ -49,13 +52,6 @@ assert_health_five() {
   $COMPOSE exec -T investigation-service wget -qO- http://127.0.0.1:8084/actuator/health | grep -q UP
 }
 
-assert_flyway_core_12_14() {
-  for v in 12 13 14; do
-    C=$(psql_count "select count(*) from flyway_schema_history where version='$v' and success")
-    test "$C" -ge 1 || { echo "Flyway core V$v ausente"; exit 1; }
-  done
-}
-
 echo "== Subir Postgres (volume pgdata do projeto $COMPOSE_PROJECT_NAME) =="
 $COMPOSE up -d postgres
 for _ in $(seq 1 36); do
@@ -75,9 +71,9 @@ $COMPOSE up -d core-api
 wait_core_up 50
 assert_health_five
 assert_flyway_core_12_14
-
-FLYWAY_MAX=$(psql_count "select coalesce(max(version::int),0) from flyway_schema_history where success")
-ML_V=$(psql_count "select coalesce(max(version::int),0) from flyway_ml_history where success")
+assert_flyway_ml_1_3
+assert_flyway_threat_ok
+assert_flyway_investigation_ok
 
 USERS_BASELINE=0
 for _ in $(seq 1 45); do
@@ -108,6 +104,12 @@ bash "$ROOT/scripts/aws/deploy-app-update.sh"
 wait_core_up 40
 assert_health_five
 assert_flyway_core_12_14
+assert_flyway_ml_1_3
+assert_flyway_threat_ok
+assert_flyway_investigation_ok
+
+FLYWAY_MAX=$(flyway_core_max)
+ML_V=$(flyway_ml_max)
 
 USERS_AFTER=$(psql_count "select count(*) from app_user")
 RULES_AFTER=$(psql_count "select count(*) from risk_engine_rule where status='PUBLISHED'")
@@ -127,6 +129,8 @@ cat >"$ROOT/docs/DEPLOY-ISOLATED-TEST.json" <<EOF
   "flywayV12": true,
   "flywayV13": true,
   "flywayV14": true,
+  "flywayMlV2": true,
+  "flywayMlV3": true,
   "usersBaseline": $USERS_BASELINE,
   "rulesPublishedBaseline": $RULES_BASELINE,
   "policiesPublishedBaseline": $POL_BASELINE,

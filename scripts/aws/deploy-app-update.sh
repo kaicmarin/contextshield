@@ -43,10 +43,14 @@ until $COMPOSE exec -T core-api wget -qO- http://127.0.0.1:8080/actuator/health 
   sleep 5
 done
 FLYWAY_MAX=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
-  "select coalesce(max(version::text),'0') from flyway_schema_history" 2>/dev/null | tr -d '[:space:]')
+  "select coalesce(max(version::text),'0') from flyway_schema_history where success" | tr -d '[:space:]')
 ML_FLY=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
-  "select coalesce(max(version::text),'0') from flyway_ml_history where success" 2>/dev/null | tr -d '[:space:]' || echo "?")
-echo "Flyway core: versão $FLYWAY_MAX (V12–V14 core; ml-service schema: $ML_FLY)"
+  "select coalesce(max(version::text),'0') from ml.flyway_ml_history where success" | tr -d '[:space:]')
+THREAT_FLY=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
+  "select coalesce(max(version::text),'0') from threat.flyway_threat_history where success" | tr -d '[:space:]')
+INVEST_FLY=$($COMPOSE exec -T postgres psql -U contextshield -d contextshield -tAc \
+  "select coalesce(max(version::text),'0') from investigation.flyway_investigation_history where success" | tr -d '[:space:]')
+echo "Flyway core=$FLYWAY_MAX ml=$ML_FLY threat=$THREAT_FLY investigation=$INVEST_FLY"
 test -d machine-learning/models && echo "Modelos .ser publicados em machine-learning/models preservados no host/imagem."
 
 echo "== 5/5 Health dos microsserviços =="
