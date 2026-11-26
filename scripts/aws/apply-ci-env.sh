@@ -34,7 +34,12 @@ CI_JWT_ALLOW_DEV_SECRET="${CI_JWT_ALLOW_DEV_SECRET:-true}"
 
 export ROOT CI_DB_PASSWORD CI_CORE_DB_PASSWORD CI_THREAT_DB_PASSWORD CI_INVESTIGATION_DB_PASSWORD CI_ML_DB_PASSWORD CI_JWT_SECRET CI_SEED_ENABLED CI_JWT_ALLOW_DEV_SECRET
 
+# shellcheck source=ci-seed-host-perms.sh
+. "$ROOT/scripts/aws/ci-seed-host-perms.sh"
+
+SEED_FILE="$ROOT/.ci/seed-credentials.json"
 mkdir -p "$ROOT/.ci"
+ci_seed_prepare_regenerate "$SEED_FILE"
 
 python3 <<'PY'
 import json
@@ -106,17 +111,6 @@ for k, v in keys.items():
 env_path.write_text("\n".join(out) + "\n", encoding="utf-8")
 PY
 
-SEED_FILE="$ROOT/.ci/seed-credentials.json"
-APP_UID="${CONTEXTSHIELD_APP_UID:-10100}"
-APP_GID="${CONTEXTSHIELD_APP_GID:-10100}"
-chmod 600 "$SEED_FILE"
-if ! chown "${APP_UID}:${APP_GID}" "$SEED_FILE" 2>/dev/null; then
-  if command -v sudo >/dev/null; then
-    sudo chown "${APP_UID}:${APP_GID}" "$SEED_FILE"
-  else
-    echo "apply-ci-env: chown ${APP_UID}:${APP_GID} no host falhou"
-    exit 1
-  fi
-fi
+ci_seed_set_host_permissions "$SEED_FILE"
 
 echo "OK apply-ci-env (.env descartável + .ci/seed-credentials.json gerado; nenhuma senha impressa)"
