@@ -38,7 +38,7 @@ function eventTone(type = "") {
   return TONE[type] || TONE[base] || "muted";
 }
 
-function timelineItem(ev, onSelectModel) {
+function timelineItem(ev, onSelectModel, onOpenReport) {
   const aligned = ev.alignedWithEngine;
   const alignLabel = aligned == null ? null : aligned ? "Concorda com o motor" : "Diverge do motor";
   const details = [];
@@ -62,12 +62,12 @@ function timelineItem(ev, onSelectModel) {
       ev.error ? el("p", { class: "ml-tl-error" }, ev.error) : null,
       ev.probabilityNote ? el("p", { class: "muted small" }, ev.probabilityNote) : null,
       ev.modelId ? button({ size: "sm", onClick: () => onSelectModel(ev.modelId) }, `Modelo ${ev.modelId}`) : null,
-      ev.reportHref ? el("a", { class: "small", href: "#", onClick: (e) => { e.preventDefault(); window.open(ev.reportHref, "_blank"); } }, "Ver relatório") : null,
+      ev.reportHref ? button({ size: "sm", onClick: () => onOpenReport(ev) }, "Ver relatório") : null,
     ),
   );
 }
 
-export function mountLabActivity(mount, { isAdmin } = {}) {
+export function mountLabActivity(mount, { isAdmin, onOpenStudy } = {}) {
   disposeLabActivity();
   let tab = "live";
   let filters = { page: 0, size: 25, days: 7, liveIntervalMs: LIVE_MS_DEFAULT, cursor: "", cursorStack: [] };
@@ -82,6 +82,7 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
   let empty = false;
   let selectedModel = null;
   let modelDetail = null;
+  let selectedReport = null;
   let scrollTop = 0;
   let destroyed = false;
 
@@ -166,7 +167,7 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
     if (!ul || items.length === 0) return;
     const newest = items[0];
     if (ul.querySelector(`[data-event-key="${newest.key}"]`)) return;
-    ul.prepend(timelineItem(newest, selectModel));
+    ul.prepend(timelineItem(newest, selectModel, openReport));
     while (ul.children.length > 200) ul.lastElementChild?.remove();
   };
 
@@ -176,6 +177,30 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
       modelDetail = await api(`/api/ops/ml/models/${id}/activity`, { area: "ops" });
     } catch (e) {
       modelDetail = { error: e.message };
+    }
+    paintShell();
+  };
+
+  const openReport = async (ev) => {
+    const path = String(ev.reportHref || "");
+    const study = /^\/api\/ops\/ml\/studies\/(\d+)$/.exec(path);
+    if (study && typeof onOpenStudy === "function") {
+      await onOpenStudy(Number(study[1]));
+      return;
+    }
+    if (!/^\/api\/ops\/ml\/(?:studies|experiments)\/\d+$/.test(path)) {
+      selectedReport = { title: "Relatório", error: "Endereço de relatório inválido." };
+      paintShell();
+      return;
+    }
+    try {
+      const result = await api(path, { area: "ops" });
+      selectedReport = {
+        title: ev.title || "Relatório do estudo",
+        data: result.report ?? result,
+      };
+    } catch (error) {
+      selectedReport = { title: "Relatório", error: error.message || "Não foi possível abrir o relatório." };
     }
     paintShell();
   };
@@ -268,7 +293,7 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
         } })) : null,
     );
     const timeline = el("ul", { class: "ml-tl-list o-stack" },
-      items.length ? items.map((ev) => timelineItem(ev, selectModel)) : el("li", { class: "muted" }, empty && !error ? "Nenhuma atividade no período." : "—"));
+      items.length ? items.map((ev) => timelineItem(ev, selectModel, openReport)) : el("li", { class: "muted" }, empty && !error ? "Nenhuma atividade no período." : "—"));
     const pager = tab === "history" ? el("div", { class: "pol-actions" },
       button({ size: "sm", disabled: filters.cursorStack.length === 0, onClick: () => {
         filters.cursor = filters.cursorStack.pop() || "";
@@ -296,10 +321,21 @@ export function mountLabActivity(mount, { isAdmin } = {}) {
           el("p", { class: "muted" }, modelDetail.alignNote || ""),
         ),
     ) : null;
+    const reportPanel = selectedReport
+      ? el("section", { class: "panel o-stack", "data-ml-report": "" },
+          el("div", { class: "pol-actions" },
+            el("h3", {}, selectedReport.title),
+            button({ size: "sm", onClick: () => { selectedReport = null; paintShell(); } }, "Fechar")),
+          selectedReport.error
+            ? notice("stop", "Relatório", selectedReport.error)
+            : el("pre", { class: "mono small", style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere", maxHeight: "360px", overflow: "auto" } },
+                JSON.stringify(selectedReport.data, null, 2)),
+        )
+      : null;
     replace(mount,
       el("section", { class: "panel ml-activity o-stack" }, headRow, dashboard, chartRow, filterBar,
         error ? notice("stop", "Conexão", error) : null,
-        timeline, pager, detail),
+        reportPanel, timeline, pager, detail),
     );
   };
 

@@ -220,7 +220,7 @@ public class LabStudyService {
 
             List<SyntheticCases.Case> synthetic = SyntheticCases.generate(Math.max(400, 300), seed);
             SyntheticCases.Parts parts = SyntheticCases.split(synthetic, seed);
-            Map<String, Object> optimization = WeightSearch.run(parts.search(), parts.confirm(), seed, 48, dynamicRules, cost);
+            Map<String, Object> optimization = WeightSearch.run(parts.search(), parts.confirm(), seed, 48, dynamicRules, cost, published);
             Map<String, Object> baselineSynthetic = Map.of(
                     "search", optimization.get("baselineSearch"),
                     "confirm", optimization.get("baselineConfirm"),
