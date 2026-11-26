@@ -23,9 +23,24 @@ await page.waitForURL(/\/loja\/pedido\//);
 await page.getByRole("heading", { name: "Só mais um passo" }).waitFor();
 step("checkout com sinais de indução pede contexto");
 
-// responde como alguém orientado: escolhe sempre a primeira opção
+// Respostas espelho do roteiro (CheckoutFlowTest.inducaoPedeContextoPausaEClienteCancela) → INTERVENTION.
+const inductionAnswers = {
+  origin: "self",
+  contact: "no",
+  coached: "no",
+  address: "mine",
+  anchor: "home",
+  device: "mine",
+  amount: "chose",
+};
 for (;;) {
-  await page.locator(".choice").first().click();
+  const key = await page.locator(".cs-q-set input[type=radio]").first().getAttribute("name");
+  const val = inductionAnswers[key];
+  const choice = val
+    ? page.locator(`label.choice:has(input[name="${key}"][value="${val}"])`)
+    : page.locator(".cs-q-set label.choice").first();
+  await choice.scrollIntoViewIfNeeded();
+  await choice.click({ force: true });
   const next = page.getByRole("button", { name: /Próxima|Enviar respostas/ });
   const last = /Enviar/.test(await next.textContent());
   await next.click();

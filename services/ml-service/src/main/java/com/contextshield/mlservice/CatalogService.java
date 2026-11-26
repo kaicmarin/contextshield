@@ -3,6 +3,7 @@ package com.contextshield.mlservice;
 import com.contextshield.ml.Experiment;
 import com.contextshield.ml.Features;
 import com.contextshield.ml.SavedModel;
+import com.contextshield.ml.support.ExperimentFila;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -22,8 +23,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -39,9 +44,15 @@ public class CatalogService implements ApplicationRunner {
     private final Path modelsDir;
     private final Path workDir;
     private final int maxExamples;
-    private final AtomicBoolean busy = new AtomicBoolean(false);
+    private final Duration maxRun;
+    private final AtomicBoolean workerRunning = new AtomicBoolean(false);
     private final ExecutorService pool = Executors.newSingleThreadExecutor(task -> {
-        Thread thread = new Thread(task, "ml-experiment");
+        Thread thread = new Thread(task, "ml-experiment-queue");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private final ExecutorService training = Executors.newCachedThreadPool(task -> {
+        Thread thread = new Thread(task, "ml-experiment-train");
         thread.setDaemon(true);
         return thread;
     });
@@ -49,22 +60,27 @@ public class CatalogService implements ApplicationRunner {
     public CatalogService(JdbcTemplate jdbc, ObjectMapper mapper, ModelCatalog files,
                           @Value("${contextshield.models-dir}") String modelsDir,
                           @Value("${contextshield.work-dir}") String workDir,
-                          @Value("${contextshield.max-examples}") int maxExamples) {
+                          @Value("${contextshield.max-examples}") int maxExamples,
+                          @Value("${contextshield.experiment-max-minutes:20}") int maxMinutes) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.files = files;
         this.modelsDir = Path.of(modelsDir).toAbsolutePath().normalize();
         this.workDir = Path.of(workDir).toAbsolutePath().normalize();
         this.maxExamples = maxExamples;
+        this.maxRun = Duration.ofMinutes(Math.max(5, maxMinutes));
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        jdbc.update("""
-                update ml_experiment set status = 'FAILED', error = 'O processo encerrou durante o experimento.', finished_at = ?
-                where status in ('QUEUED', 'RUNNING')
-                """, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+        ExperimentFila.recoverOnStartup(jdbc, "ml_experiment");
         registerPublished();
+        kickWorker();
+    }
+
+    void kickWorker() {
+        if (!workerRunning.compareAndSet(false, true)) return;
+        pool.submit(this::drainQueue);
     }
 
     public Map<String, Object> models(long organizationId) {
@@ -141,19 +157,16 @@ public class CatalogService implements ApplicationRunner {
         if (workDir.startsWith(modelsDir)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A pasta de treino não pode ser a pasta dos modelos publicados.");
         }
-        if (!busy.compareAndSet(false, true)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um experimento em execução.");
-        }
-        long id;
-        try {
-            id = insertExperiment(organizationId, examples, seed, actor);
-        } catch (RuntimeException e) {
-            busy.set(false);
-            throw e;
-        }
         double[][] confirmedX = confirmedX(body.get("confirmed"));
         int[] confirmedY = confirmedY(body.get("confirmed"));
-        pool.submit(() -> execute(id, organizationId, examples, seed, confirmedX, confirmedY));
+        String confirmedJson;
+        try {
+            confirmedJson = mapper.writeValueAsString(body.get("confirmed") == null ? List.of() : body.get("confirmed"));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            confirmedJson = "[]";
+        }
+        long id = insertExperiment(organizationId, examples, seed, actor, confirmedJson);
+        kickWorker();
         return experiment(organizationId, id);
     }
 
@@ -273,22 +286,87 @@ public class CatalogService implements ApplicationRunner {
         return Map.of("left", one(organizationId, left), "right", one(organizationId, right), "decidesPurchase", false);
     }
 
-    private void execute(long id, long organizationId, int examples, long seed, double[][] x, int[] y) {
-        jdbc.update("update ml_experiment set status = 'RUNNING' where id = ?", id);
+    private void drainQueue() {
         try {
-            Path dir = workDir.resolve("job-" + id);
-            Files.createDirectories(dir);
-            Map<String, Object> report = Experiment.run(examples, seed, dir, x, y);
-            jdbc.update("update ml_experiment set status = 'DONE', finished_at = ?, report_json = ?, work_dir = ? where id = ?",
-                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), mapper.writeValueAsString(report), dir.toString(), id);
-            store(id, organizationId, report.get("logistic"));
-            store(id, organizationId, report.get("forest"));
-            storeSuggestion(id, organizationId, report.get("optimization"));
-        } catch (Exception e) {
-            jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ?",
-                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), trim(e.getMessage()), id);
+            for (;;) {
+                ExperimentFila.failExpired(jdbc, "ml_experiment", maxRun);
+                Long id = ExperimentFila.claimNext(jdbc, "ml_experiment");
+                if (id == null) break;
+                Job job = loadJob(id);
+                if (job == null) continue;
+                runOne(job);
+            }
         } finally {
-            busy.set(false);
+            workerRunning.set(false);
+            if (ExperimentFila.hasInFlight(jdbc, "ml_experiment")) {
+                kickWorker();
+            }
+        }
+    }
+
+    private record Job(long id, long organizationId, int examples, long seed, double[][] confirmedX, int[] confirmedY) {}
+
+    private Job loadJob(long id) {
+        return jdbc.query("""
+                        select id, organization_id, example_count, seed, confirmed_json
+                        from ml_experiment where id = ? and status = 'RUNNING'
+                        """, rs -> {
+                    if (!rs.next()) return null;
+                    int examples = rs.getInt("example_count");
+                    long seed = rs.getLong("seed");
+                    long organizationId = rs.getLong("organization_id");
+                    String confirmedRaw = rs.getString("confirmed_json");
+                    return new Job(id, organizationId, examples, seed, confirmedXFromJson(confirmedRaw), confirmedYFromJson(confirmedRaw));
+                }, id);
+    }
+
+    private void runOne(Job job) {
+        Future<?> run = training.submit(() -> {
+            try {
+                Path dir = workDir.resolve("job-" + job.id());
+                Files.createDirectories(dir);
+                Map<String, Object> report = Experiment.run(job.examples(), job.seed(), dir, job.confirmedX(), job.confirmedY());
+                jdbc.update("update ml_experiment set status = 'DONE', finished_at = ?, report_json = ?, work_dir = ? where id = ?",
+                        Timestamp.valueOf(LocalDateTime.now().withNano(0)), mapper.writeValueAsString(report), dir.toString(), job.id());
+                store(job.id(), job.organizationId(), report.get("logistic"));
+                store(job.id(), job.organizationId(), report.get("forest"));
+                storeSuggestion(job.id(), job.organizationId(), report.get("optimization"));
+            } catch (Exception e) {
+                jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ? and status = 'RUNNING'",
+                        Timestamp.valueOf(LocalDateTime.now().withNano(0)), trim(e.getMessage()), job.id());
+            }
+        });
+        try {
+            run.get(maxRun.toSeconds(), TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            run.cancel(true);
+            jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ? and status = 'RUNNING'",
+                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), ExperimentFila.ERR_TIMEOUT, job.id());
+        } catch (Exception e) {
+            jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ? and status = 'RUNNING'",
+                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), trim(e.getMessage()), job.id());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private double[][] confirmedXFromJson(String raw) {
+        if (raw == null || raw.isBlank()) return new double[0][];
+        try {
+            Object parsed = mapper.readValue(raw, Object.class);
+            return confirmedX(parsed);
+        } catch (Exception e) {
+            return new double[0][];
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private int[] confirmedYFromJson(String raw) {
+        if (raw == null || raw.isBlank()) return new int[0];
+        try {
+            Object parsed = mapper.readValue(raw, Object.class);
+            return confirmedY(parsed);
+        } catch (Exception e) {
+            return new int[0];
         }
     }
 
@@ -453,18 +531,19 @@ public class CatalogService implements ApplicationRunner {
         return rows.get(0);
     }
 
-    private long insertExperiment(long organizationId, int examples, long seed, String actor) {
+    private long insertExperiment(long organizationId, int examples, long seed, String actor, String confirmedJson) {
         GeneratedKeyHolder keys = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement("""
-                    insert into ml_experiment (organization_id, status, seed, example_count, requested_by, created_at)
-                    values (?, 'QUEUED', ?, ?, ?, ?)
+                    insert into ml_experiment (organization_id, status, seed, example_count, requested_by, created_at, confirmed_json)
+                    values (?, 'QUEUED', ?, ?, ?, ?, ?)
                     """, new String[]{"id"});
             ps.setLong(1, organizationId);
             ps.setLong(2, seed);
             ps.setInt(3, examples);
             ps.setString(4, actor);
             ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+            ps.setString(6, confirmedJson);
             return ps;
         }, keys);
         Number key = keys.getKey();

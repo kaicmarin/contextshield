@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -41,4 +42,20 @@ jobs:
     needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build
+      - run: docker compose -f docker-compose.aws-free.yml build
+
+  deploy-isolated:
+  # Validação descartável: backup + Flyway V12–V14 + health + 2º deploy (sem restaurar dump sobre dados novos).
+    runs-on: ubuntu-latest
+    needs: [backend]
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: chmod +x scripts/aws/validate-deploy-isolated.sh scripts/aws/deploy-app-update.sh
+      - run: bash scripts/aws/validate-deploy-isolated.sh
+      - name: Publicar artefato de evidência
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-isolated-report
+          path: docs/DEPLOY-ISOLATED-TEST.json

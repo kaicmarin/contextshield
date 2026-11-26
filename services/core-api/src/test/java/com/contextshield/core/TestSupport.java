@@ -2,6 +2,7 @@ package com.contextshield.core;
 
 import com.contextshield.core.config.AppProperties;
 import com.contextshield.core.config.JwtService;
+import com.contextshield.core.service.SeedCredentialLoader;
 import com.contextshield.core.service.SeedService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,7 @@ public abstract class TestSupport {
     @Autowired protected MockMvc mvc;
     @Autowired protected ObjectMapper json;
     @Autowired protected SeedService seed;
+    @Autowired protected SeedCredentialLoader seedCredentials;
     @Autowired protected InProcessEngine engine;
 
     private static boolean seeded = false;
@@ -60,10 +62,15 @@ public abstract class TestSupport {
     }
 
     protected String login(String email) throws Exception {
+        String pw = seedCredentials.passwordFor(email);
         String body = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"contexto\"}"))
+                        .content("{\"email\":\"" + email + "\",\"password\":\"" + pw + "\"}"))
                 .andReturn().getResponse().getContentAsString();
         return json.readTree(body).path("token").asText();
+    }
+
+    protected String passwordFor(String email) {
+        return seedCredentials.passwordFor(email);
     }
 
     protected String ana() throws Exception { return login("ana.martins@correio.example"); }

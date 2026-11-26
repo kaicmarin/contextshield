@@ -4,6 +4,7 @@ import com.contextshield.risk.engine.RiskAssessor;
 import com.contextshield.risk.engine.Weights;
 import com.contextshield.risk.model.Assessment;
 import com.contextshield.risk.model.AssessmentInput;
+import com.contextshield.risk.model.DynamicRule;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -31,13 +32,18 @@ public final class WeightSearch {
     }
 
     public static Map<String, Object> run(List<SyntheticCases.Case> search, List<SyntheticCases.Case> confirm, long seed, int requested) {
+        return run(search, confirm, seed, requested, List.of(), PolicyEvaluation.CostProfile.standard());
+    }
+
+    public static Map<String, Object> run(List<SyntheticCases.Case> search, List<SyntheticCases.Case> confirm, long seed,
+                                          int requested, List<DynamicRule> rules, PolicyEvaluation.CostProfile cost) {
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule())
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         RiskAssessor assessor = new RiskAssessor();
         List<Ready> searchReady = ready(mapper, search);
         List<Ready> confirmReady = ready(mapper, confirm);
-        Score baselineSearch = score(assessor, searchReady, Map.of());
-        Score baselineConfirm = score(assessor, confirmReady, Map.of());
+        Score baselineSearch = score(assessor, searchReady, Map.of(), rules, cost);
+        Score baselineConfirm = score(assessor, confirmReady, Map.of(), rules, cost);
 
         Random random = new Random(seed);
         List<String> keys = Weights.CATALOG.stream().map(Weights.Bound::key).toList();
@@ -55,21 +61,23 @@ public final class WeightSearch {
                 int next = current + (random.nextBoolean() ? step : -step);
                 overlay.put(key, Weights.value(Map.of(key, next), key));
             }
-            Score found = score(assessor, searchReady, overlay);
+            Score found = score(assessor, searchReady, overlay, rules, cost);
             evaluated++;
             if (found.cost < bestSearch.cost) {
                 bestSearch = found;
                 best = Map.copyOf(overlay);
             }
         }
-        Score bestConfirm = score(assessor, confirmReady, best);
+        Score bestConfirm = score(assessor, confirmReady, best, rules, cost);
         boolean improved = bestSearch.cost < baselineSearch.cost
                 && bestConfirm.cost <= baselineConfirm.cost
                 && bestConfirm.falseNegatives <= baselineConfirm.falseNegatives;
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("method", "busca aleatória estruturada");
         out.put("candidates", evaluated);
-        out.put("cost", FALSE_NEGATIVE_COST + " * falso negativo + " + FALSE_POSITIVE_COST + " * falso positivo");
+        out.put("cost", cost.description());
+        out.put("costProfileId", cost.id());
+        out.put("dynamicRulesApplied", !rules.isEmpty());
         out.put("definition", "Falso negativo: fraude liberada (aprovada ou aprovada com alerta). Falso positivo: operação legítima não liberada.");
         out.put("searchExamples", searchReady.size());
         out.put("confirmExamples", confirmReady.size());
@@ -125,11 +133,10 @@ public final class WeightSearch {
         return out;
     }
 
-    private static Score score(RiskAssessor assessor, List<Ready> cases, Map<String, Integer> weights) {
-        var config = new AssessmentInput.EngineConfig(
-                AssessmentInput.EngineConfig.defaults().flags(),
-                AssessmentInput.EngineConfig.defaults().providers(),
-                weights);
+    private static Score score(RiskAssessor assessor, List<Ready> cases, Map<String, Integer> weights,
+                               List<DynamicRule> rules, PolicyEvaluation.CostProfile cost) {
+        var base = AssessmentInput.EngineConfig.defaults();
+        var config = new AssessmentInput.EngineConfig(base.flags(), base.providers(), weights, base.contextProbes(), rules);
         int fp = 0;
         int fn = 0;
         for (Ready item : cases) {
@@ -142,7 +149,7 @@ public final class WeightSearch {
             if (item.fraud && released) fn++;
             if (!item.fraud && !released) fp++;
         }
-        return new Score(fp, fn, FALSE_NEGATIVE_COST * fn + FALSE_POSITIVE_COST * fp);
+        return new Score(fp, fn, cost.falseNegativeCost() * fn + cost.falsePositiveCost() * fp);
     }
 
     private record Score(int falsePositives, int falseNegatives, int cost) {

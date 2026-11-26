@@ -37,7 +37,7 @@ public class PolicyController {
     @GetMapping("/catalog")
     public Object catalog() {
         return Map.of("profile", policies.activeProfile(), "signals", policies.catalog(organizations.idOf(Auth.user())),
-                "rules", "As regras R1 a R11 continuam fixas. R12 fica desligada por padrão e, quando ligada, só pede verificação se já houver um sinal de atenção. O score não muda.");
+                "rules", "As regras publicadas no painel Regras do motor são enviadas ao risk-engine a cada compra, sem reiniciar os serviços.");
     }
 
     @GetMapping("/compare")

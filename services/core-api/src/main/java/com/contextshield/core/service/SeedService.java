@@ -48,13 +48,15 @@ public class SeedService {
     private final TransactionService txService;
     private final IncidentService incidentService;
     private final IncidentRepository incidents;
+    private final SeedCredentialLoader seedCredentials;
     private volatile String state = "pending";
 
     public SeedService(ReferenceData ref, AppProperties props, PasswordEncoder encoder, JdbcTemplate jdbc, TransactionTemplate tx,
                        CustomerRepository customers, AppUserRepository users, CardRepository cards, DeviceRepository devices,
                        AddressRepository addresses, MerchantRepository merchants, SellerRepository sellers,
                        CategoryRepository categories, ProductRepository products, TransactionRepository transactions,
-                       TransactionService txService, IncidentService incidentService, IncidentRepository incidents) {
+                       TransactionService txService, IncidentService incidentService, IncidentRepository incidents,
+                       SeedCredentialLoader seedCredentials) {
         this.ref = ref;
         this.props = props;
         this.encoder = encoder;
@@ -73,6 +75,7 @@ public class SeedService {
         this.txService = txService;
         this.incidentService = incidentService;
         this.incidents = incidents;
+        this.seedCredentials = seedCredentials;
     }
 
     public String state() {
@@ -156,7 +159,11 @@ public class SeedService {
             return;
         }
         shiftDays = props.seed().anchorToday() ? Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(STORY_DAY, LocalDate.now())) : 0;
-        String hash = encoder.encode(props.seed().demoPassword());
+        Set<String> emails = new LinkedHashSet<>();
+        for (JsonNode c : ref.get("customers")) emails.add(c.path("email").asText());
+        emails.add(ANALYST_EMAIL);
+        emails.add(ADMIN_EMAIL);
+        Map<String, String> passwords = seedCredentials.passwordsFor(emails);
         for (JsonNode c : ref.get("customers")) {
             Customer x = new Customer();
             x.setId(c.path("id").asText());
@@ -171,10 +178,13 @@ public class SeedService {
             x.setAvgTicket90d(c.path("spend").path("avgTicket90d").decimalValue());
             x.setPurchases90d(c.path("spend").path("purchases90d").asInt());
             customers.save(x);
-            users.save(user(x.getEmail(), x.getName(), AppUser.Role.CUSTOMER, x.getId(), hash));
+            users.save(user(x.getEmail(), x.getName(), AppUser.Role.CUSTOMER, x.getId(),
+                    encoder.encode(passwords.get(x.getEmail().trim().toLowerCase()))));
         }
-        users.save(user(ANALYST_EMAIL, "Lívia Moreira", AppUser.Role.ANALYST, null, hash));
-        users.save(user(ADMIN_EMAIL, "Administrador", AppUser.Role.ADMIN, null, hash));
+        users.save(user(ANALYST_EMAIL, "Lívia Moreira", AppUser.Role.ANALYST, null,
+                encoder.encode(passwords.get(ANALYST_EMAIL.toLowerCase()))));
+        users.save(user(ADMIN_EMAIL, "Administrador", AppUser.Role.ADMIN, null,
+                encoder.encode(passwords.get(ADMIN_EMAIL.toLowerCase()))));
         for (JsonNode c : ref.get("cards")) {
             Card x = new Card();
             x.setId(c.path("id").asText());

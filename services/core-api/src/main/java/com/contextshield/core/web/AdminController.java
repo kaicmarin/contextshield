@@ -4,6 +4,7 @@ import com.contextshield.core.config.CurrentUser;
 import com.contextshield.core.domain.AppUser;
 import com.contextshield.core.repo.AppUserRepository;
 import com.contextshield.core.repo.CustomerRepository;
+import com.contextshield.core.security.PasswordPolicy;
 import com.contextshield.core.service.AuditService;
 import com.contextshield.core.service.OrganizationService;
 import jakarta.validation.Valid;
@@ -54,7 +55,7 @@ public class AdminController {
     }
 
     public record CreateUser(@NotBlank @Email String email, @NotBlank @Size(max = 120) String name,
-                             @NotBlank @Size(min = 8, max = 72) String password,
+                             @NotBlank @Size(min = PasswordPolicy.MIN_LENGTH, max = PasswordPolicy.MAX_LENGTH) String password,
                              @NotBlank @Pattern(regexp = "CUSTOMER|ANALYST|ADMIN") String role, String customerId) {}
 
     @PostMapping
@@ -68,6 +69,7 @@ public class AdminController {
         u.setName(req.name().trim());
         u.setRole(AppUser.Role.valueOf(req.role()));
         u.setCustomerId("CUSTOMER".equals(req.role()) ? req.customerId() : null);
+        PasswordPolicy.requireNewPassword(req.password());
         u.setPasswordHash(encoder.encode(req.password()));
         u.setActive(true);
         u.setCreatedAt(LocalDateTime.now());
@@ -78,7 +80,7 @@ public class AdminController {
     }
 
     public record UpdateUser(@Size(max = 120) String name, @Pattern(regexp = "CUSTOMER|ANALYST|ADMIN") String role,
-                             Boolean active, @Size(min = 8, max = 72) String password) {}
+                             Boolean active, @Size(min = PasswordPolicy.MIN_LENGTH, max = PasswordPolicy.MAX_LENGTH) String password) {}
 
     @PutMapping("/{id}")
     public AuthController.UserView update(@PathVariable Long id, @Valid @RequestBody UpdateUser req) {
@@ -98,13 +100,16 @@ public class AdminController {
             u.setActive(req.active());
         }
         if (req.role() != null && !req.role().equals(u.getRole().name())) revoke = true;
+        boolean passwordReset = false;
         if (req.password() != null) {
+            PasswordPolicy.requireNewPassword(req.password());
             u.setPasswordHash(encoder.encode(req.password()));
             revoke = true;
+            passwordReset = true;
         }
         if (revoke) u.bumpTokenVersion();
         users.save(u);
-        audit.log(me.email(), "USER_UPDATED", u.getEmail(), null);
+        audit.log(me.email(), passwordReset ? "PASSWORD_RESET" : "USER_UPDATED", u.getEmail(), null);
         return AuthController.UserView.of(u);
     }
 

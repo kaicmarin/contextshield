@@ -2,6 +2,7 @@ package com.contextshield.core.web;
 
 import com.contextshield.core.service.MlLabService;
 import com.contextshield.core.service.RiskPolicyService;
+import com.contextshield.core.service.RiskRuleService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +15,12 @@ import java.util.Map;
 public class GovernanceController {
 
     private final RiskPolicyService policies;
+    private final RiskRuleService rules;
     private final MlLabService lab;
 
-    public GovernanceController(RiskPolicyService policies, MlLabService lab) {
+    public GovernanceController(RiskPolicyService policies, RiskRuleService rules, MlLabService lab) {
         this.policies = policies;
+        this.rules = rules;
         this.lab = lab;
     }
 
@@ -44,6 +47,27 @@ public class GovernanceController {
         return policies.rollback(id, Auth.user().email());
     }
 
+    @PostMapping("/rules/{id}/approve")
+    public Object approveRule(@PathVariable long id) {
+        return rules.approve(id, Auth.user().email());
+    }
+
+    @PostMapping("/rules/{id}/reject")
+    public Object rejectRule(@PathVariable long id, @RequestBody(required = false) ReasonRequest req) {
+        String reason = req == null || req.reason() == null || req.reason().isBlank() ? "Rejeitada" : req.reason();
+        return rules.reject(id, reason, Auth.user().email());
+    }
+
+    @PostMapping("/rules/{id}/publish")
+    public Object publishRule(@PathVariable long id) {
+        return rules.publish(id, Auth.user().email());
+    }
+
+    @PostMapping("/rules/{id}/rollback")
+    public Object rollbackRule(@PathVariable long id) {
+        return rules.rollback(id, Auth.user().email());
+    }
+
     @PostMapping("/ml/models/{id}/approve")
     public Object approveModel(@PathVariable long id) {
         return lab.approveModel(id, Auth.user().email());
@@ -62,6 +86,11 @@ public class GovernanceController {
     @PostMapping("/ml/suggestions/{id}/draft")
     public Object draft(@PathVariable long id) {
         return lab.draftFromSuggestion(id, Auth.user().email());
+    }
+
+    @PostMapping("/ml/rule-suggestions/{id}/draft")
+    public Object draftRule(@PathVariable long id) {
+        return rules.draftFromMlSuggestion(id, Auth.user().email());
     }
 
     public record OutcomeRequest(@NotBlank String txId, @NotBlank String label) {}

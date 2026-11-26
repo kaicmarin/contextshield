@@ -7,6 +7,6 @@ spring:
 contextshield:
   seed:
     enabled: ${SEED_ENABLED:true}
-    demo-password: ${DEMO_PASSWORD:contexto}
+    credentials-file: ${SEED_CREDENTIALS_FILE:}
   jwt:
     allow-dev-secret: true

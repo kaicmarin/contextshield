@@ -1,4 +1,5 @@
 import { api, login } from "./api/client.js";
+import { demoPasswordFor } from "./demo-seed-passwords.js";
 import { addLine, cartState, clearCart, replaceLines } from "./cart.js";
 import { arrivalDate } from "./catalog.js";
 import { plate, qtyControl, storeError } from "./store-parts.js";
@@ -205,7 +206,12 @@ export function createCheckout(session, go) {
       model.touched = { entrega: false, pagamento: false, revisao: false };
       model.scenario = s;
       const current = session();
-      if (current?.user.customerId !== s.customerId) await login("customer", DEMO_EMAIL[s.customerId], "contexto");
+      if (current?.user.customerId !== s.customerId) {
+        const email = DEMO_EMAIL[s.customerId];
+        const pw = demoPasswordFor(email);
+        if (!pw) throw new Error("Senha de demonstração não configurada para " + email);
+        await login("customer", email, pw);
+      }
       replaceLines(s.cart.map((l) => ({ ...l })));
       model.loadBusy = false;
       await loadMe();

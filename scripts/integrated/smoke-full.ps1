@@ -7,7 +7,8 @@ $root = Get-ItRoot
 $psql = Get-PsqlPath
 $pgHost = if ($env:PGHOST) { $env:PGHOST } else { "127.0.0.1" }
 $pgPort = if ($env:PGPORT) { $env:PGPORT } else { "5433" }
-$demoPw = if ($env:DEMO_LOGIN_PASSWORD) { $env:DEMO_LOGIN_PASSWORD } else { "contexto" }
+. (Join-Path $PSScriptRoot "Resolve-ItLogin.ps1")
+function DemoPw($email) { Get-ItLoginPassword -Email $email -Root $root -Base $base }
 $results = [System.Collections.Generic.List[object]]::new()
 
 function Note($id, $name, $pass, $detail) {
@@ -88,19 +89,19 @@ foreach ($p in @(18080, 18081, 18082, 18083, 18084)) {
 }
 
 Write-Host "=== 2. LOGIN E REVOGACAO JWT ==="
-$login = Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + $demoPw + '"}')
+$login = Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + (DemoPw "analista@contextshield.example") + '"}')
 $analystLogin = try { $login.Body | ConvertFrom-Json } catch { $null }
 $analystTok = $analystLogin.token
 $analystId = $analystLogin.user.id
 Note "2.1" "Login analista" ($login.Code -eq "200" -and $analystTok) "HTTP $($login.Code)"
 
-$adminLogin = Api "POST" "/api/auth/login" $null ('{"email":"admin@contextshield.example","password":"' + $demoPw + '"}')
+$adminLogin = Api "POST" "/api/auth/login" $null ('{"email":"admin@contextshield.example","password":"' + (DemoPw "admin@contextshield.example") + '"}')
 $adminTok = ($adminLogin.Body | ConvertFrom-Json).token
 Api "PUT" "/api/admin/users/$analystId" $adminTok '{"active":false}' | Out-Null
 $denied = Api "GET" "/api/ops/overview" $analystTok $null
 Note "2.2" "Token invalido apos desativar" ($denied.Code -eq "401") "HTTP $($denied.Code)"
 Api "PUT" "/api/admin/users/$analystId" $adminTok '{"active":true}' | Out-Null
-$analystTok = (Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + $demoPw + '"}')).Body | ConvertFrom-Json | Select-Object -ExpandProperty token
+$analystTok = (Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + (DemoPw "analista@contextshield.example") + '"}')).Body | ConvertFrom-Json | Select-Object -ExpandProperty token
 
 Write-Host "=== 3. ADMIN OPS SENSIVEL ==="
 $aPut = Api "PUT" "/api/ops/engine/config" $analystTok '{"key":"script-mirror","enabled":true}'
@@ -118,7 +119,7 @@ for ($i = 0; $i -lt 20; $i++) {
     if ($bad.Code -eq "429") { $last429 = $true; break }
 }
 Note "4.1" "Login rate limit 429" $last429 "email $rlEmail tentativas $($i+1)"
-$anaLogin = Api "POST" "/api/auth/login" $null ('{"email":"ana.martins@correio.example","password":"' + $demoPw + '"}')
+$anaLogin = Api "POST" "/api/auth/login" $null ('{"email":"ana.martins@correio.example","password":"' + (DemoPw "ana.martins@correio.example") + '"}')
 $anaTok = ($anaLogin.Body | ConvertFrom-Json).token
 $chk429 = $false
 for ($i = 0; $i -lt 250; $i++) {
@@ -167,7 +168,7 @@ Note "8.2" "Fluxo assign/evidence/transition" ($asg.Code -eq "200" -and $evd.Cod
 Write-Host "=== 10. ISOLAMENTO ORG ==="
 # Market org (2): analista temporariamente em org 2 via SQL, depois restaura
 & $psql -h $pgHost -p $pgPort -U postgres -d contextshield_it -c "UPDATE app_user SET organization_id = 2 WHERE email = 'analista@contextshield.example';" | Out-Null
-$analystTok2 = (Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + $demoPw + '"}')).Body | ConvertFrom-Json | Select-Object -ExpandProperty token
+$analystTok2 = $analystTok
 $opsTx = Api "GET" "/api/ops/transactions?size=1" $analystTok2 $null
 $total = try { ($opsTx.Body | ConvertFrom-Json).total } catch { -1 }
 & $psql -h $pgHost -p $pgPort -U postgres -d contextshield_it -c "UPDATE app_user SET organization_id = 1 WHERE email = 'analista@contextshield.example';" | Out-Null
@@ -181,7 +182,7 @@ if ($listen) { Stop-Process -Id $listen.OwningProcess -Force -ErrorAction Silent
 $up = Start-CoreIt -rp $rootPath -logName "core-restart.log"
 $cntTx2 = & $psql -h $pgHost -p $pgPort -U core_app -d contextshield_it -t -A -c "SELECT count(*) FROM transactions;"
 $txStill2 = if ($txId) { & $psql -h $pgHost -p $pgPort -U core_app -d contextshield_it -t -A -c "SELECT count(*) FROM transactions WHERE id='$txId';" } else { "0" }
-$reLogin = Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + $demoPw + '"}')
+$reLogin = Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + (DemoPw "analista@contextshield.example") + '"}')
 Note "9" "Dados apos restart Core" ($up -and $cntTx2 -eq $cntTx -and $txStill2 -eq "1" -and $reLogin.Code -eq "200") "core_UP=$up tx_antes=$cntTx tx_depois=$cntTx2 smoke_tx=$txStill2"
 
 Write-Host "=== ASSETS VERSIONAMENTO (G2) ==="

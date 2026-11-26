@@ -79,6 +79,17 @@ export async function api(path, { method = "GET", body, area } = {}) {
   return data;
 }
 
+export async function changePassword(area, { currentPassword, newPassword, confirmPassword }) {
+  const s = await api("/api/me/password", {
+    method: "POST",
+    body: { currentPassword, newPassword, confirmPassword },
+    area,
+  });
+  const existing = getSession(area);
+  if (existing) setSession(area, { ...existing, token: s.token, expiresAt: s.expiresAt, user: s.user });
+  return s;
+}
+
 export async function login(area, email, password) {
   const s = await api("/api/auth/login", { method: "POST", body: { email, password } });
   if (area === "ops" && s.user.role === "CUSTOMER") {

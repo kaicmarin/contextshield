@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import com.contextshield.risk.engine.BuiltinRuleCatalog;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,7 +49,8 @@ public final class Experiment {
         Eval forest = evaluate(forestLoaded, testX, testY);
         boolean reload = same(logisticSaved, logisticLoaded, testX) && same(forestSaved, forestLoaded, testX);
 
-        Map<String, Object> optimization = WeightSearch.run(parts.search(), parts.confirm(), seed, 36);
+        Map<String, Object> optimization = WeightSearch.run(parts.search(), parts.confirm(), seed, 36,
+                BuiltinRuleCatalog.publishedDefaults(), PolicyEvaluation.CostProfile.standard());
         List<SyntheticCases.Case> shift = SyntheticCases.generateShift(Math.max(200, count / 5), seed + 9176L);
         Eval shiftLogistic = evaluate(logisticLoaded, matrix(shift), labels(shift));
         Eval shiftForest = evaluate(forestLoaded, matrix(shift), labels(shift));

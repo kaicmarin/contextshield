@@ -12,6 +12,8 @@ backups/
 .env.*
 !.env.example
 scripts/integrated/it.env
+scripts/integrated/seed-credentials.local.json
+**/seed-credentials.local.json
 *.pem
 *.key
 *.p12

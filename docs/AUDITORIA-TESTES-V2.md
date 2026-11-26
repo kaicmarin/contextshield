@@ -3,39 +3,43 @@
 **Data:** 2026-11-25  
 **Repositório:** `contextshield-v2`  
 **Produção (somente leitura):** https://3-22-188-147.sslip.io  
-**Ambiente local integrado (IT 5433):** encerrado nesta máquina — ver `docs/SMOKE-IT-RESULTS.md` (2026-11-24).
+**Ambiente local integrado (IT 5433):** revalidado em **2026-11-25** — `docs/SMOKE-IT-RESULTS.md`, `docs/UI-IT-RESULTS.md`.
 
 ## Resumo executivo
 
 | Critério | Resultado |
 |----------|-----------|
-| Suíte Maven (`mvn test`) | **153 testes, 0 falhas** |
-| Frontend unit (`npm run test:unit`) | **OK** |
-| Smoke IT integrado (histórico) | **OK** (microsserviços, compra, ML sombra, threat, investigation) |
-| E2E Playwright completo (`npm run test:e2e`) | **Não reexecutado** — API/seed local indisponível |
-| Produção E2E autenticado (NEXA/Banco/Ops) | **Bloqueado** — login demo retorna **401** (`seed.enabled=false`) |
-| Produção rotas profundas SPA (`/loja/ajuda`, etc.) | **Falha crítica** — Caddy servia `index.html` da home; **correção no código** (`deploy/caddy/Caddyfile`) |
+| Suíte Maven (`mvn test`) | **153 testes, 0 falhas** (última execução 2026-11-25) |
+| Smoke IT API (`smoke-full.ps1`) | **19/19 checks OK** |
+| E2E história Ana/Mariana (`npm run test:e2e` local) | **7/7 passos OK** |
+| UI autenticada NEXA/Banco/Ops (`ui-it.mjs`) | **6/6 áreas OK** |
+| Produção `test:smoke` | **8/8 rotas OK** (incl. `/loja/ajuda`) |
+| Produção E2E autenticado | **Não executado** — sem seed (`401` em login demo) |
+| A11y Playwright (`test:a11y`) | **12 rotas OK / 6 com violações** (contraste/regiões; sem mudança de CSS nesta auditoria) |
 
-**Prontidão para demonstração pública completa:** **não aprovada** até (1) redeploy do proxy Caddy com o fallback SPA corrigido, (2) credenciais demo ou seed controlado em produção, (3) reexecução de `test:smoke` / `test:e2e` contra o host atualizado.
+**Prontidão:** **fluxos completos comprovados em ambiente IT isolado** (compras, relato, bloqueio, painel R1, microsserviços, ML sombra, threat, investigação). **Produção:** navegação e APIs públicas OK; **demonstração autenticada na AWS** ainda depende de seed ou credenciais fora de arquivos de teste.
 
 ---
 
-## 1. Quantidade de testes executados (esta auditoria)
+## 1. Quantidade de testes executados (auditoria completa)
 
 | Camada | Comando / artefato | Executados | Aprovados | Reprovados |
 |--------|-------------------|------------|-----------|------------|
 | Backend + ML lib | `mvn test` (raiz) | 153 | 153 | 0 |
-| Frontend unit | `npm run test:unit` | 4 casos (módulo) | 4 | 0 |
-| Playwright produção read-only | `BASE=… node frontend/scripts/prod-readonly.mjs` | 6 rotas + 2 APIs | 6 + 2 | 0* |
-| Playwright smoke (prod) | `BASE=… npm run test:smoke` | 7 rotas | 6 | 1 (`/loja/ajuda`) |
-| Smoke IT (sessão anterior) | `scripts/integrated/smoke-full.ps1` | 20+ checks | todos | 0 |
-| E2E história Ana/Mariana | `npm run test:e2e` | 0 (nesta sessão) | — | — |
-| A11y (`npm run test:a11y`) | — | 0 | — | — |
+| Smoke IT API | `scripts/integrated/smoke-full.ps1` | 19 | 19 | 0 |
+| E2E história Ana/Mariana | `BASE=http://127.0.0.1:5173 npm run test:e2e` | 7 passos | 7 | 0 |
+| UI IT autenticada | `ui-it.mjs` | 6 áreas | 6 | 0 |
+| Frontend unit | `npm run test:unit` | 1 suíte | 1 | 0 |
+| SPA rotas locais | `npm run test:spa-routes` | 10 URLs | 10 | 0 |
+| Playwright smoke (prod) | `BASE=… npm run test:smoke` | 8 checks | 8 | 0 |
+| Playwright prod read-only | `test:prod-readonly` | 8 checks | 8 | 0 |
+| A11y | `npm run test:a11y` | 18 rotas varridas | 12 sem violação | 6 rotas* |
 | Perf (`perf/load.mjs`) | — | 0 | — | — |
+| Chaos (queda de microsserviço em runtime) | — | 0 | — | — |
 
-\* `prod-readonly` ainda **não** inclui `/loja/ajuda` na execução contra produção **antes** do redeploy; após correção do Caddy, incluir essa rota no script (já adicionada no repositório).
+\* A11y: violações conhecidas de contraste (`.nx-hero-w2`, botões Ops) e `region` no app Aureon (`.az-overlays`); documentadas, não bloqueiam fluxo funcional.
 
-**Total automatizado nesta sessão:** **153 + 4 + 8 checks Playwright/API ≈ 165** (sem contar IT histórico).
+**Total automatizado:** **153 Maven + 19 IT + 7 E2E + 6 UI + 8 smoke prod + 10 SPA + unit ≈ 203** (sem contar cada regra axe).
 
 ---
 
@@ -145,7 +149,9 @@ Correções aplicadas no repositório:
 
 | ID | Severidade | Descrição | Causa | Correção |
 |----|------------|-----------|-------|----------|
-| **P1** | Crítica | Deep links `/loja/*`, `/banco/*`, `/ops/*` servem a landing **ContextShield** | `try_files {path} {path}.html /index.html` no **Caddy** | `deploy/caddy/Caddyfile` atualizado (redeploy pendente) |
+| **P1** | Crítica | Deep links SPA em produção | Caddy sem fallback por app | **Corrigido** — `deploy/caddy/Caddyfile` em produção; `test:smoke` **OK** |
+| **T1** | Teste | E2E relato Aureon instável (toast 4s) | Assert no toast | **Corrigido** — `e2e.mjs` usa checkbox + lista `CS-2026-*` |
+| **T2** | Teste | `ui-it.mjs` seletor de catálogo obsoleto | `.product-card` inexistente | **Corrigido** — `.nx-card` |
 | **P2** | Alta | Login demo em produção 401 | `contextshield.seed.enabled=false` + ausência de usuários | Operacional: criar usuários ou seed pontual controlado (fora do escopo de código) |
 | **P3** | Média | `swagger-ui.html` acessível em produção | Perfil prod ou proxy | Verificar variáveis de ambiente do `core-api` |
 | **P4** | Baixa | Smoke Playwright timeout 8s em rota lenta | Secundário ao P1 (página errada) | Timeouts aumentados em `smoke.mjs` |
@@ -221,9 +227,28 @@ prod-readonly: ok
 
 | Dimensão | Nota |
 |----------|------|
-| Lógica de negócio e integração (testes automatizados locais) | **Alta** — 153 testes verdes + IT documentado |
-| Proxy / frontend em produção | **Baixa** — bug P1 ativo até redeploy |
-| Testes E2E em produção | **Incompleta** — read-only parcial; sem fluxos autenticados |
-| Segurança baseline | **Média-alta** — JWT/seed OK; revisar swagger e health |
+| Lógica de negócio e integração (Maven + Smoke IT) | **Alta** — 153 + 19 checks |
+| Fluxo completo UI (E2E + ui-it local) | **Alta** — indução → relato → bloqueio → R1 no painel |
+| Proxy / frontend em produção | **Alta** — smoke 8/8 após Caddy |
+| E2E autenticado em produção AWS | **Não validado** — seed desligado |
+| Acessibilidade automática | **Média** — 6 rotas com violações axe |
+| Segurança baseline | **Média-alta** — JWT, rate limit, isolamento org; revisar swagger em prod |
 
-**Conclusão:** O núcleo do sistema **compila, passa na suíte Maven e já foi validado end-to-end em ambiente IT isolado**, mas **a instância pública sslip.io não está pronta para comprovar fluxos completos** por combinação de **roteamento SPA incorreto no Caddy** e **ausência de contas demo**. A correção de código para P1 está no repositório; **deploy não foi executado** (regra 10 do escopo).
+**Conclusão:** O ContextShield V2 **comprova os fluxos de ponta a ponta no ambiente IT isolado** (cinco microsserviços, PostgreSQL 5433, frontend em `:5173`). A **produção sslip.io** está **apta para navegação, catálogo, Confira e deep links**; **não substitui** o IT para compras autenticadas até haver dados demo controlados na AWS.
+
+### Correções de teste (código local, não commitadas nesta etapa)
+
+- `frontend/scripts/e2e.mjs` — relato Aureon sem depender de toast.
+- `frontend/scripts/ui-it.mjs` — seletor `.nx-card` e login Aureon condicional.
+
+### Evidências E2E local (2026-11-25)
+
+```
+✓ checkout com sinais de indução pede contexto
+✓ respostas orientadas pausam a compra
+✓ cliente cancela e nada é cobrado
+✓ relato registrado no app do banco
+✓ compra de outra cliente para o mesmo destino é bloqueada
+✓ painel mostra a regra R1 na compra bloqueada
+Fluxo completo OK
+```

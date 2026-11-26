@@ -1,10 +1,10 @@
 import { api, ApiError, getSession, login, onSession, setSession } from "./api/client.js";
 import { createRouter } from "./router.js";
-import { button, dialog, empty, errorNotice, field, loginForm, notice, pill, skeleton, tabs, toast, txPill } from "./ui.js";
+import { button, changePasswordForm, dialog, empty, errorNotice, field, loginForm, notice, pill, skeleton, tabs, toast, txPill } from "./ui.js";
 import { el } from "./utils/dom.js";
 import { BAND, BAND_TONE, brl, CHANNEL, dateTime, DECISION, ENTITY_KIND, INCIDENT_STATUS, INCIDENT_TYPE, ms, ORIGIN, relative, setTitle, SOURCE, STATUS, STATUS_ICON } from "./utils/format.js";
 import { icon, mark } from "./utils/icons.js";
-import { labPage, policiesPage } from "./ops-lab.js?v=8";
+import { labPage, policiesPage, rulesPage } from "./ops-lab.js?v=10";
 
 const ATTENTION = ["INTERVENTION", "CONTEXT_REQUIRED", "ANALYZING", "BLOCKED"];
 const STATUS_ORDER = ["INTERVENTION", "BLOCKED", "CONTEXT_REQUIRED", "ANALYZING", "RECEIVED", "INCIDENT_RECORDED", "APPROVED_WITH_ALERT", "APPROVED", "CANCELLED"];
@@ -20,7 +20,7 @@ const NEXT = {
   APPROVED_WITH_ALERT: ["INCIDENT_RECORDED"],
 };
 const GO = { v: "/ops", t: "/ops/transacoes", r: "/ops/relatos", i: "/ops/inteligencia", m: "/ops/motor", a: "/ops/auditoria", d: "/ops/demo" };
-const SECTIONS = { "": "Visão geral", transacoes: "Transações", relatos: "Relatos", casos: "Casos", inteligencia: "Inteligência", motor: "Motor de risco", politicas: "Políticas de risco", laboratorio: "Laboratório", modelos: "Modelos", auditoria: "Auditoria", usuarios: "Usuários", demo: "Demonstração" };
+const SECTIONS = { "": "Visão geral", transacoes: "Transações", relatos: "Relatos", casos: "Casos", inteligencia: "Inteligência", motor: "Motor de risco", politicas: "Políticas de risco", regras: "Regras do motor", laboratorio: "Laboratório", modelos: "Modelos", auditoria: "Auditoria", usuarios: "Usuários", demo: "Demonstração" };
 const CERT = { ROBUST: ["Robusta", "ok"], FRAGILE: ["Frágil", "risk"], INCONCLUSIVE: ["Inconclusiva", "warn"], DEGRADED: ["Degradada", "warn"] };
 const VERIFY_STATE = { NOT_REQUIRED: "Não exigida", REQUESTED: "Aguardando a cliente", ANSWERED: "Respondida", INCONCLUSIVE: "Inconclusiva", EXPIRED: "Expirada", COMPLETED: "Respondida" };
 const ANSWER_KEY = { origin: "Quem pediu a compra", contact: "Contato antes da compra", address: "Endereço", coached: "Alguém ditou a resposta", anchor: "Referência citada", device: "Aparelho", amount: "Quem escolheu o valor" };
@@ -188,6 +188,7 @@ function opsShell(loc) {
         el("span", { class: "o-nav-group" }, "Sistema"),
         nav("/ops/motor", "gauge", "Motor de risco", { mark: degraded ? " is-warn" : "" }),
         nav("/ops/politicas", "list", "Políticas de risco"),
+        nav("/ops/regras", "list", "Regras do motor"),
         nav("/ops/laboratorio", "play", "Laboratório"),
         nav("/ops/modelos", "gauge", "Modelos"),
         nav("/ops/auditoria", "history", "Auditoria"),
@@ -199,6 +200,7 @@ function opsShell(loc) {
         { class: "o-user" },
         el("span", { class: "o-avatar", "aria-hidden": "true" }, s.user.name.split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase()),
         el("span", { class: "o-user-text" }, el("strong", {}, s.user.name), el("span", {}, isAdmin ? "Administração" : "Analista")),
+        el("a", { href: "/ops/conta/senha", class: "o-icon-btn", "aria-label": "Alterar senha", title: "Alterar senha" }, icon("shield", { size: 18 })),
         el("button", { type: "button", class: "o-icon-btn o-logout", "aria-label": "Sair", onClick: () => setSession("ops", null) }, icon("out", { size: 18 })),
       ),
     ),
@@ -2075,7 +2077,7 @@ function userDialog(user, onDone) {
         field({ label: "E-mail", error: e.email, control: (p) => el("input", { ...p, class: "input", type: "email", disabled: !!user, value: f.email, onInput: (e) => { f.email = e.target.value; } }) }),
         field({ label: "Papel", error: e.role, control: (p) => el("select", { ...p, class: "select", value: f.role, onChange: (e) => { f.role = e.target.value; draw(); } }, Object.entries(ROLE).map(([k, v]) => el("option", { value: k }, v))) }),
         f.role === "CUSTOMER" && !user ? field({ label: "Cliente", error: e.customerId, control: (p) => el("select", { ...p, class: "select", value: f.customerId, onChange: (e) => { f.customerId = e.target.value; } }, el("option", { value: "" }, "Escolha"), customers.map((c) => el("option", { value: c.id }, `${c.name} (${c.id})`))) }) : null,
-        field({ label: user ? "Nova senha" : "Senha", hint: user ? "Deixe em branco para manter a atual." : "De 8 a 72 caracteres.", error: e.password, control: (p) => el("input", { ...p, class: "input", type: "password", autocomplete: "new-password", value: f.password, onInput: (e) => { f.password = e.target.value; } }) }),
+        field({ label: user ? "Nova senha" : "Senha", hint: user ? "Deixe em branco para manter a atual." : "Mínimo de 12 caracteres.", error: e.password, control: (p) => el("input", { ...p, class: "input", type: "password", autocomplete: "new-password", value: f.password, onInput: (e) => { f.password = e.target.value; } }) }),
         user ? el("label", { class: "check" }, el("input", { type: "checkbox", checked: f.active, onChange: (e) => { f.active = e.target.checked; } }), "Conta ativa") : null,
         button({ type: "submit", variant: "primary", busy }, "Salvar"),
       ),
@@ -2201,6 +2203,16 @@ function openPalette(isAdmin) {
   draw();
 }
 
+function passwordPage() {
+  setTitle("Alterar senha · Painel");
+  return el(
+    "div",
+    { class: "stack", style: { "--gap": "20px", maxWidth: "480px" } },
+    el("h1", { class: "o-h1" }, "Alterar senha"),
+    changePasswordForm({ area: "ops", backLink: "/ops" }),
+  );
+}
+
 function loginScreen() {
   setTitle("Entrar · Painel");
   document.documentElement.dataset.ops = "";
@@ -2244,11 +2256,13 @@ async function render(loc) {
   else if (loc.name === "intel") node = intelligence(loc.search);
   else if (loc.name === "engine") node = engine(loc.search);
   else if (loc.name === "policies") node = policiesPage(session().user.role === "ADMIN");
+  else if (loc.name === "rules") node = rulesPage(session().user.role === "ADMIN");
   else if (loc.name === "lab") node = labPage(session().user.role === "ADMIN");
   else if (loc.name === "models") node = modelMonitor();
   else if (loc.name === "audit") node = audit();
   else if (loc.name === "users") node = users(loc.search);
   else if (loc.name === "demo") node = demo(loc.search);
+  else if (loc.name === "password") node = passwordPage();
   else node = empty("Página não encontrada", { iconName: "search", action: el("a", { href: "/ops" }, "Voltar para a visão geral") });
   page.replaceChildren(el("div", { class: "o-route" }, node));
   if (!shell.parentElement) document.body.append(shell);
@@ -2521,11 +2535,13 @@ function mount() {
       { name: "intel", pattern: /^inteligencia$/ },
       { name: "engine", pattern: /^motor$/ },
       { name: "policies", pattern: /^politicas$/ },
+      { name: "rules", pattern: /^regras$/ },
       { name: "lab", pattern: /^laboratorio$/ },
       { name: "models", pattern: /^modelos$/ },
       { name: "audit", pattern: /^auditoria$/ },
       { name: "users", pattern: /^usuarios$/ },
       { name: "demo", pattern: /^demo$/ },
+      { name: "password", pattern: /^conta\/senha$/ },
     ],
     render,
   });

@@ -3,6 +3,8 @@ package com.contextshield.core.web;
 import com.contextshield.core.config.CurrentUser;
 import com.contextshield.core.config.JwtService;
 import com.contextshield.core.config.LoginAttemptLimiter;
+import com.contextshield.core.config.PasswordChangeLimiter;
+import com.contextshield.core.security.PasswordPolicy;
 import com.contextshield.core.domain.*;
 import com.contextshield.core.repo.*;
 import com.contextshield.core.service.AuditService;
@@ -34,10 +36,11 @@ public class AuthController {
     private final JwtService jwt;
     private final AuditService audit;
     private final LoginAttemptLimiter loginLimiter;
+    private final PasswordChangeLimiter passwordChangeLimiter;
 
     public AuthController(AppUserRepository users, CustomerRepository customers, DeviceRepository devices, AddressRepository addresses,
                           CardRepository cards, PasswordEncoder encoder, JwtService jwt, AuditService audit,
-                          LoginAttemptLimiter loginLimiter) {
+                          LoginAttemptLimiter loginLimiter, PasswordChangeLimiter passwordChangeLimiter) {
         this.users = users;
         this.customers = customers;
         this.devices = devices;
@@ -47,6 +50,7 @@ public class AuthController {
         this.jwt = jwt;
         this.audit = audit;
         this.loginLimiter = loginLimiter;
+        this.passwordChangeLimiter = passwordChangeLimiter;
     }
 
     public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {}
@@ -74,7 +78,8 @@ public class AuthController {
 
     public record RegisterRequest(@NotBlank @Size(min = 3, max = 120) String name,
                                   @NotBlank @Email String email,
-                                  @NotBlank @Size(min = 8, max = 72, message = "A senha precisa ter de 8 a 72 caracteres") String password,
+                                  @NotBlank @Size(min = PasswordPolicy.MIN_LENGTH, max = PasswordPolicy.MAX_LENGTH,
+                                          message = "A senha precisa ter de 12 a 72 caracteres") String password,
                                   @NotBlank String city,
                                   @NotBlank String addressLine,
                                   String district,
@@ -145,6 +150,7 @@ public class AuthController {
         u.setName(c.getName());
         u.setRole(AppUser.Role.CUSTOMER);
         u.setCustomerId(id);
+        PasswordPolicy.requireNewPassword(req.password());
         u.setPasswordHash(encoder.encode(req.password()));
         u.setActive(true);
         u.setCreatedAt(LocalDateTime.now());
@@ -189,5 +195,36 @@ public class AuthController {
         a.getCustomerIds().add(cu.customerId());
         audit.log(cu.email(), "ADDRESS_ADDED", a.getId(), null);
         return addresses.save(a);
+    }
+
+    public record ChangePasswordRequest(@NotBlank String currentPassword,
+                                        @NotBlank @Size(min = PasswordPolicy.MIN_LENGTH, max = PasswordPolicy.MAX_LENGTH) String newPassword,
+                                        @NotBlank String confirmPassword) {}
+
+    /** Troca a senha do usuário logado, invalida tokens anteriores e devolve um JWT novo. */
+    @PostMapping("/me/password")
+    @Transactional
+    public TokenResponse changePassword(@Valid @RequestBody ChangePasswordRequest req) {
+        CurrentUser cu = Auth.user();
+        if (!passwordChangeLimiter.allow(cu.email())) {
+            throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "Muitas tentativas. Aguarde um minuto e tente novamente.");
+        }
+        if (!req.newPassword().equals(req.confirmPassword())) {
+            throw ApiException.badRequest("A confirmação não coincide com a nova senha");
+        }
+        PasswordPolicy.requireNewPassword(req.newPassword());
+        AppUser u = users.findByEmailIgnoreCase(cu.email()).orElseThrow(() -> ApiException.notFound("Usuário"));
+        if (!encoder.matches(req.currentPassword(), u.getPasswordHash())) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Senha atual incorreta");
+        }
+        if (encoder.matches(req.newPassword(), u.getPasswordHash())) {
+            throw ApiException.conflict("A nova senha não pode ser igual à senha atual");
+        }
+        u.setPasswordHash(encoder.encode(req.newPassword()));
+        u.bumpTokenVersion();
+        users.save(u);
+        audit.log(u.getEmail(), "PASSWORD_CHANGED", null, null);
+        var issued = jwt.issue(u);
+        return new TokenResponse(issued.token(), issued.expiresAt(), UserView.of(u));
     }
 }

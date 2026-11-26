@@ -1,3 +1,4 @@
+import { demoPasswordFor } from "./demo-seed-passwords.js";
 import { el, reducedMotion, uid } from "./utils/dom.js";
 import { STATUS, STATUS_ICON } from "./utils/format.js";
 import { icon } from "./utils/icons.js";
@@ -205,7 +206,7 @@ export function dialog({ title, onClose, body }) {
   return d;
 }
 
-export function loginForm({ area, heading, intro, suggestions, onDone, buttonClass }) {
+export function loginForm({ area, heading, intro, suggestions, onDone, buttonClass, passwordHint }) {
   let email = suggestions[0]?.email ?? "";
   let password = "";
   let busy = false;
@@ -255,7 +256,7 @@ export function loginForm({ area, heading, intro, suggestions, onDone, buttonCla
         }),
         field({
           label: "Senha",
-          hint: "Na demonstração, todas as contas usam “contexto”.",
+          hint: passwordHint ?? "Cada conta tem senha própria (configure no ambiente de demonstração).",
           control: (p) =>
             el("input", {
               ...p,
@@ -285,7 +286,8 @@ export function loginForm({ area, heading, intro, suggestions, onDone, buttonCla
                       size: "sm",
                       onClick: () => {
                         email = s.email;
-                        password = "contexto";
+                        const demo = demoPasswordFor(s.email);
+                        if (demo) password = demo;
                         draw();
                       },
                     },
@@ -295,6 +297,102 @@ export function loginForm({ area, heading, intro, suggestions, onDone, buttonCla
               ),
             )
           : null,
+      ),
+    );
+  }
+  draw();
+  return root;
+}
+
+export function changePasswordForm({ area, onDone, backLink }) {
+  let currentPassword = "";
+  let newPassword = "";
+  let confirmPassword = "";
+  let busy = false;
+  let error = null;
+  let done = false;
+  const root = el("div");
+
+  async function submit(e) {
+    e.preventDefault();
+    if (busy) return;
+    busy = true;
+    error = null;
+    draw();
+    try {
+      const { changePassword } = await import("./api/client.js");
+      await changePassword(area, { currentPassword, newPassword, confirmPassword });
+      done = true;
+      onDone?.();
+    } catch (err) {
+      error = err;
+    } finally {
+      busy = false;
+      draw();
+    }
+  }
+
+  function draw() {
+    if (done) {
+      root.replaceChildren(
+        notice("ok", "Senha atualizada", el("p", {}, "Suas sessões anteriores foram encerradas. Use a nova senha na próxima entrada.")),
+        backLink ? el("a", { href: backLink, class: "btn btn-primary btn-block" }, "Voltar") : null,
+      );
+      return;
+    }
+    root.replaceChildren(
+      el(
+        "form",
+        { class: "stack", style: { "--gap": "16px" }, onSubmit: submit, novalidate: true },
+        el("p", { class: "muted small" }, "Mínimo de 12 caracteres. Não reutilize a senha atual."),
+        errorNotice(error),
+        field({
+          label: "Senha atual",
+          control: (p) =>
+            el("input", {
+              ...p,
+              class: "input",
+              type: "password",
+              autocomplete: "current-password",
+              value: currentPassword,
+              required: true,
+              onInput: (e) => {
+                currentPassword = e.target.value;
+              },
+            }),
+        }),
+        field({
+          label: "Nova senha",
+          control: (p) =>
+            el("input", {
+              ...p,
+              class: "input",
+              type: "password",
+              autocomplete: "new-password",
+              value: newPassword,
+              required: true,
+              onInput: (e) => {
+                newPassword = e.target.value;
+              },
+            }),
+        }),
+        field({
+          label: "Confirmar nova senha",
+          control: (p) =>
+            el("input", {
+              ...p,
+              class: "input",
+              type: "password",
+              autocomplete: "new-password",
+              value: confirmPassword,
+              required: true,
+              onInput: (e) => {
+                confirmPassword = e.target.value;
+              },
+            }),
+        }),
+        button({ type: "submit", variant: "primary", size: "lg", block: true, busy }, "Salvar nova senha"),
+        backLink ? el("a", { href: backLink, class: "btn btn-ghost btn-block" }, "Cancelar") : null,
       ),
     );
   }

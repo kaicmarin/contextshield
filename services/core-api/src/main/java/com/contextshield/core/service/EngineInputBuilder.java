@@ -30,6 +30,7 @@ public class EngineInputBuilder {
     private final IntelligenceService intel;
     private final EngineSettings settings;
     private final RiskPolicyService policies;
+    private final RiskRuleService rules;
     private final ObjectMapper mapper;
     private final JdbcTemplate jdbc;
     private InternalPlatformClient platform;
@@ -42,7 +43,7 @@ public class EngineInputBuilder {
     public EngineInputBuilder(CustomerRepository customers, DeviceRepository devices, AddressRepository addresses,
                               MerchantRepository merchants, SellerRepository sellers, TransactionItemRepository items,
                               TransactionRepository transactions, IntelligenceService intel, EngineSettings settings,
-                              RiskPolicyService policies, ObjectMapper mapper, JdbcTemplate jdbc) {
+                              RiskPolicyService policies, RiskRuleService rules, ObjectMapper mapper, JdbcTemplate jdbc) {
         this.customers = customers;
         this.devices = devices;
         this.addresses = addresses;
@@ -53,6 +54,7 @@ public class EngineInputBuilder {
         this.intel = intel;
         this.settings = settings;
         this.policies = policies;
+        this.rules = rules;
         this.mapper = mapper;
         this.jdbc = jdbc;
     }
@@ -142,6 +144,7 @@ public class EngineInputBuilder {
             config.put("contextProbes", Arrays.stream(probes.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
         }
         capContextProbe(config, tx.getCustomerId());
+        config.put("rules", rules.activeRulePayload(organizationId));
         in.put("config", config);
         in.put("unavailable", tx.getUnavailable() == null || tx.getUnavailable().isBlank()
                 ? List.of() : Arrays.asList(tx.getUnavailable().split(",")));

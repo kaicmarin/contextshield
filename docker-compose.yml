@@ -109,7 +109,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_ALLOW_DEV_SECRET: ${JWT_ALLOW_DEV_SECRET:-true}
       SEED_ENABLED: ${SEED_ENABLED:-true}
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-contexto}
+      SEED_CREDENTIALS_FILE: ${SEED_CREDENTIALS_FILE:-file:/config/seed-credentials.json}
       RISK_ENGINE_URL: http://risk-engine:8081
       ML_SERVICE_URL: http://ml-service:8082
       THREAT_SERVICE_URL: http://threat-service:8083

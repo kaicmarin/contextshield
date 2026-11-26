@@ -54,18 +54,24 @@ public record AssessmentInput(
                            boolean crossCustomer, List<String> incidentIds) {}
 
     public record EngineConfig(Map<String, Boolean> flags, Map<String, String> providers, Map<String, Integer> weights,
-                               List<String> contextProbes) {
+                               List<String> contextProbes, List<DynamicRule> rules) {
         public EngineConfig {
             if (weights == null) weights = Map.of();
             if (contextProbes == null) contextProbes = List.of();
+            if (rules == null) rules = List.of();
         }
 
         public EngineConfig(Map<String, Boolean> flags, Map<String, String> providers) {
-            this(flags, providers, Map.of(), List.of());
+            this(flags, providers, Map.of(), List.of(), List.of());
         }
 
         public EngineConfig(Map<String, Boolean> flags, Map<String, String> providers, Map<String, Integer> weights) {
-            this(flags, providers, weights, List.of());
+            this(flags, providers, weights, List.of(), List.of());
+        }
+
+        public EngineConfig(Map<String, Boolean> flags, Map<String, String> providers, Map<String, Integer> weights,
+                            List<String> contextProbes) {
+            this(flags, providers, weights, contextProbes, List.of());
         }
 
         public static EngineConfig defaults() {
@@ -75,7 +81,8 @@ public record AssessmentInput(
                     "context-on-declared-guidance", true,
                     "guidance-floor", true,
                     "script-mirror", true
-            ), Map.of("history", "up", "device", "up", "merchant", "up", "intelligence", "up"));
+            ), Map.of("history", "up", "device", "up", "merchant", "up", "intelligence", "up"),
+                    Map.of(), List.of(), List.of());
         }
 
         public boolean flag(String id) {

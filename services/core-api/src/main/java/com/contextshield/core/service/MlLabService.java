@@ -3,6 +3,7 @@ package com.contextshield.core.service;
 import com.contextshield.core.web.ApiException;
 import com.contextshield.ml.Experiment;
 import com.contextshield.ml.Features;
+import com.contextshield.ml.support.ExperimentFila;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -23,8 +24,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Fila de um experimento por vez. O pedido HTTP só enfileira; o treino roda numa thread à parte. */
@@ -43,16 +48,23 @@ public class MlLabService implements ApplicationRunner {
     private final com.contextshield.core.repo.TransactionRepository transactions;
     private final OrganizationService organizations;
     private final MlClient remote;
-    private final AtomicBoolean busy = new AtomicBoolean(false);
+    private final LabStudyService studies;
+    private final Duration maxRun = Duration.ofMinutes(20);
+    private final AtomicBoolean workerRunning = new AtomicBoolean(false);
     private final ExecutorService pool = Executors.newSingleThreadExecutor(task -> {
-        Thread thread = new Thread(task, "ml-experiment");
+        Thread thread = new Thread(task, "ml-experiment-queue");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private final ExecutorService training = Executors.newCachedThreadPool(task -> {
+        Thread thread = new Thread(task, "ml-experiment-train");
         thread.setDaemon(true);
         return thread;
     });
 
     public MlLabService(JdbcTemplate jdbc, ObjectMapper mapper, AuditService audit, RiskPolicyService policies,
                         EngineInputBuilder inputs, com.contextshield.core.repo.TransactionRepository transactions,
-                        OrganizationService organizations, MlClient remote) {
+                        OrganizationService organizations, MlClient remote, LabStudyService studies) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.audit = audit;
@@ -61,14 +73,22 @@ public class MlLabService implements ApplicationRunner {
         this.transactions = transactions;
         this.organizations = organizations;
         this.remote = remote;
+        this.studies = studies;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        jdbc.update("update ml_experiment set status = 'FAILED', error = 'A aplicação encerrou durante o experimento.', finished_at = ? where status in ('QUEUED', 'RUNNING')",
-                Timestamp.valueOf(LocalDateTime.now().withNano(0)));
+        if (!remote.enabled()) {
+            ExperimentFila.recoverOnStartup(jdbc, "ml_experiment");
+            kickWorker();
+        }
         importReportIfEmpty();
         importContextIfMissing();
+    }
+
+    void kickWorker() {
+        if (remote.enabled() || !workerRunning.compareAndSet(false, true)) return;
+        pool.submit(this::drainQueue);
     }
 
     public Map<String, Object> overview(long organizationId) {
@@ -80,6 +100,9 @@ public class MlLabService implements ApplicationRunner {
         out.put("shadow", shadowSummary(organizationId));
         out.put("confirmed", jdbc.queryForObject("select count(*) from known_outcome where label in ('FRAUD', 'LEGIT')", Integer.class));
         out.put("limitation", "Métricas de arquivo ou de experimento vêm de operações sintéticas, salvo quando a linha diz a origem. Elas não medem fraude bancária real.");
+        out.put("labels", studies.labelsOverview(organizationId));
+        out.put("studies", studies.studies(organizationId));
+        out.put("ruleSuggestions", studies.ruleSuggestions(organizationId));
         return out;
     }
 
@@ -95,10 +118,9 @@ public class MlLabService implements ApplicationRunner {
         }
         if (count < MIN_EXAMPLES || count > MAX_EXAMPLES)
             throw ApiException.badRequest("A quantidade fica entre " + MIN_EXAMPLES + " e " + MAX_EXAMPLES + ".");
-        if (!busy.compareAndSet(false, true)) throw ApiException.conflict("Já existe um experimento em execução.");
         long id = insertExperiment(count, seed, actor);
         audit.log(actor, "ML_EXPERIMENT", String.valueOf(id), count + " exemplos, semente " + seed);
-        pool.submit(() -> execute(id, count, seed));
+        kickWorker();
         return experiment(id);
     }
 
@@ -295,21 +317,55 @@ public class MlLabService implements ApplicationRunner {
         return policies.get(policy);
     }
 
-    private void execute(long id, int count, long seed) {
-        jdbc.update("update ml_experiment set status = 'RUNNING' where id = ?", id);
+    private void drainQueue() {
         try {
-            Confirmed confirmed = confirmed();
-            Map<String, Object> report = Experiment.run(count, seed, directory(), confirmed.x, confirmed.y);
-            jdbc.update("update ml_experiment set status = 'DONE', finished_at = ?, report_json = ? where id = ?",
-                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), mapper.writeValueAsString(report), id);
-            storeModels(id, report);
-            storeSuggestion(id, report);
-        } catch (Exception e) {
-            log.warn("Experimento {} falhou", id, e);
-            jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ?",
-                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), trim(e.getMessage()), id);
+            for (;;) {
+                ExperimentFila.failExpired(jdbc, "ml_experiment", maxRun);
+                Long id = ExperimentFila.claimNext(jdbc, "ml_experiment");
+                if (id == null) break;
+                Job job = jdbc.query("""
+                                select id, example_count, seed from ml_experiment where id = ? and status = 'RUNNING'
+                                """, rs -> {
+                            if (!rs.next()) return null;
+                            return new Job(rs.getLong("id"), rs.getInt("example_count"), rs.getLong("seed"));
+                        }, id);
+                if (job == null) continue;
+                runOne(job);
+            }
         } finally {
-            busy.set(false);
+            workerRunning.set(false);
+            if (!remote.enabled() && ExperimentFila.hasInFlight(jdbc, "ml_experiment")) {
+                kickWorker();
+            }
+        }
+    }
+
+    private record Job(long id, int count, long seed) {}
+
+    private void runOne(Job job) {
+        Future<?> run = training.submit(() -> {
+            try {
+                Confirmed confirmed = confirmed();
+                Map<String, Object> report = Experiment.run(job.count(), job.seed(), directory(), confirmed.x, confirmed.y);
+                jdbc.update("update ml_experiment set status = 'DONE', finished_at = ?, report_json = ? where id = ?",
+                        Timestamp.valueOf(LocalDateTime.now().withNano(0)), mapper.writeValueAsString(report), job.id());
+                storeModels(job.id(), report);
+                storeSuggestion(job.id(), report);
+            } catch (Exception e) {
+                log.warn("Experimento {} falhou", job.id(), e);
+                jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ? and status = 'RUNNING'",
+                        Timestamp.valueOf(LocalDateTime.now().withNano(0)), trim(e.getMessage()), job.id());
+            }
+        });
+        try {
+            run.get(maxRun.toSeconds(), TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            run.cancel(true);
+            jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ? and status = 'RUNNING'",
+                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), ExperimentFila.ERR_TIMEOUT, job.id());
+        } catch (Exception e) {
+            jdbc.update("update ml_experiment set status = 'FAILED', finished_at = ?, error = ? where id = ? and status = 'RUNNING'",
+                    Timestamp.valueOf(LocalDateTime.now().withNano(0)), trim(e.getMessage()), job.id());
         }
     }
 
