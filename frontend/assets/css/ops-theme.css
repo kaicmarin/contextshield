@@ -1487,3 +1487,40 @@ a.o-kpi:hover,
 .study-bar.is-before { background: #6b7c93; color: #f4f7fb; }
 .study-bar.is-after { background: #3ecf8e; color: #052012; }
 .study-bar span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Central de atividades ML */
+.ml-activity .ml-act-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+.ml-act-card {
+  border: 1px solid #242a36;
+  background: linear-gradient(180deg, #141922 0%, #10141c 100%);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ml-act-card-label { font-size: 11px; color: #98a6bc; text-transform: uppercase; letter-spacing: 0.04em; }
+.ml-act-card-value { font-size: 22px; color: #eef3fb; line-height: 1.1; }
+.ml-act-card-hint { font-size: 10px; color: #6d7a92; }
+.ml-act-charts {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.ml-act-charts h3 { font-size: 12px; color: #b7c4da; margin: 0 0 6px; font-weight: 600; }
+.ml-mini-chart { width: 100%; height: auto; display: block; background: #0e1219; border: 1px solid #232a38; border-radius: 8px; }
+.ml-act-filters { flex-wrap: wrap; gap: 8px; align-items: center; }
+.ml-act-filters .input { min-width: 120px; max-width: 180px; }
+.ml-tl-list { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto; gap: 0; }
+.ml-tl-item { display: grid; grid-template-columns: 16px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1f2531; }
+.ml-tl-dot { width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: #4f8cff; box-shadow: 0 0 0 3px rgb(79 140 255 / 0.16); }
+.ml-tl-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
+.ml-tl-title { margin: 0; font-size: 14px; color: #e8eef9; }
+.ml-tl-meta { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 12px; color: #9fb0c9; }
+.ml-tl-error { color: #ff8aa0; font-size: 12px; margin: 4px 0 0; }
+.ml-model-drawer { margin-top: 8px; border-color: #2a3344; }
+.ml-act-head h2 { margin: 0 0 4px; }

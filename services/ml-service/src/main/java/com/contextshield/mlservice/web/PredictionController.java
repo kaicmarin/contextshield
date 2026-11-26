@@ -1,5 +1,6 @@
 package com.contextshield.mlservice.web;
 
+import com.contextshield.mlservice.ActivityService;
 import com.contextshield.mlservice.CatalogService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,11 @@ import java.util.Set;
 @RequestMapping("/internal/v1")
 public class PredictionController {
     private final CatalogService catalog;
+    private final ActivityService activity;
 
-    public PredictionController(CatalogService catalog) {
+    public PredictionController(CatalogService catalog, ActivityService activity) {
         this.catalog = catalog;
+        this.activity = activity;
     }
 
     @GetMapping("/models")
@@ -89,6 +92,34 @@ public class PredictionController {
     public Map<String, Object> compare(HttpServletRequest request, @RequestParam long left, @RequestParam long right) {
         scope(request, "read");
         return catalog.compare(org(request), left, right);
+    }
+
+    @GetMapping("/activity/summary")
+    public Map<String, Object> activitySummary(HttpServletRequest request, @RequestParam(defaultValue = "7") int days) {
+        scope(request, "read");
+        return activity.summary(org(request), days);
+    }
+
+    @GetMapping("/activity")
+    public Map<String, Object> activity(HttpServletRequest request,
+                                         @RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "25") int size,
+                                         @RequestParam(required = false) String cursor,
+                                         @RequestParam(required = false) Long modelId,
+                                         @RequestParam(required = false) String algorithm,
+                                         @RequestParam(required = false) String prediction,
+                                         @RequestParam(required = false) String align,
+                                         @RequestParam(required = false) String stage,
+                                         @RequestParam(required = false) String status,
+                                         @RequestParam(required = false) String q) {
+        scope(request, "read");
+        return activity.feed(org(request), page, size, cursor, modelId, algorithm, prediction, align, stage, status, q);
+    }
+
+    @GetMapping("/models/{id}/activity")
+    public Map<String, Object> modelActivity(HttpServletRequest request, @PathVariable long id) {
+        scope(request, "read");
+        return activity.modelStats(org(request), id);
     }
 
     private static long org(HttpServletRequest request) {

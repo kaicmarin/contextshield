@@ -7,6 +7,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Map;
 
 /** Chamada ao ML Service. A resposta é sombra: não autoriza a compra. */
@@ -73,6 +74,45 @@ public class MlClient {
 
     public Map<String, Object> reject(long organizationId, String actor, long id) {
         return post("/internal/v1/models/" + id + "/reject", organizationId, actor, "catalog,read", Map.of());
+    }
+
+    public Map<String, Object> activitySummary(long organizationId, int days) {
+        return get("/internal/v1/activity/summary?days=" + days, organizationId, "core-api", "read");
+    }
+
+  @SuppressWarnings("unchecked")
+    public Map<String, Object> activityCharts(long organizationId, int days) {
+        Object body = get("/internal/v1/activity/summary?days=" + days, organizationId, "core-api", "read").get("charts");
+        return body instanceof Map<?, ?> map ? (Map<String, Object>) map : Map.of();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> activityFeed(long organizationId, MlActivityService.ActivityQuery query) {
+        var uri = http.get().uri(builder -> {
+            var b = builder.path("/internal/v1/activity").queryParam("page", query.safePage()).queryParam("size", query.safeSize());
+            if (query.modelId() != null) b.queryParam("modelId", query.modelId());
+            if (query.algorithm() != null && !query.algorithm().isBlank()) b.queryParam("algorithm", query.algorithm());
+            if (query.eventType() != null && !query.eventType().isBlank()) b.queryParam("eventType", query.eventType());
+            if (query.prediction() != null && !query.prediction().isBlank()) b.queryParam("prediction", query.prediction());
+            if (query.align() != null && !query.align().isBlank()) b.queryParam("align", query.align());
+            if (query.stage() != null && !query.stage().isBlank()) b.queryParam("stage", query.stage());
+            if (query.status() != null && !query.status().isBlank()) b.queryParam("status", query.status());
+            if (query.q() != null && !query.q().isBlank()) b.queryParam("q", query.q());
+            if (query.cursor() != null && !query.cursor().isBlank()) b.queryParam("cursor", query.cursor());
+            return b.build();
+        });
+        Map body = uri.header("Authorization", "Bearer " + jwt.serviceToken(organizationId, "core-api", "read"))
+                .retrieve().body(Map.class);
+        if (body == null) return List.of();
+        Object items = body.get("items");
+        if (items instanceof List<?> list) {
+            return (List<Map<String, Object>>) list;
+        }
+        return List.of();
+    }
+
+    public Map<String, Object> modelActivity(long organizationId, long modelId) {
+        return get("/internal/v1/models/" + modelId + "/activity", organizationId, "core-api", "read");
     }
 
     @SuppressWarnings("unchecked")

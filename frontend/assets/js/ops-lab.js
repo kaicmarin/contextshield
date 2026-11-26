@@ -7,6 +7,7 @@ import {
 } from "./lab-study-report.js";
 import { button, notice, pill } from "./ui.js";
 import { el, replace } from "./utils/dom.js";
+import { mountLabActivity } from "./lab-activity.js";
 import { dateTime, setTitle } from "./utils/format.js";
 import { icon } from "./utils/icons.js";
 
@@ -455,10 +456,14 @@ function studyResultCell(s) {
 }
 
 export function labPage(isAdmin) {
-  const box = el("div", { class: "o-stack" }, head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo."), el("p", { class: "muted" }, "Carregando…"));
+  const box = el("div", { class: "o-stack" });
+  const restMount = el("div", { class: "o-stack" }, el("p", { class: "muted" }, "Carregando…"));
+  const activityMount = el("div", { class: "ml-activity-mount" });
+  let activityCtl = null;
   let studyPollTimer = null;
   let selectedStudyId = null;
   let selectedStudyDetail = null;
+  replace(box, head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo."), activityMount, restMount);
   const stopStudyPoll = () => {
     if (studyPollTimer) {
       clearInterval(studyPollTimer);
@@ -495,7 +500,7 @@ export function labPage(isAdmin) {
       if (active) studyPollTimer = setInterval(load, 2000);
     } catch (error) {
       stopStudyPoll();
-      replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não foi possível carregar", error.message));
+      replace(restMount, notice("stop", "Não foi possível carregar", error.message));
     }
   };
   const paint = (data) => {
@@ -513,8 +518,10 @@ export function labPage(isAdmin) {
           el("p", { class: "mono small" }, `${s.kind} → ${s.outcome} · prioridade ${s.priority}`),
           isAdmin && s.status === "SUGGESTED" ? button({ size: "sm", onClick: async () => { await api(`/api/admin/ml/rule-suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } }, "Criar rascunho dinâmico") : null))))
       : null;
-    replace(box,
-      head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo. Uma falha do modelo não libera a compra."),
+    if (!activityCtl) {
+      activityCtl = mountLabActivity(activityMount, { isAdmin });
+    }
+    replace(restMount,
       notice("warn", "Leia antes de citar número", data.limitation),
       el("section", { class: "panel o-stack" },
         el("h2", {}, "Rótulos e origem dos dados"),
@@ -531,7 +538,7 @@ export function labPage(isAdmin) {
                 await api("/api/ops/ml/studies/weights", { method: "POST", body: { seed: 42, costProfile: "standard" }, area: "ops" });
                 await load();
               } catch (error) {
-                replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não enfileirei o estudo de pesos", error.message));
+                replace(restMount, notice("stop", "Não enfileirei o estudo de pesos", error.message));
               }
             },
           }, "Estudar pesos"),
@@ -541,7 +548,7 @@ export function labPage(isAdmin) {
                 await api("/api/ops/ml/studies/rules", { method: "POST", area: "ops" });
                 await load();
               } catch (error) {
-                replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não enfileirei o estudo de regras", error.message));
+                replace(restMount, notice("stop", "Não enfileirei o estudo de regras", error.message));
               }
             },
           }, "Estudar regras"),
@@ -590,7 +597,7 @@ export function labPage(isAdmin) {
             el("p", {}, s.note || s.status),
             el("p", { class: "small mono" }, `Confirm: FP ${base.falsePositives ?? "—"}→${best.falsePositives ?? "—"} · FN ${base.falseNegatives ?? "—"}→${best.falseNegatives ?? "—"} · custo ${base.cost ?? "—"}→${best.cost ?? "—"}`),
             el("p", { class: "muted small" }, m.dynamicRulesApplied ? "Busca com regras dinâmicas publicadas." : ""),
-            isAdmin && s.status === "SUGGESTED" ? button({ onClick: async () => { try { await api(`/api/admin/ml/suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } catch (error) { replace(box, head("Laboratório de Machine Learning"), notice("stop", "Não criei o rascunho", error.message)); } } }, "Criar rascunho de pesos") : null);
+            isAdmin && s.status === "SUGGESTED" ? button({ onClick: async () => { try { await api(`/api/admin/ml/suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } catch (error) { replace(restMount, notice("stop", "Não criei o rascunho", error.message)); } } }, "Criar rascunho de pesos") : null);
         })) : el("p", {}, "Nenhuma sugestão guardada. A busca não publica sozinha.")),
       el("section", { class: "panel" }, el("h2", {}, "Novo experimento"), el("p", { class: "muted" }, "Roda no servidor, numa fila de um por vez. Dados sintéticos — não validam fraude real."), el("form", { class: "row", onSubmit: async (e) => { e.preventDefault(); const form = new FormData(e.currentTarget); const out = el("p", { "data-job": "" }); e.currentTarget.after(out); const job = await api("/api/ops/ml/experiments", { method: "POST", body: { examples: Number(form.get("examples")), seed: Number(form.get("seed")) }, area: "ops" }); poll(job.id, out); } },
         el("input", { name: "examples", type: "number", min: "200", max: "4000", value: "400", "aria-label": "Quantidade de operações sintéticas" }),
