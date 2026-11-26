@@ -523,7 +523,7 @@ export function labPage(isAdmin) {
           isAdmin && s.status === "SUGGESTED" ? button({ size: "sm", onClick: async () => { await api(`/api/admin/ml/rule-suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } }, "Criar rascunho dinâmico") : null))))
       : null;
     if (!activityCtl) {
-      activityCtl = mountLabActivity(activityMount, { isAdmin });
+      activityCtl = mountLabActivity(activityMount, { isAdmin, onOpenStudy: openStudy });
     }
     replace(restMount,
       notice("warn", "Leia antes de citar número", data.limitation),
