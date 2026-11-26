@@ -8,7 +8,8 @@ $root = Get-ItRoot
 $psql = Get-PsqlPath
 $pgHost = if ($env:PGHOST) { $env:PGHOST } else { "127.0.0.1" }
 $pgPort = if ($env:PGPORT) { $env:PGPORT } else { "5433" }
-$demoPw = if ($env:DEMO_LOGIN_PASSWORD) { $env:DEMO_LOGIN_PASSWORD } else { "contexto" }
+. (Join-Path $PSScriptRoot "Resolve-ItLogin.ps1")
+function DemoPw($email) { Get-ItLoginPassword -Email $email -Root $root -Base "http://127.0.0.1:18080" }
 
 function Call-Api([string]$method, [string]$path, [string]$token, [string]$json) {
     $curl = @("-sS", "-w", "`nHTTP:%{http_code}", "-X", $method, "-H", "Content-Type: application/json")
@@ -43,11 +44,11 @@ Get-ChildItem "$root\machine-learning\models\*.ser" | ForEach-Object {
 }
 
 $check = Call-Api "POST" "/api/check" $null '{"text":"Sua entrega está retida. Pague o PIX agora para liberar o pedido."}'
-$ana = Call-Api "POST" "/api/auth/login" $null ('{"email":"ana.martins@correio.example","password":"' + $demoPw + '"}')
+$ana = Call-Api "POST" "/api/auth/login" $null ('{"email":"ana.martins@correio.example","password":"' + (DemoPw "ana.martins@correio.example") + '"}')
 $anaToken = ($ana.Body | ConvertFrom-Json).token
-$analyst = Call-Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + $demoPw + '"}')
+$analyst = Call-Api "POST" "/api/auth/login" $null ('{"email":"analista@contextshield.example","password":"' + (DemoPw "analista@contextshield.example") + '"}')
 $analystToken = ($analyst.Body | ConvertFrom-Json).token
-$admin = Call-Api "POST" "/api/auth/login" $null ('{"email":"admin@contextshield.example","password":"' + $demoPw + '"}')
+$admin = Call-Api "POST" "/api/auth/login" $null ('{"email":"admin@contextshield.example","password":"' + (DemoPw "admin@contextshield.example") + '"}')
 $adminToken = ($admin.Body | ConvertFrom-Json).token
 
 $product = Call-Api "GET" "/api/catalog/products/prod-010" $null $null

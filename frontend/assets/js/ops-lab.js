@@ -179,6 +179,121 @@ async function save(policy) {
   }
 }
 
+const RULE_OUTCOMES = ["APPROVE", "APPROVE_WITH_ALERT", "REQUEST_CONTEXT", "INTERVENE", "BLOCK"];
+
+export function rulesPage(isAdmin) {
+  const box = el("div", { class: "o-stack" }, head("Regras do motor", "Crie e publique regras sem reiniciar."), el("p", { class: "muted" }, "Carregando…"));
+  let items = [];
+  let catalog = null;
+  let selected = null;
+  const load = async () => {
+    try {
+      const [list, cat] = await Promise.all([
+        api("/api/ops/rules", { area: "ops" }),
+        api("/api/ops/rules/catalog", { area: "ops" }),
+      ]);
+      items = list;
+      catalog = cat;
+      if (!selected && items.length) selected = items.find((r) => r.status === "DRAFT")?.id ?? items[0].id;
+      if (selected) await open(selected);
+      else paint();
+    } catch (error) {
+      box.replaceChildren(head("Regras do motor"), notice("stop", "Não foi possível carregar", error.message));
+    }
+  };
+  const open = async (id) => {
+    selected = id;
+    const full = await api(`/api/ops/rules/${id}`, { area: "ops" });
+    items = items.map((item) => (item.id === id ? { ...item, ...full } : item));
+    paint();
+  };
+  const paint = () => {
+    const current = items.find((r) => r.id === selected);
+    box.replaceChildren(
+      head("Regras do motor", "R1–R12 vêm da migração. R13+ são criadas aqui e entram na próxima compra."),
+      notice("info", `${catalog?.publishedCount ?? "—"} regras publicadas`, "O Safety Monitor e o ML continuam após a decisão das regras."),
+      el("section", { class: "panel o-stack" },
+        el("div", { class: "pol-actions" },
+          button({ variant: "primary", size: "sm", onClick: () => newRule() }, "Nova regra (ex. R13)"),
+        ),
+        el("div", { class: "pol-versions", role: "tablist" }, items.map((r) => el("button", {
+          type: "button",
+          class: `pol-version${r.id === selected ? " is-on" : ""}`,
+          onClick: () => open(r.id),
+        }, el("span", {}, `${r.ruleKey} v${r.version}`), pill(STATUS_TONE[r.status] || "muted", STATUS_LABEL[r.status] || r.status, { size: "sm" })))),
+        ruleDetail(current, isAdmin, load),
+      ),
+    );
+  };
+  const newRule = async () => {
+    try {
+      const created = await api("/api/ops/rules", {
+        method: "POST",
+        area: "ops",
+        body: {
+          ruleKey: "R13",
+          name: "Regra personalizada",
+          summary: "Score médio+ com destino em incidente",
+          priority: 15,
+          kind: "SCORE_SIGNAL",
+          params: { weightKey: "THRESHOLD_MEDIUM", signal: "DESTINATION_IN_INCIDENT", stage: "any", summary: "destino citado em incidente" },
+          outcome: "BLOCK",
+          note: "Criada no Operations",
+        },
+      });
+      selected = created.id;
+      await load();
+    } catch (error) {
+      box.replaceChildren(head("Regras do motor"), notice("stop", "Não criei a regra", error.message));
+    }
+  };
+  load();
+  return box;
+
+  function ruleDetail(rule, admin, reload) {
+    if (!rule) return el("p", {}, "Nenhuma regra selecionada.");
+    const editable = rule.status === "DRAFT" || rule.status === "REJECTED";
+    const p = rule.params || {};
+    return el("div", { class: "o-stack" },
+      el("h2", {}, `${rule.ruleKey} · ${rule.name}`),
+      el("p", {}, rule.summary || rule.note || ""),
+      el("p", { class: "mono small" }, `Tipo ${rule.kind} → ${rule.outcome} · prioridade ${rule.priority}`),
+      editable ? el("label", {}, "Prioridade", el("input", { class: "input", type: "number", id: "rule-priority", value: String(rule.priority) })) : null,
+      rule.kind === "SCORE_SIGNAL" && editable ? el("div", { class: "pol-group" },
+        el("label", {}, "Sinal", el("input", { class: "input", id: "rule-signal", value: p.signal || "DESTINATION_IN_INCIDENT" })),
+        el("label", {}, "Peso limiar", el("input", { class: "input", id: "rule-weight", value: p.weightKey || "THRESHOLD_MEDIUM" })),
+      ) : null,
+      editable ? el("label", {}, "Decisão", el("select", { class: "input", id: "rule-outcome" }, RULE_OUTCOMES.map((o) => el("option", { value: o, selected: o === rule.outcome ? true : null }, o)))) : null,
+      el("div", { class: "pol-actions" },
+        editable ? button({ variant: "primary", size: "sm", onClick: () => saveRule(rule, reload) }, "Salvar rascunho") : null,
+        rule.status === "DRAFT" ? button({ size: "sm", onClick: async () => { await api(`/api/ops/rules/${rule.id}/submit`, { method: "POST", area: "ops" }); reload(); } }, "Enviar para aprovação") : null,
+        admin && rule.status === "PENDING" ? button({ variant: "primary", size: "sm", onClick: async () => { await api(`/api/admin/rules/${rule.id}/approve`, { method: "POST", area: "ops" }); reload(); } }, "Aprovar") : null,
+        admin && rule.status === "APPROVED" ? button({ variant: "primary", size: "sm", onClick: async () => { await api(`/api/admin/rules/${rule.id}/publish`, { method: "POST", area: "ops" }); reload(); } }, "Publicar") : null,
+        rule.status === "PUBLISHED" ? button({ size: "sm", onClick: async () => { await api(`/api/ops/rules/${rule.id}/disable`, { method: "POST", area: "ops" }); reload(); } }, "Desativar") : null,
+        rule.status === "DISABLED" ? button({ size: "sm", onClick: async () => { await api(`/api/ops/rules/${rule.id}/enable`, { method: "POST", area: "ops" }); reload(); } }, "Ativar") : null,
+        admin && rule.status === "ARCHIVED" ? button({ size: "sm", onClick: async () => { await api(`/api/admin/rules/${rule.id}/rollback`, { method: "POST", area: "ops" }); reload(); } }, "Restaurar") : null,
+      ),
+      rule.events?.length ? table(["Quando", "Ação", "Quem", "Detalhe"], rule.events.map((ev) => [dateTime(ev.at), ev.action, ev.actor, ev.detail || ""])) : null,
+    );
+  }
+}
+
+async function saveRule(rule, reload) {
+  const priority = Number(document.getElementById("rule-priority")?.value ?? rule.priority);
+  const outcome = document.getElementById("rule-outcome")?.value ?? rule.outcome;
+  const params = { ...(rule.params || {}) };
+  if (rule.kind === "SCORE_SIGNAL") {
+    params.signal = document.getElementById("rule-signal")?.value ?? params.signal;
+    params.weightKey = document.getElementById("rule-weight")?.value ?? params.weightKey;
+  }
+  await api(`/api/ops/rules/${rule.id}`, {
+    method: "PUT",
+    area: "ops",
+    body: { name: rule.name, summary: rule.summary, priority, kind: rule.kind, params, outcome, note: rule.note },
+  });
+  reload();
+}
+
 export function labPage(isAdmin) {
   const box = el("div", { class: "o-stack" }, head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo."), el("p", { class: "muted" }, "Carregando…"));
   const load = async () => {
@@ -192,6 +307,26 @@ export function labPage(isAdmin) {
     box.replaceChildren(
       head("Laboratório de Machine Learning", "Modo sombra: o motor continua decidindo. Uma falha do modelo não libera a compra."),
       notice("warn", "Leia antes de citar número", data.limitation),
+      el("section", { class: "panel o-stack" },
+        el("h2", {}, "Rótulos e origem dos dados"),
+        el("p", { class: "muted" }, data.labels?.syntheticNote || ""),
+        el("p", {}, `Revisados (fraude/legítimo): ${data.labels?.reviewedFraudLegit ?? "—"} · Relatos pendentes: ${data.labels?.pendingReports ?? "—"}`),
+        el("p", { class: "small" }, data.labels?.trainingLabelPolicy || "")),
+      el("section", { class: "panel o-stack" },
+        el("h2", {}, "Estudos de política (pesos e regras)"),
+        el("p", { class: "muted" }, "Não publica automaticamente. O motor dinâmico e o Safety Monitor permanecem."),
+        el("div", { class: "pol-actions" },
+          button({ size: "sm", variant: "primary", onClick: async () => { await api("/api/ops/ml/studies/weights", { method: "POST", body: { seed: 42, costProfile: "standard" }, area: "ops" }); load(); } }, "Estudar pesos"),
+          button({ size: "sm", onClick: async () => { await api("/api/ops/ml/studies/rules", { method: "POST", area: "ops" }); load(); } }, "Estudar regras"),
+        ),
+        data.studies?.length ? table(["Id", "Tipo", "Status", "Custo", "Quem", "Quando"], data.studies.slice(0, 6).map((s) => [
+          String(s.id), s.kind, s.status, s.costProfile || "—", s.createdBy || "—", dateTime(s.createdAt),
+        ])) : el("p", {}, "Nenhum estudo ainda.")),
+      data.ruleSuggestions?.length ? el("section", { class: "panel" }, el("h2", {}, "Sugestões de novas regras"),
+        el("div", { class: "o-stack" }, data.ruleSuggestions.map((s) => el("article", { class: "o-stack" },
+          el("p", {}, el("strong", {}, `${s.ruleKey} · ${s.name}`), " — ", s.summary || s.note),
+          el("p", { class: "mono small" }, `${s.kind} → ${s.outcome} · prioridade ${s.priority}`),
+          isAdmin && s.status === "SUGGESTED" ? button({ size: "sm", onClick: async () => { await api(`/api/admin/ml/rule-suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } }, "Criar rascunho dinâmico") : null)))) : null,
       el("section", { class: "panel" }, el("h2", {}, "Modelos treinados"), data.models.length ? table(
         ["Algoritmo", "Validação", "Status", "Uso", "Teste", "F1", "Recall", "Precisão", "FP", "FN"],
         data.models.map((m) => {
@@ -203,7 +338,16 @@ export function labPage(isAdmin) {
         }),
       ) : el("p", {}, "Nenhum modelo treinado ainda.")),
       el("section", { class: "panel" }, el("h2", {}, "Modo sombra"), el("p", {}, `${data.shadow.predictions ?? 0} previsões sem erro, ${data.shadow.failures ?? 0} falhas, ${data.shadow.sameDirection ?? (data.shadow.disagreementsWithEngine == null ? "—" : Number(data.shadow.predictions || 0) - Number(data.shadow.disagreementsWithEngine))} na mesma direção do motor.`)),
-      el("section", { class: "panel" }, el("h2", {}, "Sugestões de peso"), data.suggestions.length ? el("div", { class: "o-stack" }, data.suggestions.map((s) => el("article", {}, el("p", {}, s.note || s.status), isAdmin && s.status === "SUGGESTED" ? button({ onClick: async () => { try { await api(`/api/admin/ml/suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } catch (error) { box.replaceChildren(head("Laboratório de Machine Learning"), notice("stop", "Não criei o rascunho", error.message)); } } }, "Criar rascunho") : null))) : el("p", {}, "Nenhuma sugestão guardada. A busca não publica sozinha.")),
+      el("section", { class: "panel" }, el("h2", {}, "Sugestões de peso"), data.suggestions.length ? el("div", { class: "o-stack" }, data.suggestions.map((s) => {
+        const m = s.metrics || {};
+        const base = m.baselineConfirm || m.baselineSearch || {};
+        const best = m.bestConfirm || m.bestSearch || {};
+        return el("article", { class: "o-stack" },
+          el("p", {}, s.note || s.status),
+          el("p", { class: "small mono" }, `Confirm: FP ${base.falsePositives ?? "—"}→${best.falsePositives ?? "—"} · FN ${base.falseNegatives ?? "—"}→${best.falseNegatives ?? "—"} · custo ${base.cost ?? "—"}→${best.cost ?? "—"}`),
+          el("p", { class: "muted small" }, m.dynamicRulesApplied ? "Busca com regras dinâmicas publicadas." : ""),
+          isAdmin && s.status === "SUGGESTED" ? button({ onClick: async () => { try { await api(`/api/admin/ml/suggestions/${s.id}/draft`, { method: "POST", area: "ops" }); load(); } catch (error) { box.replaceChildren(head("Laboratório de Machine Learning"), notice("stop", "Não criei o rascunho", error.message)); } } }, "Criar rascunho de pesos") : null);
+      })) : el("p", {}, "Nenhuma sugestão guardada. A busca não publica sozinha.")),
       el("section", { class: "panel" }, el("h2", {}, "Novo experimento"), el("p", { class: "muted" }, "Roda no servidor, numa fila de um por vez. O navegador não executa comando."), el("form", { class: "row", onSubmit: async (e) => { e.preventDefault(); const form = new FormData(e.currentTarget); const out = el("p", { "data-job": "" }); e.currentTarget.after(out); const job = await api("/api/ops/ml/experiments", { method: "POST", body: { examples: Number(form.get("examples")), seed: Number(form.get("seed")) }, area: "ops" }); poll(job.id, out); } },
         el("input", { name: "examples", type: "number", min: "200", max: "4000", value: "400", "aria-label": "Quantidade de operações sintéticas" }),
         el("input", { name: "seed", type: "number", value: "42", "aria-label": "Semente" }),

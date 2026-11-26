@@ -4,7 +4,7 @@ import { arrivalDate, CURATED, cutOf, FEATURE_ID, fold, HERO_ID, installmentText
 import { createRouter } from "./router.js";
 import { createCheckout, orderView } from "./store-flow.js";
 import { cardSkeleton, plate, priceBlock, productCard, qtyControl, ratingEl, storeError, wordmark } from "./store-parts.js";
-import { loginForm, statusPill } from "./ui.js";
+import { changePasswordForm, loginForm, statusPill } from "./ui.js";
 import { el, reducedMotion } from "./utils/dom.js";
 import { brl, dateTime, setTitle } from "./utils/format.js";
 import { icon, mark } from "./utils/icons.js";
@@ -148,6 +148,7 @@ function paintHeader(path) {
         { class: "nx-top-links", "aria-label": "Sua conta" },
         el("a", { href: "/loja/ajuda", class: "nx-toplink nx-hide-md", "aria-current": path === "/loja/ajuda" ? "page" : null }, "Ajuda"),
         el("a", { href: "/loja/pedidos", class: "nx-toplink nx-hide-md", "aria-current": path === "/loja/pedidos" ? "page" : null }, "Pedidos"),
+        s ? el("a", { href: "/loja/conta/senha", class: "nx-toplink nx-hide-md", "aria-current": path === "/loja/conta/senha" ? "page" : null }, "Alterar senha") : null,
         s
           ? el(
               "a",
@@ -486,6 +487,7 @@ async function pageFor(loc) {
   if (loc.name === "cart") return checkoutPage(loc.search);
   if (loc.name === "order") return orderPage(loc.params.id, loc.state);
   if (loc.name === "login") return loginPage(loc.search);
+  if (loc.name === "password") return passwordPage();
   if (loc.name === "orders") return ordersPage();
   if (loc.name === "help") return helpPage(loc.hash);
   setTitle("Página não encontrada · NEXA");
@@ -912,6 +914,19 @@ function orderPage(id, state) {
   return view.root;
 }
 
+function passwordPage() {
+  setTitle("Alterar senha · NEXA");
+  if (!session()) {
+    go("/loja/entrar?next=/loja/conta/senha");
+    return el("div");
+  }
+  return el(
+    "div",
+    { class: "nx-wrap nx-auth" },
+    el("div", { class: "nx-auth-card stack", style: { "--gap": "20px" } }, el("h1", { class: "nx-h2" }, "Alterar senha"), changePasswordForm({ area: "customer", backLink: "/loja" })),
+  );
+}
+
 function loginPage(search) {
   setTitle("Entrar · NEXA");
   const next = search.get("next") || "/loja/carrinho";
@@ -1079,6 +1094,7 @@ function mount() {
       { name: "cart", pattern: /^carrinho$/ },
       { name: "order", pattern: /^pedido\/(?<id>[^/]+)$/ },
       { name: "login", pattern: /^entrar$/ },
+      { name: "password", pattern: /^conta\/senha$/ },
       { name: "orders", pattern: /^pedidos$/ },
       { name: "help", pattern: /^ajuda$/ },
     ],

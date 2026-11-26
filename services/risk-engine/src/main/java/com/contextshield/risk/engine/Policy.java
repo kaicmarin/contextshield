@@ -1,6 +1,7 @@
 package com.contextshield.risk.engine;
 
 import com.contextshield.risk.model.AssessmentInput.EngineConfig;
+import com.contextshield.risk.model.DynamicRule;
 import com.contextshield.risk.model.Signal;
 
 import java.util.HashMap;
@@ -68,6 +69,18 @@ public final class Policy {
     }
 
     public static Outcome decide(Scored s, String stage, EngineConfig config) {
+        java.util.List<com.contextshield.risk.model.DynamicRule> active = (config != null && config.rules() != null && !config.rules().isEmpty())
+                ? config.rules()
+                : BuiltinRuleCatalog.publishedDefaults();
+        if (active.isEmpty()) {
+            return new Outcome("REQUEST_CONTEXT", "S0",
+                    "S0 · Proteção: nenhuma regra publicada válida; a compra exige confirmação antes de aprovar.");
+        }
+        return DynamicPolicy.decide(s, stage, config, active);
+    }
+
+    /** Caminho legado usado só quando nenhuma regra dinâmica foi enviada (testes unitários isolados). */
+    public static Outcome legacyDecide(Scored s, String stage, EngineConfig config) {
         boolean recalculated = "recalculated".equals(stage);
         int block = Weights.value(config.weights(), "THRESHOLD_BLOCK");
         int high = Weights.value(config.weights(), "THRESHOLD_HIGH");

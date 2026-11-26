@@ -8,7 +8,10 @@ contextshield:
     allow-dev-secret: true
   seed:
     enabled: false
+    credentials-file: classpath:seed/test-credentials.json
     allow-demo-reset: true
+  password-change:
+    per-minute-email: 500
   check:
     per-minute: 200
   login:

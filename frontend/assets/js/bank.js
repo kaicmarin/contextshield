@@ -1,6 +1,6 @@
 import { api, getSession, onSession, setSession } from "./api/client.js";
 import { createRouter } from "./router.js";
-import { button, empty, errorNotice, field, loginForm, pill, statusPill } from "./ui.js";
+import { button, changePasswordForm, empty, errorNotice, field, loginForm, pill, statusPill } from "./ui.js";
 import { el, reducedMotion } from "./utils/dom.js";
 import { brl, CHANNEL, dateTime, INCIDENT_STATUS, INCIDENT_TYPE, relative, setTitle, STATUS, STATUS_ICON, time } from "./utils/format.js";
 import { icon } from "./utils/icons.js";
@@ -308,6 +308,7 @@ function home() {
       ),
       el("h1", { class: "az-hello" }, `Olá, ${first}`),
       el("p", { class: "az-hello-sub" }, customer ? `Cliente desde ${customer.since.slice(0, 4)}` : " "),
+      el("a", { href: "/banco/senha", class: "az-link small" }, "Alterar senha"),
     ),
     el(
       "div",
@@ -784,6 +785,16 @@ function checkPage() {
   return box;
 }
 
+function passwordPage() {
+  setTitle("Alterar senha — Aureon");
+  return el(
+    "div",
+    {},
+    topBar({ title: "Alterar senha", back: { to: "/banco", label: "Início" } }),
+    el("div", { class: "az-content" }, changePasswordForm({ area: "customer", backLink: "/banco" })),
+  );
+}
+
 async function render(loc) {
   const signed = !!session();
   if (signed && !me) await refreshMe();
@@ -798,6 +809,7 @@ async function render(loc) {
   else if (loc.name === "report-new") node = reportForm(null, loc.search);
   else if (loc.name === "report-edit") node = reportForm(loc.params.id, loc.search);
   else if (loc.name === "check") node = checkPage();
+  else if (loc.name === "password" && signed) node = passwordPage();
   else {
     setTitle("Aureon");
     node = el("div", {}, topBar({ title: "Aureon", back: { to: "/banco", label: "Início" } }), el("div", { class: "az-content" }, emptyState("search", "Esta tela não existe", "O endereço pode ter mudado.", el("a", { href: "/banco", class: "btn btn-primary" }, "Voltar ao início"))));
@@ -830,6 +842,7 @@ function mount() {
       { name: "report-new", pattern: /^relatar\/novo$/ },
       { name: "report-edit", pattern: /^relatar\/(?<id>[^/]+)\/editar$/ },
       { name: "check", pattern: /^confira$/ },
+      { name: "password", pattern: /^senha$/ },
     ],
     render,
   });

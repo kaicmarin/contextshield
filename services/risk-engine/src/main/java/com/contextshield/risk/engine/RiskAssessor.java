@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Orquestra o motor: sinais → score e confiança → política (R1–R11) → certificado de fragilidade
+ * Orquestra o motor: sinais → score e confiança → regras publicadas (dinâmicas) → certificado de fragilidade
  * → Safety Monitor → perguntas de verificação (quando a decisão é pedir contexto).
  */
 @Service

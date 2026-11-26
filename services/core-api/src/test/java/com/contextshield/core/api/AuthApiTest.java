@@ -14,7 +14,8 @@ class AuthApiTest extends TestSupport {
 
     @Test
     void loginDevolveTokenJwtComPapel() throws Exception {
-        var r = read(call(post("/api/auth/login"), null, Map.of("email", "ana.martins@correio.example", "password", "contexto"))
+        var r = read(call(post("/api/auth/login"), null,
+                        Map.of("email", "ana.martins@correio.example", "password", passwordFor("ana.martins@correio.example")))
                 .andExpect(status().isOk()));
         assertThat(r.path("token").asText()).contains(".");
         assertThat(r.path("user").path("role").asText()).isEqualTo("CUSTOMER");
@@ -56,7 +57,7 @@ class AuthApiTest extends TestSupport {
 
     @Test
     void cadastroCriaClienteEImpedeEmailRepetido() throws Exception {
-        var body = Map.of("name", "Eric Teste", "email", "eric.teste@correio.example", "password", "senha-forte-1",
+        var body = Map.of("name", "Eric Teste", "email", "eric.teste@correio.example", "password", "senha-forte-12",
                 "city", "São Paulo", "addressLine", "Rua do Teste, 100", "district", "Centro", "zip", "01000-000");
         var r = read(call(post("/api/auth/register"), null, body).andExpect(status().isCreated()));
         String token = r.path("token").asText();

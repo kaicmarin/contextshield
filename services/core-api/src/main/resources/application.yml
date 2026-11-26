@@ -52,9 +52,11 @@ contextshield:
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   seed:
     enabled: ${SEED_ENABLED:false}
-    demo-password: ${DEMO_PASSWORD:contexto}
+    credentials-file: ${SEED_CREDENTIALS_FILE:}
     anchor-today: ${SEED_ANCHOR_TODAY:true}
     allow-demo-reset: ${SEED_ALLOW_DEMO_RESET:false}
+  password-change:
+    per-minute-email: ${PASSWORD_CHANGE_PER_MINUTE_EMAIL:5}
   check:
     per-minute: ${CHECK_PER_MINUTE:40}
     trusted-proxies: []

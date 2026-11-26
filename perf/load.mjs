@@ -16,7 +16,14 @@ const PHASES = [
 // metas (requisito não funcional): p95 da API
 const TARGET_P95 = { normal: 500, pico: 1500 };
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 const CUSTOMERS = ["ana.martins", "carlos.menezes", "mariana.rocha", "rafael.nunes", "beatriz.lima", "diego.faria", "helena.prado", "pedro.alves", "joana.ribeiro"];
+const SEED_PW = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../services/core-api/src/test/resources/seed/test-credentials.json"), "utf8"),
+).passwords;
 
 async function json(method, path, body, token) {
   const t0 = performance.now();
@@ -38,7 +45,8 @@ const pct = (arr, p) => {
 async function prepare() {
   const sessions = [];
   for (const c of CUSTOMERS) {
-    const r = await json("POST", "/api/auth/login", { email: `${c}@correio.example`, password: "contexto" });
+    const email = `${c}@correio.example`;
+    const r = await json("POST", "/api/auth/login", { email, password: SEED_PW[email] });
     if (r.status !== 200) throw new Error(`login ${c}: ${r.status}`);
     const me = await json("GET", "/api/me", null, r.data.token);
     const home = me.data.addresses.find((a) => a.kind === "home") ?? me.data.addresses[0];

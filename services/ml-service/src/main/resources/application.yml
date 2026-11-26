@@ -31,6 +31,8 @@ contextshield:
   models-dir: ${MODELS_DIR:../../machine-learning/models}
   work-dir: ${ML_WORK_DIR:target/ml-work}
   max-examples: ${ML_MAX_EXAMPLES:400}
+  experiment-max-minutes: ${ML_EXPERIMENT_MAX_MINUTES:20}
+  experiment-watchdog-ms: ${ML_EXPERIMENT_WATCHDOG_MS:45000}
   rate-limit-per-minute: ${RATE_LIMIT_PER_MINUTE:120}
   jwt:
     secret: ${JWT_SECRET:}

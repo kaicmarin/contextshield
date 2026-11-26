@@ -1,0 +1,1 @@
+alter table ml_experiment add column if not exists confirmed_json text;
