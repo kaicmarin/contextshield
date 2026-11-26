@@ -21,9 +21,9 @@ const EXAMPLES = [
   { label: "Mensagem normal", text: "Oi! Seu pedido NEXA saiu para entrega e chega amanhã entre 9h e 18h." },
 ];
 const FIRST_STEPS = [
-  ["phoneCall", "Ligue para a central", "0800 000 0000, 24 horas. Use só o número do verso do cartão."],
+  ["phoneCall", "Ligue para a central", "Procure a central pelo número no verso do cartão ou no aplicativo oficial do banco."],
   ["lock", "Não faça mais nada que pedirem", "Nenhuma central pede compra, Pix ou código para “cancelar” algo."],
-  ["flag", "Registre o relato aqui", "O telefone, o link e o endereço que você informar bloqueiam o golpe para outros clientes."],
+  ["flag", "Registre o relato aqui", "O telefone, o link e o endereço informados ajudam os analistas a investigar golpes e proteger outros clientes."],
 ];
 const DECISION = {
   APPROVED: ["Aprovamos na hora", "Nada nesta compra fugiu do seu padrão."],
@@ -203,7 +203,7 @@ function paintShell() {
   );
   const keep = screen.querySelector(".az-status");
   screen.replaceChildren(keep ?? el("div", { class: "az-status", "aria-hidden": "true" }), app, overlays, el("span", { class: "az-island", "aria-hidden": "true" }), el("span", { class: "az-homebar", "aria-hidden": "true" }));
-  overlays.replaceChildren(sheet ? alertSheet() : null);
+  overlays.replaceChildren(...(sheet ? [alertSheet()] : []));
   syncOverlayA11y();
   if (!toasts.parentElement) screen.querySelector(".az-app")?.append(toasts);
   paintChrome(path);
