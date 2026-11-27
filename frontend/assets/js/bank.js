@@ -161,6 +161,23 @@ function bell() {
     unread > 0 ? el("span", { class: "az-badge num", "aria-hidden": "true" }, unread > 9 ? "9+" : String(unread)) : null,
   );
 }
+function paintUnreadIndicators() {
+  // A atualização periódica dos avisos não deve remontar a tela nem zerar a rolagem.
+  const label = unread ? `Avisos, ${unread} ${unread === 1 ? "não lido" : "não lidos"}` : "Avisos";
+  const count = unread > 9 ? "9+" : String(unread);
+  screen.querySelectorAll(".az-bell").forEach((bellEl) => {
+    bellEl.setAttribute("aria-label", label);
+    const badge = bellEl.querySelector(".az-badge");
+    if (!unread) {
+      badge?.remove();
+    } else if (badge) {
+      if (badge.textContent !== count) badge.textContent = count;
+    } else {
+      bellEl.append(el("span", { class: "az-badge num", "aria-hidden": "true" }, count));
+    }
+  });
+}
+
 function rowsSkeleton(n, label) {
   return el("div", { class: "az-group", "aria-busy": "true", "aria-label": label }, Array.from({ length: n }, () => el("div", { class: "az-row az-row-skel" }, el("span", { class: "skeleton az-skel-dot" }), el("span", { class: "az-row-main" }, el("span", { class: "skeleton", style: { width: "60%", height: "14px" } }), el("span", { class: "skeleton", style: { width: "40%", height: "12px" } })))));
 }
@@ -798,7 +815,7 @@ function passwordPage() {
 async function render(loc) {
   const signed = !!session();
   if (signed && !me) await refreshMe();
-  if (signed) refreshAlerts();
+  if (signed) refreshAlerts().then(paintUnreadIndicators);
   let node;
   if (!signed && loc.name !== "check") node = login();
   else if (loc.name === "home") node = signed ? home() : login();
@@ -851,7 +868,7 @@ function mount() {
     router.start();
   });
   setInterval(() => {
-    if (document.visibilityState === "visible" && session()) refreshAlerts().then(paintShell);
+    if (document.visibilityState === "visible" && session()) refreshAlerts().then(paintUnreadIndicators);
   }, 15000);
   router.start();
 }
